@@ -65,12 +65,11 @@ $(PREPROC): $(PREPROC_DIR)/src/main.rs
 	cd "$(PREPROC_DIR)" && cargo build --release 
 
 $(VENV_BIN):
-	python3 -m pip install --user virtualenv==$(VENV_VERSION)
 	touch $@
 
 $(PYTHON_BIN): $(VENV_BIN) requirements.txt
-	python3 -m virtualenv -p python3 $(VENV_DIR)
-	$@ -m pip install -r requirements.txt
+	python3 -m venv $(VENV_DIR)
+	$(VENV_DIR)/bin/pip install -r requirements.txt
 
 $(MAKO_RENDER): $(PYTHON_BIN) $(wildcard $(GEN_LIB_SRC)/*)
 
