@@ -428,7 +428,7 @@ pub struct ApplicationPermission {
 impl client::Part for ApplicationPermission {}
 
 
-/// Policy for an individual app. Note: Application availability on a given device cannot be changed using this policy if installAppsDisabled is enabled.
+/// Policy for an individual app. Note: Application availability on a given device cannot be changed using this policy if installAppsDisabled is enabled. The maximum number of applications that you can specify per enterprise policy is 3,000.
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
 /// 
@@ -455,7 +455,7 @@ pub struct ApplicationPolicy {
     #[serde(rename="defaultPermissionPolicy")]
     
     pub default_permission_policy: Option<String>,
-    /// The scopes delegated to the app from Android Device Policy.
+    /// The scopes delegated to the app from Android Device Policy. These provide additional privileges for the applications they are applied to.
     #[serde(rename="delegatedScopes")]
     
     pub delegated_scopes: Option<Vec<String>>,
@@ -691,6 +691,22 @@ pub struct Command {
     #[serde(rename="resetPasswordFlags")]
     
     pub reset_password_flags: Option<Vec<String>>,
+    /// Parameters for the START_LOST_MODE command to put the device into lost mode. See StartLostModeParams. If this is set, then it is suggested that type should not be set. In this case, the server automatically sets it to START_LOST_MODE. It is also acceptable to explicitly set type to START_LOST_MODE.
+    #[serde(rename="startLostModeParams")]
+    
+    pub start_lost_mode_params: Option<StartLostModeParams>,
+    /// Output only. Status of the START_LOST_MODE command to put the device into lost mode. See StartLostModeStatus.
+    #[serde(rename="startLostModeStatus")]
+    
+    pub start_lost_mode_status: Option<StartLostModeStatus>,
+    /// Parameters for the STOP_LOST_MODE command to take the device out of lost mode. See StopLostModeParams. If this is set, then it is suggested that type should not be set. In this case, the server automatically sets it to STOP_LOST_MODE. It is also acceptable to explicitly set type to STOP_LOST_MODE.
+    #[serde(rename="stopLostModeParams")]
+    
+    pub stop_lost_mode_params: Option<StopLostModeParams>,
+    /// Output only. Status of the STOP_LOST_MODE command to take the device out of lost mode. See StopLostModeStatus.
+    #[serde(rename="stopLostModeStatus")]
+    
+    pub stop_lost_mode_status: Option<StopLostModeStatus>,
     /// The type of the command.
     #[serde(rename="type")]
     
@@ -811,7 +827,7 @@ pub struct ContentProviderEndpoint {
 impl client::Part for ContentProviderEndpoint {}
 
 
-/// Cross-profile policies applied on the device.
+/// Controls the data from the work profile that can be accessed from the personal profile and vice versa. A nonComplianceDetail with MANAGEMENT_MODE is reported if the device does not have a work profile.
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
 /// 
@@ -1963,7 +1979,7 @@ pub struct Operation {
     /// The server-assigned name, which is only unique within the same service that originally returns it. If you use the default HTTP mapping, the name should be a resource name ending with operations/{unique_id}.
     
     pub name: Option<String>,
-    /// The normal response of the operation in case of success. If the original method returns no data on success, such as Delete, the response is google.protobuf.Empty. If the original method is standard Get/Create/Update, the response should be the resource. For other methods, the response should have the type XxxResponse, where Xxx is the original method name. For example, if the original method name is TakeSnapshot(), the inferred response type is TakeSnapshotResponse.
+    /// The normal, successful response of the operation. If the original method returns no data on success, such as Delete, the response is google.protobuf.Empty. If the original method is standard Get/Create/Update, the response should be the resource. For other methods, the response should have the type XxxResponse, where Xxx is the original method name. For example, if the original method name is TakeSnapshot(), the inferred response type is TakeSnapshotResponse.
     
     pub response: Option<HashMap<String, json::Value>>,
 }
@@ -2263,7 +2279,7 @@ pub struct Policy {
     #[serde(rename="cellBroadcastsConfigDisabled")]
     
     pub cell_broadcasts_config_disabled: Option<bool>,
-    /// Rules for determining apps' access to private keys. See ChoosePrivateKeyRule for details.
+    /// Rules for determining apps' access to private keys. See ChoosePrivateKeyRule for details. This must be empty if any application has CERT_SELECTION delegation scope.
     #[serde(rename="choosePrivateKeyRules")]
     
     pub choose_private_key_rules: Option<Vec<ChoosePrivateKeyRule>>,
@@ -2451,7 +2467,7 @@ pub struct Policy {
     #[serde(rename="preferentialNetworkService")]
     
     pub preferential_network_service: Option<String>,
-    /// Allows showing UI on a device for a user to choose a private key alias if there are no matching rules in ChoosePrivateKeyRules. For devices below Android P, setting this may leave enterprise keys vulnerable.
+    /// Allows showing UI on a device for a user to choose a private key alias if there are no matching rules in ChoosePrivateKeyRules. For devices below Android P, setting this may leave enterprise keys vulnerable. This value will have no effect if any application has CERT_SELECTION delegation scope.
     #[serde(rename="privateKeySelectionEnabled")]
     
     pub private_key_selection_enabled: Option<bool>,
@@ -2643,11 +2659,7 @@ pub struct ProvisioningInfo {
     #[serde(rename="apiLevel")]
     
     pub api_level: Option<i32>,
-    /// The email address of the authenticated user (only present for Google Account provisioning method).
-    #[serde(rename="authenticatedUserEmail")]
-    
-    pub authenticated_user_email: Option<String>,
-    /// Brand of the device. For example, Google.
+    /// The brand of the device. For example, Google.
     
     pub brand: Option<String>,
     /// The name of the enterprise in the form enterprises/{enterprise}.
@@ -2866,6 +2878,53 @@ pub struct SpecificNonComplianceContext {
 impl client::Part for SpecificNonComplianceContext {}
 
 
+/// Parameters associated with the START_LOST_MODE command to put the device into lost mode. At least one of the parameters, not including the organization name, must be provided in order for the device to be put into lost mode.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct StartLostModeParams {
+    /// The email address displayed to the user when the device is in lost mode.
+    #[serde(rename="lostEmailAddress")]
+    
+    pub lost_email_address: Option<String>,
+    /// The message displayed to the user when the device is in lost mode.
+    #[serde(rename="lostMessage")]
+    
+    pub lost_message: Option<UserFacingMessage>,
+    /// The organization name displayed to the user when the device is in lost mode.
+    #[serde(rename="lostOrganization")]
+    
+    pub lost_organization: Option<UserFacingMessage>,
+    /// The phone number displayed to the user when the device is in lost mode.
+    #[serde(rename="lostPhoneNumber")]
+    
+    pub lost_phone_number: Option<UserFacingMessage>,
+    /// The street address displayed to the user when the device is in lost mode.
+    #[serde(rename="lostStreetAddress")]
+    
+    pub lost_street_address: Option<UserFacingMessage>,
+}
+
+impl client::Part for StartLostModeParams {}
+
+
+/// Status of the START_LOST_MODE command to put the device into lost mode.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct StartLostModeStatus {
+    /// The status. See StartLostModeStatus.
+    
+    pub status: Option<String>,
+}
+
+impl client::Part for StartLostModeStatus {}
+
+
 /// The Status type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs. It is used by gRPC (https://github.com/grpc). Each Status message contains three pieces of data: error code, error message, and error details.You can find out more about this error model and how to work with it in the API Design Guide (https://cloud.google.com/apis/design/errors).
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
@@ -2941,6 +3000,32 @@ pub struct StatusReportingSettings {
 }
 
 impl client::Part for StatusReportingSettings {}
+
+
+/// Parameters associated with the STOP_LOST_MODE command to take the device out of lost mode.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct StopLostModeParams { _never_set: Option<bool> }
+
+impl client::Part for StopLostModeParams {}
+
+
+/// Status of the STOP_LOST_MODE command to take the device out of lost mode.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct StopLostModeStatus {
+    /// The status. See StopLostModeStatus.
+    
+    pub status: Option<String>,
+}
+
+impl client::Part for StopLostModeStatus {}
 
 
 /// Configuration for managing system updates
@@ -3812,7 +3897,7 @@ impl<'a, S> ProvisioningInfoMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// Get the device provisioning info by the identifier provided via the sign-in url.
+    /// Get the device provisioning information by the identifier provided in the sign-in url.
     /// 
     /// # Arguments
     ///
@@ -12036,7 +12121,7 @@ where
 }
 
 
-/// Get the device provisioning info by the identifier provided via the sign-in url.
+/// Get the device provisioning information by the identifier provided in the sign-in url.
 ///
 /// A builder for the *get* method supported by a *provisioningInfo* resource.
 /// It is not used directly, but through a [`ProvisioningInfoMethods`] instance.

@@ -2,7 +2,7 @@
 // This file was generated automatically from 'src/generator/templates/api/lib.rs.mako'
 // DO NOT EDIT !
 
-//! This documentation was generated from *Android Management* crate version *5.0.2+20230717*, where *20230717* is the exact revision of the *androidmanagement:v1* schema built by the [mako](http://www.makotemplates.org/) code generator *v5.0.2*.
+//! This documentation was generated from *Android Management* crate version *5.0.2+20230814*, where *20230814* is the exact revision of the *androidmanagement:v1* schema built by the [mako](http://www.makotemplates.org/) code generator *v5.0.2*.
 //! 
 //! Everything else about the *Android Management* *v1* API can be found at the
 //! [official documentation site](https://developers.google.com/android/management).
