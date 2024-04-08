@@ -23,7 +23,7 @@ use crate::{client, client::GetToken, client::serde_with};
 /// Identifies the an OAuth2 authorization scope.
 /// A scope is needed when requesting an
 /// [authorization token](https://developers.google.com/youtube/v3/guides/authentication).
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Ord, PartialOrd, Hash, Debug, Clone, Copy)]
 pub enum Scope {
     /// View and manage your Google Cloud Platform billing accounts
     CloudBilling,
@@ -81,7 +81,7 @@ impl Default for Scope {
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = CloudBillingBudget::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = CloudBillingBudget::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -130,7 +130,7 @@ impl<'a, S> CloudBillingBudget<S> {
         CloudBillingBudget {
             client,
             auth: Box::new(auth),
-            _user_agent: "google-api-rust-client/5.0.2".to_string(),
+            _user_agent: "google-api-rust-client/5.0.4".to_string(),
             _base_url: "https://billingbudgets.googleapis.com/".to_string(),
             _root_url: "https://billingbudgets.googleapis.com/".to_string(),
         }
@@ -141,7 +141,7 @@ impl<'a, S> CloudBillingBudget<S> {
     }
 
     /// Set the user-agent header field to use in all requests to the server.
-    /// It defaults to `google-api-rust-client/5.0.2`.
+    /// It defaults to `google-api-rust-client/5.0.4`.
     ///
     /// Returns the previously set user-agent.
     pub fn user_agent(&mut self, agent_name: String) -> String {
@@ -179,7 +179,6 @@ impl<'a, S> CloudBillingBudget<S> {
 /// * [budgets create billing accounts](BillingAccountBudgetCreateCall) (request|response)
 /// * [budgets get billing accounts](BillingAccountBudgetGetCall) (response)
 /// * [budgets patch billing accounts](BillingAccountBudgetPatchCall) (request|response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudBillingBudgetsV1Budget {
@@ -204,6 +203,10 @@ pub struct GoogleCloudBillingBudgetsV1Budget {
     #[serde(rename="notificationsRule")]
     
     pub notifications_rule: Option<GoogleCloudBillingBudgetsV1NotificationsRule>,
+    /// no description provided
+    #[serde(rename="ownershipScope")]
+    
+    pub ownership_scope: Option<String>,
     /// Optional. Rules that trigger alerts (notifications of thresholds being crossed) when spend exceeds the specified percentages of the budget. Optional for `pubsubTopic` notifications. Required if using email notifications.
     #[serde(rename="thresholdRules")]
     
@@ -283,6 +286,10 @@ pub struct GoogleCloudBillingBudgetsV1Filter {
     /// Optional. A set of projects of the form `projects/{project}`, specifying that usage from only this set of projects should be included in the budget. If omitted, the report includes all usage for the billing account, regardless of which project the usage occurred on.
     
     pub projects: Option<Vec<String>>,
+    /// Optional. A set of folder and organization names of the form `folders/{folderId}` or `organizations/{organizationId}`, specifying that usage from only this set of folders and organizations should be included in the budget. If omitted, the budget includes all usage that the billing account pays for. If the folder or organization contains projects that are paid for by a different Cloud Billing account, the budget *doesn't* apply to those projects.
+    #[serde(rename="resourceAncestors")]
+    
+    pub resource_ancestors: Option<Vec<String>>,
     /// Optional. A set of services of the form `services/{service_id}`, specifying that usage from only this set of services should be included in the budget. If omitted, the report includes usage for all the services. The service names are available through the Catalog API: https://cloud.google.com/billing/v1/how-tos/catalog-api.
     
     pub services: Option<Vec<String>>,
@@ -313,7 +320,6 @@ impl client::Part for GoogleCloudBillingBudgetsV1LastPeriodAmount {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [budgets list billing accounts](BillingAccountBudgetListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudBillingBudgetsV1ListBudgetsResponse {
@@ -340,11 +346,15 @@ pub struct GoogleCloudBillingBudgetsV1NotificationsRule {
     #[serde(rename="disableDefaultIamRecipients")]
     
     pub disable_default_iam_recipients: Option<bool>,
+    /// Optional. When set to true, and when the budget has a single project configured, notifications will be sent to project level recipients of that project. This field will be ignored if the budget has multiple or no project configured. Currently, project level recipients are the users with `Owner` role on a cloud project.
+    #[serde(rename="enableProjectLevelRecipients")]
+    
+    pub enable_project_level_recipients: Option<bool>,
     /// Optional. Email targets to send notifications to when a threshold is exceeded. This is in addition to the `DefaultIamRecipients` who receive alert emails based on their billing account IAM role. The value is the full REST resource name of a Cloud Monitoring email notification channel with the form `projects/{project_id}/notificationChannels/{channel_id}`. A maximum of 5 email notifications are allowed. To customize budget alert email recipients with monitoring notification channels, you _must create the monitoring notification channels before you link them to a budget_. For guidance on setting up notification channels to use with budgets, see [Customize budget alert email recipients](https://cloud.google.com/billing/docs/how-to/budgets-notification-recipients). For Cloud Billing budget alerts, you _must use email notification channels_. The other types of notification channels are _not_ supported, such as Slack, SMS, or PagerDuty. If you want to [send budget notifications to Slack](https://cloud.google.com/billing/docs/how-to/notify#send_notifications_to_slack), use a pubsubTopic and configure [programmatic notifications](https://cloud.google.com/billing/docs/how-to/budgets-programmatic-notifications).
     #[serde(rename="monitoringNotificationChannels")]
     
     pub monitoring_notification_channels: Option<Vec<String>>,
-    /// Optional. The name of the Pub/Sub topic where budget-related messages are published, in the form `projects/{project_id}/topics/{topic_id}`. Updates are sent to the topic at regular intervals; the timing of the updates is not dependent on the [threshold rules](#thresholdrule) you've set. Note that if you want your [Pub/Sub JSON object](https://cloud.google.com/billing/docs/how-to/budgets-programmatic-notifications#notification_format) to contain data for `alertThresholdExceeded`, you need at least one [alert threshold rule](#thresholdrule). When you set threshold rules, you must also enable at least one of the email notification options, either using the default IAM recipients or Cloud Monitoring email notification channels. To use Pub/Sub topics with budgets, you must do the following: 1. Create the Pub/Sub topic before connecting it to your budget. For guidance, see [Manage programmatic budget alert notifications](https://cloud.google.com/billing/docs/how-to/budgets-programmatic-notifications). 2. Grant the API caller the `pubsub.topics.setIamPolicy` permission on the Pub/Sub topic. If not set, the API call fails with PERMISSION_DENIED. For additional details on Pub/Sub roles and permissions, see [Permissions required for this task](https://cloud.google.com/billing/docs/how-to/budgets-programmatic-notifications#permissions_required_for_this_task).
+    /// Optional. The name of the Pub/Sub topic where budget-related messages are published, in the form `projects/{project_id}/topics/{topic_id}`. Updates are sent to the topic at regular intervals; the timing of the updates is not dependent on the [threshold rules](#thresholdrule) you’ve set. Note that if you want your [Pub/Sub JSON object](https://cloud.google.com/billing/docs/how-to/budgets-programmatic-notifications#notification_format) to contain data for `alertThresholdExceeded`, you need at least one [alert threshold rule](#thresholdrule). When you set threshold rules, you must also enable at least one of the email notification options, either using the default IAM recipients or Cloud Monitoring email notification channels. To use Pub/Sub topics with budgets, you must do the following: 1. Create the Pub/Sub topic before connecting it to your budget. For guidance, see [Manage programmatic budget alert notifications](https://cloud.google.com/billing/docs/how-to/budgets-programmatic-notifications). 2. Grant the API caller the `pubsub.topics.setIamPolicy` permission on the Pub/Sub topic. If not set, the API call fails with PERMISSION_DENIED. For additional details on Pub/Sub roles and permissions, see [Permissions required for this task](https://cloud.google.com/billing/docs/how-to/budgets-programmatic-notifications#permissions_required_for_this_task).
     #[serde(rename="pubsubTopic")]
     
     pub pubsub_topic: Option<String>,
@@ -357,10 +367,9 @@ pub struct GoogleCloudBillingBudgetsV1NotificationsRule {
 impl client::Part for GoogleCloudBillingBudgetsV1NotificationsRule {}
 
 
-/// ThresholdRule contains the definition of a threshold. Threshold rules define the triggering events used to generate a budget notification email. When a threshold is crossed (spend exceeds the specified percentages of the budget), budget alert emails are sent to the email recipients you specify in the [NotificationsRule](#notificationsrule). Threshold rules also affect the fields included in the [JSON data object](https://cloud.google.com/billing/docs/how-to/budgets-programmatic-notifications#notification_format) sent to a Pub/Sub topic. Threshold rules are _required_ if using email notifications. Threshold rules are _optional_ if only setting a [`pubsubTopic` NotificationsRule](#NotificationsRule), unless you want your JSON data object to include data about the thresholds you set. For more information, see [set budget threshold rules and actions](https://cloud.google.com/billing/docs/how-to/budgets#budget-actions).
+/// ThresholdRule contains the definition of a threshold. Threshold rules define the triggering events used to generate a budget notification email. When a threshold is crossed (spend exceeds the specified percentages of the budget), budget alert emails are sent to the email recipients you specify in the [NotificationsRule](#notificationsrule). Threshold rules also affect the fields included in the [JSON data object](https://cloud.google.com/billing/docs/how-to/budgets-programmatic-notifications#notification_format) sent to a Pub/Sub topic. Threshold rules are *required* if using email notifications. Threshold rules are *optional* if only setting a [`pubsubTopic` NotificationsRule](#NotificationsRule), unless you want your JSON data object to include data about the thresholds you set. For more information, see [set budget threshold rules and actions](https://cloud.google.com/billing/docs/how-to/budgets#budget-actions).
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudBillingBudgetsV1ThresholdRule {
@@ -385,7 +394,6 @@ impl client::Part for GoogleCloudBillingBudgetsV1ThresholdRule {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [budgets delete billing accounts](BillingAccountBudgetDeleteCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleProtobufEmpty { _never_set: Option<bool> }
@@ -463,7 +471,7 @@ impl client::Part for GoogleTypeMoney {}
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = CloudBillingBudget::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = CloudBillingBudget::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
 /// // like `budgets_create(...)`, `budgets_delete(...)`, `budgets_get(...)`, `budgets_list(...)` and `budgets_patch(...)`
 /// // to build up your call.
@@ -544,6 +552,7 @@ impl<'a, S> BillingAccountMethods<'a, S> {
         BillingAccountBudgetListCall {
             hub: self.hub,
             _parent: parent.to_string(),
+            _scope: Default::default(),
             _page_token: Default::default(),
             _page_size: Default::default(),
             _delegate: Default::default(),
@@ -604,7 +613,7 @@ impl<'a, S> BillingAccountMethods<'a, S> {
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudBillingBudget::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudBillingBudget::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -801,7 +810,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> BillingAccountBudgetCreateCall<'a, S> {
@@ -894,7 +904,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudBillingBudget::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudBillingBudget::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -1062,7 +1072,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> BillingAccountBudgetDeleteCall<'a, S> {
@@ -1155,7 +1166,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudBillingBudget::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudBillingBudget::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -1323,7 +1334,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> BillingAccountBudgetGetCall<'a, S> {
@@ -1416,13 +1428,14 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudBillingBudget::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudBillingBudget::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.billing_accounts().budgets_list("parent")
-///              .page_token("sed")
-///              .page_size(-2)
+///              .scope("sed")
+///              .page_token("amet.")
+///              .page_size(-59)
 ///              .doit().await;
 /// # }
 /// ```
@@ -1431,6 +1444,7 @@ pub struct BillingAccountBudgetListCall<'a, S>
 
     hub: &'a CloudBillingBudget<S>,
     _parent: String,
+    _scope: Option<String>,
     _page_token: Option<String>,
     _page_size: Option<i32>,
     _delegate: Option<&'a mut dyn client::Delegate>,
@@ -1461,15 +1475,18 @@ where
         dlg.begin(client::MethodInfo { id: "billingbudgets.billingAccounts.budgets.list",
                                http_method: hyper::Method::GET });
 
-        for &field in ["alt", "parent", "pageToken", "pageSize"].iter() {
+        for &field in ["alt", "parent", "scope", "pageToken", "pageSize"].iter() {
             if self._additional_params.contains_key(field) {
                 dlg.finished(false);
                 return Err(client::Error::FieldClash(field));
             }
         }
 
-        let mut params = Params::with_capacity(5 + self._additional_params.len());
+        let mut params = Params::with_capacity(6 + self._additional_params.len());
         params.push("parent", self._parent);
+        if let Some(value) = self._scope.as_ref() {
+            params.push("scope", value);
+        }
         if let Some(value) = self._page_token.as_ref() {
             params.push("pageToken", value);
         }
@@ -1590,6 +1607,13 @@ where
         self._parent = new_value.to_string();
         self
     }
+    /// Optional. Set the scope of the budgets to be returned, in the format of the resource name. The scope of a budget is the cost that it tracks, such as costs for a single project, or the costs for all projects in a folder. Only project scope (in the format of "projects/project-id" or "projects/123") is supported in this field. When this field is set to a project's resource name, the budgets returned are tracking the costs for that project.
+    ///
+    /// Sets the *scope* query property to the given value.
+    pub fn scope(mut self, new_value: &str) -> BillingAccountBudgetListCall<'a, S> {
+        self._scope = Some(new_value.to_string());
+        self
+    }
     /// Optional. The value returned by the last `ListBudgetsResponse` which indicates that this is a continuation of a prior `ListBudgets` call, and that the system should return the next page of data.
     ///
     /// Sets the *page token* query property to the given value.
@@ -1608,7 +1632,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> BillingAccountBudgetListCall<'a, S> {
@@ -1702,7 +1727,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudBillingBudget::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudBillingBudget::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -1911,7 +1936,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> BillingAccountBudgetPatchCall<'a, S> {

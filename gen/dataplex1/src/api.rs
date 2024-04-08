@@ -23,7 +23,7 @@ use crate::{client, client::GetToken, client::serde_with};
 /// Identifies the an OAuth2 authorization scope.
 /// A scope is needed when requesting an
 /// [authorization token](https://developers.google.com/youtube/v3/guides/authentication).
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Ord, PartialOrd, Hash, Debug, Clone, Copy)]
 pub enum Scope {
     /// See, edit, configure, and delete your Google Cloud data and see the email address for your Google Account.
     CloudPlatform,
@@ -59,7 +59,6 @@ impl Default for Scope {
 /// extern crate hyper;
 /// extern crate hyper_rustls;
 /// extern crate google_dataplex1 as dataplex1;
-/// use dataplex1::api::GoogleCloudDataplexV1DataAttributeBinding;
 /// use dataplex1::{Result, Error};
 /// # async fn dox() {
 /// use std::default::Default;
@@ -77,18 +76,12 @@ impl Default for Scope {
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
-/// // As the method needs a request, you would usually fill it with the desired information
-/// // into the respective structure. Some of the parts shown here might not be applicable !
-/// // Values shown here are possibly random and not representative !
-/// let mut req = GoogleCloudDataplexV1DataAttributeBinding::default();
-/// 
+/// let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
-/// let result = hub.projects().locations_data_attribute_bindings_create(req, "parent")
-///              .validate_only(true)
-///              .data_attribute_binding_id("duo")
+/// let result = hub.projects().locations_aspect_types_get_iam_policy("resource")
+///              .options_requested_policy_version(-27)
 ///              .doit().await;
 /// 
 /// match result {
@@ -127,7 +120,7 @@ impl<'a, S> CloudDataplex<S> {
         CloudDataplex {
             client,
             auth: Box::new(auth),
-            _user_agent: "google-api-rust-client/5.0.2".to_string(),
+            _user_agent: "google-api-rust-client/5.0.4".to_string(),
             _base_url: "https://dataplex.googleapis.com/".to_string(),
             _root_url: "https://dataplex.googleapis.com/".to_string(),
         }
@@ -138,7 +131,7 @@ impl<'a, S> CloudDataplex<S> {
     }
 
     /// Set the user-agent header field to use in all requests to the server.
-    /// It defaults to `google-api-rust-client/5.0.2`.
+    /// It defaults to `google-api-rust-client/5.0.4`.
     ///
     /// Returns the previously set user-agent.
     pub fn user_agent(&mut self, agent_name: String) -> String {
@@ -180,7 +173,6 @@ impl<'a, S> CloudDataplex<S> {
 /// * [locations lakes zones entities delete projects](ProjectLocationLakeZoneEntityDeleteCall) (response)
 /// * [locations operations cancel projects](ProjectLocationOperationCancelCall) (response)
 /// * [locations operations delete projects](ProjectLocationOperationDeleteCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Empty { _never_set: Option<bool> }
@@ -398,7 +390,6 @@ impl client::Part for GoogleCloudDataplexV1ActionUnauthorizedResource {}
 /// * [locations lakes zones assets create projects](ProjectLocationLakeZoneAssetCreateCall) (request)
 /// * [locations lakes zones assets get projects](ProjectLocationLakeZoneAssetGetCall) (response)
 /// * [locations lakes zones assets patch projects](ProjectLocationLakeZoneAssetPatchCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1Asset {
@@ -628,6 +619,10 @@ impl client::Part for GoogleCloudDataplexV1AssetResourceSpec {}
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1AssetResourceStatus {
+    /// Output only. Service account associated with the BigQuery Connection.
+    #[serde(rename="managedAccessIdentity")]
+    
+    pub managed_access_identity: Option<String>,
     /// Additional information about the current state.
     
     pub message: Option<String>,
@@ -697,7 +692,6 @@ impl client::Part for GoogleCloudDataplexV1AssetStatus {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations lakes tasks jobs cancel projects](ProjectLocationLakeTaskJobCancelCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1CancelJobRequest { _never_set: Option<bool> }
@@ -718,7 +712,6 @@ impl client::RequestValue for GoogleCloudDataplexV1CancelJobRequest {}
 /// * [locations lakes contentitems create projects](ProjectLocationLakeContentitemCreateCall) (request|response)
 /// * [locations lakes contentitems get projects](ProjectLocationLakeContentitemGetCall) (response)
 /// * [locations lakes contentitems patch projects](ProjectLocationLakeContentitemPatchCall) (request|response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1Content {
@@ -793,7 +786,7 @@ pub struct GoogleCloudDataplexV1ContentSqlScript {
 impl client::Part for GoogleCloudDataplexV1ContentSqlScript {}
 
 
-/// DataAccessSpec holds the access control configuration to be enforced on data stored within resources (eg: rows, columns in BigQuery Tables). When associated with data,the data is only accessible to principals explicitly granted access through the DataAttribute. Principals with access to the containing resource are not implicitly granted access.
+/// DataAccessSpec holds the access control configuration to be enforced on data stored within resources (eg: rows, columns in BigQuery Tables). When associated with data, the data is only accessible to principals explicitly granted access through the DataAccessSpec. Principals with access to the containing resource are not implicitly granted access.
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
 /// 
@@ -818,7 +811,6 @@ impl client::Part for GoogleCloudDataplexV1DataAccessSpec {}
 /// * [locations data taxonomies attributes create projects](ProjectLocationDataTaxonomyAttributeCreateCall) (request)
 /// * [locations data taxonomies attributes get projects](ProjectLocationDataTaxonomyAttributeGetCall) (response)
 /// * [locations data taxonomies attributes patch projects](ProjectLocationDataTaxonomyAttributePatchCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1DataAttribute {
@@ -871,7 +863,7 @@ impl client::RequestValue for GoogleCloudDataplexV1DataAttribute {}
 impl client::ResponseResult for GoogleCloudDataplexV1DataAttribute {}
 
 
-/// DataAttributeBinding represents binding of attributes to resources. Eg: Bind 'CustomerInfo' entity with 'PII' attribute.
+/// DataAttributeBinding represents binding of attributes to resources. Eg: Bind ‘CustomerInfo’ entity with ‘PII’ attribute.
 /// 
 /// # Activities
 /// 
@@ -881,7 +873,6 @@ impl client::ResponseResult for GoogleCloudDataplexV1DataAttribute {}
 /// * [locations data attribute bindings create projects](ProjectLocationDataAttributeBindingCreateCall) (request)
 /// * [locations data attribute bindings get projects](ProjectLocationDataAttributeBindingGetCall) (response)
 /// * [locations data attribute bindings patch projects](ProjectLocationDataAttributeBindingPatchCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1DataAttributeBinding {
@@ -908,10 +899,10 @@ pub struct GoogleCloudDataplexV1DataAttributeBinding {
     /// Output only. The relative resource name of the Data Attribute Binding, of the form: projects/{project_number}/locations/{location}/dataAttributeBindings/{data_attribute_binding_id}
     
     pub name: Option<String>,
-    /// Optional. The list of paths for items within the associated resource (eg. columns within a table) along with attribute bindings.
+    /// Optional. The list of paths for items within the associated resource (eg. columns and partitions within a table) along with attribute bindings.
     
     pub paths: Option<Vec<GoogleCloudDataplexV1DataAttributeBindingPath>>,
-    /// Optional. Immutable. The resource name of the resource that is binded to attributes. Presently, only entity resource is supported in the form: projects/{project}/locations/{location}/lakes/{lake}/zones/{zone}/entities/{entity_id} Must belong in the same project and region as the attribute binding, and there can only exist one active binding for a resource.
+    /// Optional. Immutable. The resource name of the resource that is associated to attributes. Presently, only entity resource is supported in the form: projects/{project}/locations/{location}/lakes/{lake}/zones/{zone}/entities/{entity_id} Must belong in the same project and region as the attribute binding, and there can only exist one active binding for a resource.
     
     pub resource: Option<String>,
     /// Output only. System generated globally unique ID for the DataAttributeBinding. This ID will be different if the DataAttributeBinding is deleted and re-created with the same name.
@@ -927,7 +918,7 @@ impl client::RequestValue for GoogleCloudDataplexV1DataAttributeBinding {}
 impl client::ResponseResult for GoogleCloudDataplexV1DataAttributeBinding {}
 
 
-/// Represents a subresource of a given resource, and associated bindings with it.
+/// Represents a subresource of the given resource, and associated bindings with it. Currently supported subresources are column and partition schema fields within a table.
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
 /// 
@@ -937,7 +928,7 @@ pub struct GoogleCloudDataplexV1DataAttributeBindingPath {
     /// Optional. List of attributes to be associated with the path of the resource, provided in the form: projects/{project}/locations/{location}/dataTaxonomies/{dataTaxonomy}/attributes/{data_attribute_id}
     
     pub attributes: Option<Vec<String>>,
-    /// Required. The name identifier of the path. Nested columns should be of the form: 'country.state.city'.
+    /// Required. The name identifier of the path. Nested columns should be of the form: 'address.city'.
     
     pub name: Option<String>,
 }
@@ -952,6 +943,10 @@ impl client::Part for GoogleCloudDataplexV1DataAttributeBindingPath {}
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1DataProfileResult {
+    /// Output only. The result of post scan actions.
+    #[serde(rename="postScanActionsResult")]
+    
+    pub post_scan_actions_result: Option<GoogleCloudDataplexV1DataProfileResultPostScanActionsResult>,
     /// The profile information per field.
     
     pub profile: Option<GoogleCloudDataplexV1DataProfileResultProfile>,
@@ -967,6 +962,40 @@ pub struct GoogleCloudDataplexV1DataProfileResult {
 }
 
 impl client::Part for GoogleCloudDataplexV1DataProfileResult {}
+
+
+/// The result of post scan actions of DataProfileScan job.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleCloudDataplexV1DataProfileResultPostScanActionsResult {
+    /// Output only. The result of BigQuery export post scan action.
+    #[serde(rename="bigqueryExportResult")]
+    
+    pub bigquery_export_result: Option<GoogleCloudDataplexV1DataProfileResultPostScanActionsResultBigQueryExportResult>,
+}
+
+impl client::Part for GoogleCloudDataplexV1DataProfileResultPostScanActionsResult {}
+
+
+/// The result of BigQuery export post scan action.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleCloudDataplexV1DataProfileResultPostScanActionsResultBigQueryExportResult {
+    /// Output only. Additional information about the BigQuery exporting.
+    
+    pub message: Option<String>,
+    /// Output only. Execution state for the BigQuery exporting.
+    
+    pub state: Option<String>,
+}
+
+impl client::Part for GoogleCloudDataplexV1DataProfileResultPostScanActionsResultBigQueryExportResult {}
 
 
 /// Contains name, type, mode and field type specific profile information.
@@ -1000,7 +1029,7 @@ pub struct GoogleCloudDataplexV1DataProfileResultProfileField {
     /// Profile information for the corresponding field.
     
     pub profile: Option<GoogleCloudDataplexV1DataProfileResultProfileFieldProfileInfo>,
-    /// The field data type. Possible values include: STRING BYTE INT64 INT32 INT16 DOUBLE FLOAT DECIMAL BOOLEAN BINARY TIMESTAMP DATE TIME NULL RECORD
+    /// The data type retrieved from the schema of the data source. For instance, for a BigQuery native table, it is the BigQuery Table Schema (https://cloud.google.com/bigquery/docs/reference/rest/v2/tables#tablefieldschema). For a Dataplex Entity, it is the Entity Schema (https://cloud.google.com/dataplex/docs/reference/rpc/google.cloud.dataplex.v1#type_3).
     #[serde(rename="type")]
     
     pub type_: Option<String>,
@@ -1036,7 +1065,7 @@ pub struct GoogleCloudDataplexV1DataProfileResultProfileFieldProfileInfo {
     #[serde(rename="stringProfile")]
     
     pub string_profile: Option<GoogleCloudDataplexV1DataProfileResultProfileFieldProfileInfoStringFieldInfo>,
-    /// The list of top N non-null values and number of times they occur in the scanned data. N is 10 or equal to the number of distinct values in the field, whichever is smaller. Not available for complex non-groupable field type RECORD and fields with REPEATABLE mode.
+    /// The list of top N non-null values, frequency and ratio with which they occur in the scanned data. N is 10 or equal to the number of distinct values in the field, whichever is smaller. Not available for complex non-groupable field type RECORD and fields with REPEATABLE mode.
     #[serde(rename="topNValues")]
     
     pub top_n_values: Option<Vec<GoogleCloudDataplexV1DataProfileResultProfileFieldProfileInfoTopNValue>>,
@@ -1091,7 +1120,7 @@ pub struct GoogleCloudDataplexV1DataProfileResultProfileFieldProfileInfoIntegerF
     
     #[serde_as(as = "Option<::client::serde_with::DisplayFromStr>")]
     pub min: Option<i64>,
-    /// A quartile divides the number of data points into four parts, or quarters, of more-or-less equal size. Three main quartiles used are: The first quartile (Q1) splits off the lowest 25% of data from the highest 75%. It is also known as the lower or 25th empirical quartile, as 25% of the data is below this point. The second quartile (Q2) is the median of a data set. So, 50% of the data lies below this point. The third quartile (Q3) splits off the highest 25% of data from the lowest 75%. It is known as the upper or 75th empirical quartile, as 75% of the data lies below this point. Here, the quartiles is provided as an ordered list of quartile values for the scanned data, occurring in order Q1, median, Q3.
+    /// A quartile divides the number of data points into four parts, or quarters, of more-or-less equal size. Three main quartiles used are: The first quartile (Q1) splits off the lowest 25% of data from the highest 75%. It is also known as the lower or 25th empirical quartile, as 25% of the data is below this point. The second quartile (Q2) is the median of a data set. So, 50% of the data lies below this point. The third quartile (Q3) splits off the highest 25% of data from the lowest 75%. It is known as the upper or 75th empirical quartile, as 75% of the data lies below this point. Here, the quartiles is provided as an ordered list of approximate quartile values for the scanned data, occurring in order Q1, median, Q3.
     
     #[serde_as(as = "Option<Vec<::client::serde_with::DisplayFromStr>>")]
     pub quartiles: Option<Vec<i64>>,
@@ -1141,6 +1170,9 @@ pub struct GoogleCloudDataplexV1DataProfileResultProfileFieldProfileInfoTopNValu
     
     #[serde_as(as = "Option<::client::serde_with::DisplayFromStr>")]
     pub count: Option<i64>,
+    /// Ratio of the corresponding value in the field against the total number of rows in the scanned data.
+    
+    pub ratio: Option<f64>,
     /// String value of a top N non-null value.
     
     pub value: Option<String>,
@@ -1155,9 +1187,111 @@ impl client::Part for GoogleCloudDataplexV1DataProfileResultProfileFieldProfileI
 /// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
-pub struct GoogleCloudDataplexV1DataProfileSpec { _never_set: Option<bool> }
+pub struct GoogleCloudDataplexV1DataProfileSpec {
+    /// Optional. The fields to exclude from data profile.If specified, the fields will be excluded from data profile, regardless of include_fields value.
+    #[serde(rename="excludeFields")]
+    
+    pub exclude_fields: Option<GoogleCloudDataplexV1DataProfileSpecSelectedFields>,
+    /// Optional. The fields to include in data profile.If not specified, all fields at the time of profile scan job execution are included, except for ones listed in exclude_fields.
+    #[serde(rename="includeFields")]
+    
+    pub include_fields: Option<GoogleCloudDataplexV1DataProfileSpecSelectedFields>,
+    /// Optional. Actions to take upon job completion..
+    #[serde(rename="postScanActions")]
+    
+    pub post_scan_actions: Option<GoogleCloudDataplexV1DataProfileSpecPostScanActions>,
+    /// Optional. A filter applied to all rows in a single DataScan job. The filter needs to be a valid SQL expression for a WHERE clause in BigQuery standard SQL syntax. Example: col1 >= 0 AND col2 < 10
+    #[serde(rename="rowFilter")]
+    
+    pub row_filter: Option<String>,
+    /// Optional. The percentage of the records to be selected from the dataset for DataScan. Value can range between 0.0 and 100.0 with up to 3 significant decimal digits. Sampling is not applied if sampling_percent is not specified, 0 or 100.
+    #[serde(rename="samplingPercent")]
+    
+    pub sampling_percent: Option<f32>,
+}
 
 impl client::Part for GoogleCloudDataplexV1DataProfileSpec {}
+
+
+/// The configuration of post scan actions of DataProfileScan job.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleCloudDataplexV1DataProfileSpecPostScanActions {
+    /// Optional. If set, results will be exported to the provided BigQuery table.
+    #[serde(rename="bigqueryExport")]
+    
+    pub bigquery_export: Option<GoogleCloudDataplexV1DataProfileSpecPostScanActionsBigQueryExport>,
+}
+
+impl client::Part for GoogleCloudDataplexV1DataProfileSpecPostScanActions {}
+
+
+/// The configuration of BigQuery export post scan action.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleCloudDataplexV1DataProfileSpecPostScanActionsBigQueryExport {
+    /// Optional. The BigQuery table to export DataProfileScan results to. Format: //bigquery.googleapis.com/projects/PROJECT_ID/datasets/DATASET_ID/tables/TABLE_ID
+    #[serde(rename="resultsTable")]
+    
+    pub results_table: Option<String>,
+}
+
+impl client::Part for GoogleCloudDataplexV1DataProfileSpecPostScanActionsBigQueryExport {}
+
+
+/// The specification for fields to include or exclude in data profile scan.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleCloudDataplexV1DataProfileSpecSelectedFields {
+    /// Optional. Expected input is a list of fully qualified names of fields as in the schema.Only top-level field names for nested fields are supported. For instance, if 'x' is of nested field type, listing 'x' is supported but 'x.y.z' is not supported. Here 'y' and 'y.z' are nested fields of 'x'.
+    #[serde(rename="fieldNames")]
+    
+    pub field_names: Option<Vec<String>>,
+}
+
+impl client::Part for GoogleCloudDataplexV1DataProfileSpecSelectedFields {}
+
+
+/// DataQualityColumnResult provides a more detailed, per-column view of the results.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleCloudDataplexV1DataQualityColumnResult {
+    /// Output only. The column specified in the DataQualityRule.
+    
+    pub column: Option<String>,
+    /// Output only. The column-level data quality score for this data scan job if and only if the 'column' field is set.The score ranges between between 0, 100 (up to two decimal points).
+    
+    pub score: Option<f32>,
+}
+
+impl client::Part for GoogleCloudDataplexV1DataQualityColumnResult {}
+
+
+/// A dimension captures data quality intent about a defined subset of the rules specified.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleCloudDataplexV1DataQualityDimension {
+    /// The dimension name a rule belongs to. Supported dimensions are "COMPLETENESS", "ACCURACY", "CONSISTENCY", "VALIDITY", "UNIQUENESS", "INTEGRITY"
+    
+    pub name: Option<String>,
+}
+
+impl client::Part for GoogleCloudDataplexV1DataQualityDimension {}
 
 
 /// DataQualityDimensionResult provides a more detailed, per-dimension view of the results.
@@ -1167,9 +1301,15 @@ impl client::Part for GoogleCloudDataplexV1DataProfileSpec {}
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1DataQualityDimensionResult {
+    /// Output only. The dimension config specified in the DataQualitySpec, as is.
+    
+    pub dimension: Option<GoogleCloudDataplexV1DataQualityDimension>,
     /// Whether the dimension passed or failed.
     
     pub passed: Option<bool>,
+    /// Output only. The dimension-level data quality score for this data scan job if and only if the 'dimension' field is set.The score ranges between 0, 100 (up to two decimal points).
+    
+    pub score: Option<f32>,
 }
 
 impl client::Part for GoogleCloudDataplexV1DataQualityDimensionResult {}
@@ -1182,12 +1322,19 @@ impl client::Part for GoogleCloudDataplexV1DataQualityDimensionResult {}
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1DataQualityResult {
-    /// A list of results at the dimension level.
+    /// Output only. A list of results at the column level.A column will have a corresponding DataQualityColumnResult if and only if there is at least one rule with the 'column' field set to it.
+    
+    pub columns: Option<Vec<GoogleCloudDataplexV1DataQualityColumnResult>>,
+    /// A list of results at the dimension level.A dimension will have a corresponding DataQualityDimensionResult if and only if there is at least one rule with the 'dimension' field set to it.
     
     pub dimensions: Option<Vec<GoogleCloudDataplexV1DataQualityDimensionResult>>,
     /// Overall data quality result -- true if all rules passed.
     
     pub passed: Option<bool>,
+    /// Output only. The result of post scan actions.
+    #[serde(rename="postScanActionsResult")]
+    
+    pub post_scan_actions_result: Option<GoogleCloudDataplexV1DataQualityResultPostScanActionsResult>,
     /// The count of rows processed.
     #[serde(rename="rowCount")]
     
@@ -1200,9 +1347,46 @@ pub struct GoogleCloudDataplexV1DataQualityResult {
     #[serde(rename="scannedData")]
     
     pub scanned_data: Option<GoogleCloudDataplexV1ScannedData>,
+    /// Output only. The overall data quality score.The score ranges between 0, 100 (up to two decimal points).
+    
+    pub score: Option<f32>,
 }
 
 impl client::Part for GoogleCloudDataplexV1DataQualityResult {}
+
+
+/// The result of post scan actions of DataQualityScan job.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleCloudDataplexV1DataQualityResultPostScanActionsResult {
+    /// Output only. The result of BigQuery export post scan action.
+    #[serde(rename="bigqueryExportResult")]
+    
+    pub bigquery_export_result: Option<GoogleCloudDataplexV1DataQualityResultPostScanActionsResultBigQueryExportResult>,
+}
+
+impl client::Part for GoogleCloudDataplexV1DataQualityResultPostScanActionsResult {}
+
+
+/// The result of BigQuery export post scan action.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleCloudDataplexV1DataQualityResultPostScanActionsResultBigQueryExportResult {
+    /// Output only. Additional information about the BigQuery exporting.
+    
+    pub message: Option<String>,
+    /// Output only. Execution state for the BigQuery exporting.
+    
+    pub state: Option<String>,
+}
+
+impl client::Part for GoogleCloudDataplexV1DataQualityResultPostScanActionsResultBigQueryExportResult {}
 
 
 /// A rule captures data quality intent about a data source.
@@ -1215,45 +1399,51 @@ pub struct GoogleCloudDataplexV1DataQualityRule {
     /// Optional. The unnested column which this rule is evaluated against.
     
     pub column: Option<String>,
+    /// Optional. Description of the rule. The maximum length is 1,024 characters.
+    
+    pub description: Option<String>,
     /// Required. The dimension a rule belongs to. Results are also aggregated at the dimension level. Supported dimensions are "COMPLETENESS", "ACCURACY", "CONSISTENCY", "VALIDITY", "UNIQUENESS", "INTEGRITY"
     
     pub dimension: Option<String>,
-    /// Optional. Rows with null values will automatically fail a rule, unless ignore_null is true. In that case, such null rows are trivially considered passing.Only applicable to ColumnMap rules.
+    /// Optional. Rows with null values will automatically fail a rule, unless ignore_null is true. In that case, such null rows are trivially considered passing.This field is only valid for the following type of rules: RangeExpectation RegexExpectation SetExpectation UniquenessExpectation
     #[serde(rename="ignoreNull")]
     
     pub ignore_null: Option<bool>,
-    /// ColumnMap rule which evaluates whether each column value is null.
+    /// Optional. A mutable name for the rule. The name must contain only letters (a-z, A-Z), numbers (0-9), or hyphens (-). The maximum length is 63 characters. Must start with a letter. Must end with a number or a letter.
+    
+    pub name: Option<String>,
+    /// Row-level rule which evaluates whether each column value is null.
     #[serde(rename="nonNullExpectation")]
     
     pub non_null_expectation: Option<GoogleCloudDataplexV1DataQualityRuleNonNullExpectation>,
-    /// ColumnMap rule which evaluates whether each column value lies between a specified range.
+    /// Row-level rule which evaluates whether each column value lies between a specified range.
     #[serde(rename="rangeExpectation")]
     
     pub range_expectation: Option<GoogleCloudDataplexV1DataQualityRuleRangeExpectation>,
-    /// ColumnMap rule which evaluates whether each column value matches a specified regex.
+    /// Row-level rule which evaluates whether each column value matches a specified regex.
     #[serde(rename="regexExpectation")]
     
     pub regex_expectation: Option<GoogleCloudDataplexV1DataQualityRuleRegexExpectation>,
-    /// Table rule which evaluates whether each row passes the specified condition.
+    /// Row-level rule which evaluates whether each row in a table passes the specified condition.
     #[serde(rename="rowConditionExpectation")]
     
     pub row_condition_expectation: Option<GoogleCloudDataplexV1DataQualityRuleRowConditionExpectation>,
-    /// ColumnMap rule which evaluates whether each column value is contained by a specified set.
+    /// Row-level rule which evaluates whether each column value is contained by a specified set.
     #[serde(rename="setExpectation")]
     
     pub set_expectation: Option<GoogleCloudDataplexV1DataQualityRuleSetExpectation>,
-    /// ColumnAggregate rule which evaluates whether the column aggregate statistic lies between a specified range.
+    /// Aggregate rule which evaluates whether the column aggregate statistic lies between a specified range.
     #[serde(rename="statisticRangeExpectation")]
     
     pub statistic_range_expectation: Option<GoogleCloudDataplexV1DataQualityRuleStatisticRangeExpectation>,
-    /// Table rule which evaluates whether the provided expression is true.
+    /// Aggregate rule which evaluates whether the provided expression is true for a table.
     #[serde(rename="tableConditionExpectation")]
     
     pub table_condition_expectation: Option<GoogleCloudDataplexV1DataQualityRuleTableConditionExpectation>,
-    /// Optional. The minimum ratio of passing_rows / total_rows required to pass this rule, with a range of 0.0, 1.0.0 indicates default value (i.e. 1.0).
+    /// Optional. The minimum ratio of passing_rows / total_rows required to pass this rule, with a range of 0.0, 1.0.0 indicates default value (i.e. 1.0).This field is only valid for row-level type rules.
     
     pub threshold: Option<f64>,
-    /// ColumnAggregate rule which evaluates whether the column has duplicates.
+    /// Row-level rule which evaluates whether each column value is unique.
     #[serde(rename="uniquenessExpectation")]
     
     pub uniqueness_expectation: Option<GoogleCloudDataplexV1DataQualityRuleUniquenessExpectation>,
@@ -1308,7 +1498,7 @@ impl client::Part for GoogleCloudDataplexV1DataQualityRuleRangeExpectation {}
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1DataQualityRuleRegexExpectation {
-    /// A regular expression the column value is expected to match.
+    /// Optional. A regular expression the column value is expected to match.
     
     pub regex: Option<String>,
 }
@@ -1323,12 +1513,12 @@ impl client::Part for GoogleCloudDataplexV1DataQualityRuleRegexExpectation {}
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1DataQualityRuleResult {
-    /// The number of rows a rule was evaluated against. This field is only valid for ColumnMap type rules.Evaluated count can be configured to either include all rows (default) - with null rows automatically failing rule evaluation, or exclude null rows from the evaluated_count, by setting ignore_nulls = true.
+    /// The number of rows a rule was evaluated against.This field is only valid for row-level type rules.Evaluated count can be configured to either include all rows (default) - with null rows automatically failing rule evaluation, or exclude null rows from the evaluated_count, by setting ignore_nulls = true.
     #[serde(rename="evaluatedCount")]
     
     #[serde_as(as = "Option<::client::serde_with::DisplayFromStr>")]
     pub evaluated_count: Option<i64>,
-    /// The query to find rows that did not pass this rule. Only applies to ColumnMap and RowCondition rules.
+    /// The query to find rows that did not pass this rule.This field is only valid for row-level type rules.
     #[serde(rename="failingRowsQuery")]
     
     pub failing_rows_query: Option<String>,
@@ -1337,14 +1527,14 @@ pub struct GoogleCloudDataplexV1DataQualityRuleResult {
     
     #[serde_as(as = "Option<::client::serde_with::DisplayFromStr>")]
     pub null_count: Option<i64>,
-    /// The ratio of passed_count / evaluated_count. This field is only valid for ColumnMap type rules.
+    /// The ratio of passed_count / evaluated_count.This field is only valid for row-level type rules.
     #[serde(rename="passRatio")]
     
     pub pass_ratio: Option<f64>,
     /// Whether the rule passed or failed.
     
     pub passed: Option<bool>,
-    /// The number of rows which passed a rule evaluation. This field is only valid for ColumnMap type rules.
+    /// The number of rows which passed a rule evaluation.This field is only valid for row-level type rules.
     #[serde(rename="passedCount")]
     
     #[serde_as(as = "Option<::client::serde_with::DisplayFromStr>")]
@@ -1364,7 +1554,7 @@ impl client::Part for GoogleCloudDataplexV1DataQualityRuleResult {}
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1DataQualityRuleRowConditionExpectation {
-    /// The SQL expression.
+    /// Optional. The SQL expression.
     #[serde(rename="sqlExpression")]
     
     pub sql_expression: Option<String>,
@@ -1380,7 +1570,7 @@ impl client::Part for GoogleCloudDataplexV1DataQualityRuleRowConditionExpectatio
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1DataQualityRuleSetExpectation {
-    /// Expected values for the column value.
+    /// Optional. Expected values for the column value.
     
     pub values: Option<Vec<String>>,
 }
@@ -1395,22 +1585,22 @@ impl client::Part for GoogleCloudDataplexV1DataQualityRuleSetExpectation {}
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1DataQualityRuleStatisticRangeExpectation {
-    /// The maximum column statistic value allowed for a row to pass this validation.At least one of min_value and max_value need to be provided.
+    /// Optional. The maximum column statistic value allowed for a row to pass this validation.At least one of min_value and max_value need to be provided.
     #[serde(rename="maxValue")]
     
     pub max_value: Option<String>,
-    /// The minimum column statistic value allowed for a row to pass this validation.At least one of min_value and max_value need to be provided.
+    /// Optional. The minimum column statistic value allowed for a row to pass this validation.At least one of min_value and max_value need to be provided.
     #[serde(rename="minValue")]
     
     pub min_value: Option<String>,
-    /// no description provided
+    /// Optional. The aggregate metric to evaluate.
     
     pub statistic: Option<String>,
-    /// Whether column statistic needs to be strictly lesser than ('<') the maximum, or if equality is allowed.Only relevant if a max_value has been defined. Default = false.
+    /// Optional. Whether column statistic needs to be strictly lesser than ('<') the maximum, or if equality is allowed.Only relevant if a max_value has been defined. Default = false.
     #[serde(rename="strictMaxEnabled")]
     
     pub strict_max_enabled: Option<bool>,
-    /// Whether column statistic needs to be strictly greater than ('>') the minimum, or if equality is allowed.Only relevant if a min_value has been defined. Default = false.
+    /// Optional. Whether column statistic needs to be strictly greater than ('>') the minimum, or if equality is allowed.Only relevant if a min_value has been defined. Default = false.
     #[serde(rename="strictMinEnabled")]
     
     pub strict_min_enabled: Option<bool>,
@@ -1426,7 +1616,7 @@ impl client::Part for GoogleCloudDataplexV1DataQualityRuleStatisticRangeExpectat
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1DataQualityRuleTableConditionExpectation {
-    /// The SQL expression.
+    /// Optional. The SQL expression.
     #[serde(rename="sqlExpression")]
     
     pub sql_expression: Option<String>,
@@ -1453,12 +1643,56 @@ impl client::Part for GoogleCloudDataplexV1DataQualityRuleUniquenessExpectation 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1DataQualitySpec {
-    /// The list of rules to evaluate against a data source. At least one rule is required.
+    /// Optional. Actions to take upon job completion.
+    #[serde(rename="postScanActions")]
+    
+    pub post_scan_actions: Option<GoogleCloudDataplexV1DataQualitySpecPostScanActions>,
+    /// Optional. A filter applied to all rows in a single DataScan job. The filter needs to be a valid SQL expression for a WHERE clause in BigQuery standard SQL syntax. Example: col1 >= 0 AND col2 < 10
+    #[serde(rename="rowFilter")]
+    
+    pub row_filter: Option<String>,
+    /// Required. The list of rules to evaluate against a data source. At least one rule is required.
     
     pub rules: Option<Vec<GoogleCloudDataplexV1DataQualityRule>>,
+    /// Optional. The percentage of the records to be selected from the dataset for DataScan. Value can range between 0.0 and 100.0 with up to 3 significant decimal digits. Sampling is not applied if sampling_percent is not specified, 0 or 100.
+    #[serde(rename="samplingPercent")]
+    
+    pub sampling_percent: Option<f32>,
 }
 
 impl client::Part for GoogleCloudDataplexV1DataQualitySpec {}
+
+
+/// The configuration of post scan actions of DataQualityScan.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleCloudDataplexV1DataQualitySpecPostScanActions {
+    /// Optional. If set, results will be exported to the provided BigQuery table.
+    #[serde(rename="bigqueryExport")]
+    
+    pub bigquery_export: Option<GoogleCloudDataplexV1DataQualitySpecPostScanActionsBigQueryExport>,
+}
+
+impl client::Part for GoogleCloudDataplexV1DataQualitySpecPostScanActions {}
+
+
+/// The configuration of BigQuery export post scan action.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleCloudDataplexV1DataQualitySpecPostScanActionsBigQueryExport {
+    /// Optional. The BigQuery table to export DataQualityScan results to. Format: //bigquery.googleapis.com/projects/PROJECT_ID/datasets/DATASET_ID/tables/TABLE_ID
+    #[serde(rename="resultsTable")]
+    
+    pub results_table: Option<String>,
+}
+
+impl client::Part for GoogleCloudDataplexV1DataQualitySpecPostScanActionsBigQueryExport {}
 
 
 /// Represents a user-visible job which provides the insights for the related data source.For example: Data Quality: generates queries based on the rules and runs against the data to get data quality check results. Data Profile: analyzes the data in table(s) and generates insights about the structure, content and relationships (such as null percent, cardinality, min/max/mean, etc).
@@ -1471,7 +1705,6 @@ impl client::Part for GoogleCloudDataplexV1DataQualitySpec {}
 /// * [locations data scans create projects](ProjectLocationDataScanCreateCall) (request)
 /// * [locations data scans get projects](ProjectLocationDataScanGetCall) (response)
 /// * [locations data scans patch projects](ProjectLocationDataScanPatchCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1DataScan {
@@ -1585,7 +1818,6 @@ impl client::Part for GoogleCloudDataplexV1DataScanExecutionStatus {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations data scans jobs get projects](ProjectLocationDataScanJobGetCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1DataScanJob {
@@ -1644,12 +1876,15 @@ pub struct GoogleCloudDataplexV1DataSource {
     /// Immutable. The Dataplex entity that represents the data source (e.g. BigQuery table) for DataScan, of the form: projects/{project_number}/locations/{location_id}/lakes/{lake_id}/zones/{zone_id}/entities/{entity_id}.
     
     pub entity: Option<String>,
+    /// Immutable. The service-qualified full resource name of the cloud resource for a DataScan job to scan against. The field could be: BigQuery table of type "TABLE" for DataProfileScan/DataQualityScan Format: //bigquery.googleapis.com/projects/PROJECT_ID/datasets/DATASET_ID/tables/TABLE_ID
+    
+    pub resource: Option<String>,
 }
 
 impl client::Part for GoogleCloudDataplexV1DataSource {}
 
 
-/// DataTaxonomy represents a set of hierarchical DataAttributes resources, grouped with a common theme Eg: 'SensitiveDataTaxonomy' can have attributes to manage PII data. It is defined at project level.
+/// DataTaxonomy represents a set of hierarchical DataAttributes resources, grouped with a common theme Eg: ‘SensitiveDataTaxonomy’ can have attributes to manage PII data. It is defined at project level.
 /// 
 /// # Activities
 /// 
@@ -1659,7 +1894,6 @@ impl client::Part for GoogleCloudDataplexV1DataSource {}
 /// * [locations data taxonomies create projects](ProjectLocationDataTaxonomyCreateCall) (request)
 /// * [locations data taxonomies get projects](ProjectLocationDataTaxonomyGetCall) (response)
 /// * [locations data taxonomies patch projects](ProjectLocationDataTaxonomyPatchCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1DataTaxonomy {
@@ -1667,6 +1901,10 @@ pub struct GoogleCloudDataplexV1DataTaxonomy {
     #[serde(rename="attributeCount")]
     
     pub attribute_count: Option<i32>,
+    /// Output only. The number of classes in the DataTaxonomy.
+    #[serde(rename="classCount")]
+    
+    pub class_count: Option<i32>,
     /// Output only. The time when the DataTaxonomy was created.
     #[serde(rename="createTime")]
     
@@ -1710,7 +1948,6 @@ impl client::ResponseResult for GoogleCloudDataplexV1DataTaxonomy {}
 /// * [locations lakes zones entities create projects](ProjectLocationLakeZoneEntityCreateCall) (request|response)
 /// * [locations lakes zones entities get projects](ProjectLocationLakeZoneEntityGetCall) (response)
 /// * [locations lakes zones entities update projects](ProjectLocationLakeZoneEntityUpdateCall) (request|response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1Entity {
@@ -1752,7 +1989,7 @@ pub struct GoogleCloudDataplexV1Entity {
     /// Required. Identifies the storage format of the entity data. It does not apply to entities with data stored in BigQuery.
     
     pub format: Option<GoogleCloudDataplexV1StorageFormat>,
-    /// Required. A user-provided entity ID. It is mutable, and will be used as the published table name. Specifying a new ID in an update entity request will override the existing value. The ID must contain only letters (a-z, A-Z), numbers (0-9), and underscores. Must begin with a letter and consist of 256 or fewer characters.
+    /// Required. A user-provided entity ID. It is mutable, and will be used as the published table name. Specifying a new ID in an update entity request will override the existing value. The ID must contain only letters (a-z, A-Z), numbers (0-9), and underscores, and consist of 256 or fewer characters.
     
     pub id: Option<String>,
     /// Output only. The resource name of the entity, of the form: projects/{project_number}/locations/{location_id}/lakes/{lake_id}/zones/{zone_id}/entities/{id}.
@@ -1828,7 +2065,6 @@ impl client::Part for GoogleCloudDataplexV1EntityCompatibilityStatusCompatibilit
 /// * [locations lakes environments create projects](ProjectLocationLakeEnvironmentCreateCall) (request)
 /// * [locations lakes environments get projects](ProjectLocationLakeEnvironmentGetCall) (response)
 /// * [locations lakes environments patch projects](ProjectLocationLakeEnvironmentPatchCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1Environment {
@@ -1880,7 +2116,7 @@ impl client::RequestValue for GoogleCloudDataplexV1Environment {}
 impl client::ResponseResult for GoogleCloudDataplexV1Environment {}
 
 
-/// There is no detailed description.
+/// URI Endpoints to access sessions associated with the Environment.
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
 /// 
@@ -1968,7 +2204,7 @@ pub struct GoogleCloudDataplexV1EnvironmentInfrastructureSpecOsImageRuntime {
 impl client::Part for GoogleCloudDataplexV1EnvironmentInfrastructureSpecOsImageRuntime {}
 
 
-/// There is no detailed description.
+/// Configuration for sessions created for this environment.
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
 /// 
@@ -1989,7 +2225,7 @@ pub struct GoogleCloudDataplexV1EnvironmentSessionSpec {
 impl client::Part for GoogleCloudDataplexV1EnvironmentSessionSpec {}
 
 
-/// There is no detailed description.
+/// Status of sessions created for this environment.
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
 /// 
@@ -2012,7 +2248,6 @@ impl client::Part for GoogleCloudDataplexV1EnvironmentSessionStatus {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations lakes tasks jobs get projects](ProjectLocationLakeTaskJobGetCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1Job {
@@ -2020,6 +2255,13 @@ pub struct GoogleCloudDataplexV1Job {
     #[serde(rename="endTime")]
     
     pub end_time: Option<client::chrono::DateTime<client::chrono::offset::Utc>>,
+    /// Output only. Spec related to how a task is executed.
+    #[serde(rename="executionSpec")]
+    
+    pub execution_spec: Option<GoogleCloudDataplexV1TaskExecutionSpec>,
+    /// Output only. User-defined labels for the task.
+    
+    pub labels: Option<HashMap<String, String>>,
     /// Output only. Additional information about the current state.
     
     pub message: Option<String>,
@@ -2044,6 +2286,9 @@ pub struct GoogleCloudDataplexV1Job {
     /// Output only. Execution state for the job.
     
     pub state: Option<String>,
+    /// Output only. Job execution trigger.
+    
+    pub trigger: Option<String>,
     /// Output only. System generated globally unique ID for the job.
     
     pub uid: Option<String>,
@@ -2062,7 +2307,6 @@ impl client::ResponseResult for GoogleCloudDataplexV1Job {}
 /// * [locations lakes create projects](ProjectLocationLakeCreateCall) (request)
 /// * [locations lakes get projects](ProjectLocationLakeGetCall) (response)
 /// * [locations lakes patch projects](ProjectLocationLakePatchCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1Lake {
@@ -2164,7 +2408,6 @@ impl client::Part for GoogleCloudDataplexV1LakeMetastoreStatus {}
 /// * [locations lakes actions list projects](ProjectLocationLakeActionListCall) (response)
 /// * [locations lakes zones actions list projects](ProjectLocationLakeZoneActionListCall) (response)
 /// * [locations lakes zones assets actions list projects](ProjectLocationLakeZoneAssetActionListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1ListActionsResponse {
@@ -2188,7 +2431,6 @@ impl client::ResponseResult for GoogleCloudDataplexV1ListActionsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations lakes zones assets list projects](ProjectLocationLakeZoneAssetListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1ListAssetsResponse {
@@ -2213,7 +2455,6 @@ impl client::ResponseResult for GoogleCloudDataplexV1ListAssetsResponse {}
 /// 
 /// * [locations lakes content list projects](ProjectLocationLakeContentListCall) (response)
 /// * [locations lakes contentitems list projects](ProjectLocationLakeContentitemListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1ListContentResponse {
@@ -2237,7 +2478,6 @@ impl client::ResponseResult for GoogleCloudDataplexV1ListContentResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations data attribute bindings list projects](ProjectLocationDataAttributeBindingListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1ListDataAttributeBindingsResponse {
@@ -2266,7 +2506,6 @@ impl client::ResponseResult for GoogleCloudDataplexV1ListDataAttributeBindingsRe
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations data taxonomies attributes list projects](ProjectLocationDataTaxonomyAttributeListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1ListDataAttributesResponse {
@@ -2295,7 +2534,6 @@ impl client::ResponseResult for GoogleCloudDataplexV1ListDataAttributesResponse 
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations data scans jobs list projects](ProjectLocationDataScanJobListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1ListDataScanJobsResponse {
@@ -2320,7 +2558,6 @@ impl client::ResponseResult for GoogleCloudDataplexV1ListDataScanJobsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations data scans list projects](ProjectLocationDataScanListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1ListDataScansResponse {
@@ -2348,7 +2585,6 @@ impl client::ResponseResult for GoogleCloudDataplexV1ListDataScansResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations data taxonomies list projects](ProjectLocationDataTaxonomyListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1ListDataTaxonomiesResponse {
@@ -2377,7 +2613,6 @@ impl client::ResponseResult for GoogleCloudDataplexV1ListDataTaxonomiesResponse 
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations lakes zones entities list projects](ProjectLocationLakeZoneEntityListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1ListEntitiesResponse {
@@ -2401,7 +2636,6 @@ impl client::ResponseResult for GoogleCloudDataplexV1ListEntitiesResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations lakes environments list projects](ProjectLocationLakeEnvironmentListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1ListEnvironmentsResponse {
@@ -2425,7 +2659,6 @@ impl client::ResponseResult for GoogleCloudDataplexV1ListEnvironmentsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations lakes tasks jobs list projects](ProjectLocationLakeTaskJobListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1ListJobsResponse {
@@ -2449,7 +2682,6 @@ impl client::ResponseResult for GoogleCloudDataplexV1ListJobsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations lakes list projects](ProjectLocationLakeListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1ListLakesResponse {
@@ -2477,7 +2709,6 @@ impl client::ResponseResult for GoogleCloudDataplexV1ListLakesResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations lakes zones entities partitions list projects](ProjectLocationLakeZoneEntityPartitionListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1ListPartitionsResponse {
@@ -2501,7 +2732,6 @@ impl client::ResponseResult for GoogleCloudDataplexV1ListPartitionsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations lakes environments sessions list projects](ProjectLocationLakeEnvironmentSessionListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1ListSessionsResponse {
@@ -2525,7 +2755,6 @@ impl client::ResponseResult for GoogleCloudDataplexV1ListSessionsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations lakes tasks list projects](ProjectLocationLakeTaskListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1ListTasksResponse {
@@ -2553,7 +2782,6 @@ impl client::ResponseResult for GoogleCloudDataplexV1ListTasksResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations lakes zones list projects](ProjectLocationLakeZoneListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1ListZonesResponse {
@@ -2578,7 +2806,6 @@ impl client::ResponseResult for GoogleCloudDataplexV1ListZonesResponse {}
 /// 
 /// * [locations lakes zones entities partitions create projects](ProjectLocationLakeZoneEntityPartitionCreateCall) (request|response)
 /// * [locations lakes zones entities partitions get projects](ProjectLocationLakeZoneEntityPartitionGetCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1Partition {
@@ -2629,7 +2856,6 @@ impl client::Part for GoogleCloudDataplexV1ResourceAccessSpec {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations data scans run projects](ProjectLocationDataScanRunCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1RunDataScanRequest { _never_set: Option<bool> }
@@ -2645,7 +2871,6 @@ impl client::RequestValue for GoogleCloudDataplexV1RunDataScanRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations data scans run projects](ProjectLocationDataScanRunCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1RunDataScanResponse {
@@ -2665,10 +2890,16 @@ impl client::ResponseResult for GoogleCloudDataplexV1RunDataScanResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations lakes tasks run projects](ProjectLocationLakeTaskRunCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
-pub struct GoogleCloudDataplexV1RunTaskRequest { _never_set: Option<bool> }
+pub struct GoogleCloudDataplexV1RunTaskRequest {
+    /// Optional. Execution spec arguments. If the map is left empty, the task will run with existing execution spec args from task definition. If the map contains an entry with a new key, the same will be added to existing set of args. If the map contains an entry with an existing arg key in task definition, the task will run with new arg value for that entry. Clearing an existing arg will require arg value to be explicitly set to a hyphen "-". The arg value cannot be empty.
+    
+    pub args: Option<HashMap<String, String>>,
+    /// Optional. User-defined labels for the task. If the map is left empty, the task will run with existing labels from task definition. If the map contains an entry with a new key, the same will be added to existing set of labels. If the map contains an entry with an existing label key in task definition, the task will run with new label value for that entry. Clearing an existing label will require label value to be explicitly set to a hyphen "-". The label value cannot be empty.
+    
+    pub labels: Option<HashMap<String, String>>,
+}
 
 impl client::RequestValue for GoogleCloudDataplexV1RunTaskRequest {}
 
@@ -2681,7 +2912,6 @@ impl client::RequestValue for GoogleCloudDataplexV1RunTaskRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations lakes tasks run projects](ProjectLocationLakeTaskRunCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1RunTaskResponse {
@@ -2818,7 +3048,7 @@ pub struct GoogleCloudDataplexV1Session {
     /// Output only. The relative resource name of the content, of the form: projects/{project_id}/locations/{location_id}/lakes/{lake_id}/environment/{environment_id}/sessions/{session_id}
     
     pub name: Option<String>,
-    /// no description provided
+    /// Output only. State of Session
     
     pub state: Option<String>,
     /// Output only. Email of user running the session.
@@ -2943,7 +3173,6 @@ impl client::Part for GoogleCloudDataplexV1StorageFormatJsonOptions {}
 /// * [locations lakes tasks create projects](ProjectLocationLakeTaskCreateCall) (request)
 /// * [locations lakes tasks get projects](ProjectLocationLakeTaskGetCall) (response)
 /// * [locations lakes tasks patch projects](ProjectLocationLakeTaskPatchCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1Task {
@@ -3297,7 +3526,6 @@ impl client::Part for GoogleCloudDataplexV1TriggerSchedule {}
 /// * [locations lakes zones create projects](ProjectLocationLakeZoneCreateCall) (request)
 /// * [locations lakes zones get projects](ProjectLocationLakeZoneGetCall) (response)
 /// * [locations lakes zones patch projects](ProjectLocationLakeZonePatchCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudDataplexV1Zone {
@@ -3453,7 +3681,6 @@ impl client::Part for GoogleCloudDataplexV1ZoneResourceSpec {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations list projects](ProjectLocationListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudLocationListLocationsResponse {
@@ -3469,7 +3696,7 @@ pub struct GoogleCloudLocationListLocationsResponse {
 impl client::ResponseResult for GoogleCloudLocationListLocationsResponse {}
 
 
-/// A resource that represents Google Cloud Platform location.
+/// A resource that represents a Google Cloud location.
 /// 
 /// # Activities
 /// 
@@ -3477,7 +3704,6 @@ impl client::ResponseResult for GoogleCloudLocationListLocationsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations get projects](ProjectLocationGetCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudLocationLocation {
@@ -3552,10 +3778,10 @@ pub struct GoogleIamV1Binding {
     /// The condition that is associated with this binding.If the condition evaluates to true, then this binding applies to the current request.If the condition evaluates to false, then this binding does not apply to the current request. However, a different role binding might grant the same role to one or more of the principals in this binding.To learn which resources support conditions in their IAM policies, see the IAM documentation (https://cloud.google.com/iam/help/conditions/resource-policies).
     
     pub condition: Option<GoogleTypeExpr>,
-    /// Specifies the principals requesting access for a Google Cloud resource. members can have the following values: allUsers: A special identifier that represents anyone who is on the internet; with or without a Google account. allAuthenticatedUsers: A special identifier that represents anyone who is authenticated with a Google account or a service account. Does not include identities that come from external identity providers (IdPs) through identity federation. user:{emailid}: An email address that represents a specific Google account. For example, alice@example.com . serviceAccount:{emailid}: An email address that represents a Google service account. For example, my-other-app@appspot.gserviceaccount.com. serviceAccount:{projectid}.svc.id.goog[{namespace}/{kubernetes-sa}]: An identifier for a Kubernetes service account (https://cloud.google.com/kubernetes-engine/docs/how-to/kubernetes-service-accounts). For example, my-project.svc.id.goog[my-namespace/my-kubernetes-sa]. group:{emailid}: An email address that represents a Google group. For example, admins@example.com. deleted:user:{emailid}?uid={uniqueid}: An email address (plus unique identifier) representing a user that has been recently deleted. For example, alice@example.com?uid=123456789012345678901. If the user is recovered, this value reverts to user:{emailid} and the recovered user retains the role in the binding. deleted:serviceAccount:{emailid}?uid={uniqueid}: An email address (plus unique identifier) representing a service account that has been recently deleted. For example, my-other-app@appspot.gserviceaccount.com?uid=123456789012345678901. If the service account is undeleted, this value reverts to serviceAccount:{emailid} and the undeleted service account retains the role in the binding. deleted:group:{emailid}?uid={uniqueid}: An email address (plus unique identifier) representing a Google group that has been recently deleted. For example, admins@example.com?uid=123456789012345678901. If the group is recovered, this value reverts to group:{emailid} and the recovered group retains the role in the binding. domain:{domain}: The G Suite domain (primary) that represents all the users of that domain. For example, google.com or example.com.
+    /// Specifies the principals requesting access for a Google Cloud resource. members can have the following values: allUsers: A special identifier that represents anyone who is on the internet; with or without a Google account. allAuthenticatedUsers: A special identifier that represents anyone who is authenticated with a Google account or a service account. Does not include identities that come from external identity providers (IdPs) through identity federation. user:{emailid}: An email address that represents a specific Google account. For example, alice@example.com . serviceAccount:{emailid}: An email address that represents a Google service account. For example, my-other-app@appspot.gserviceaccount.com. serviceAccount:{projectid}.svc.id.goog[{namespace}/{kubernetes-sa}]: An identifier for a Kubernetes service account (https://cloud.google.com/kubernetes-engine/docs/how-to/kubernetes-service-accounts). For example, my-project.svc.id.goog[my-namespace/my-kubernetes-sa]. group:{emailid}: An email address that represents a Google group. For example, admins@example.com. domain:{domain}: The G Suite domain (primary) that represents all the users of that domain. For example, google.com or example.com. principal://iam.googleapis.com/locations/global/workforcePools/{pool_id}/subject/{subject_attribute_value}: A single identity in a workforce identity pool. principalSet://iam.googleapis.com/locations/global/workforcePools/{pool_id}/group/{group_id}: All workforce identities in a group. principalSet://iam.googleapis.com/locations/global/workforcePools/{pool_id}/attribute.{attribute_name}/{attribute_value}: All workforce identities with a specific attribute value. principalSet://iam.googleapis.com/locations/global/workforcePools/{pool_id}/*: All identities in a workforce identity pool. principal://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/subject/{subject_attribute_value}: A single identity in a workload identity pool. principalSet://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/group/{group_id}: A workload identity pool group. principalSet://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/attribute.{attribute_name}/{attribute_value}: All identities in a workload identity pool with a certain attribute. principalSet://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/*: All identities in a workload identity pool. deleted:user:{emailid}?uid={uniqueid}: An email address (plus unique identifier) representing a user that has been recently deleted. For example, alice@example.com?uid=123456789012345678901. If the user is recovered, this value reverts to user:{emailid} and the recovered user retains the role in the binding. deleted:serviceAccount:{emailid}?uid={uniqueid}: An email address (plus unique identifier) representing a service account that has been recently deleted. For example, my-other-app@appspot.gserviceaccount.com?uid=123456789012345678901. If the service account is undeleted, this value reverts to serviceAccount:{emailid} and the undeleted service account retains the role in the binding. deleted:group:{emailid}?uid={uniqueid}: An email address (plus unique identifier) representing a Google group that has been recently deleted. For example, admins@example.com?uid=123456789012345678901. If the group is recovered, this value reverts to group:{emailid} and the recovered group retains the role in the binding. deleted:principal://iam.googleapis.com/locations/global/workforcePools/{pool_id}/subject/{subject_attribute_value}: Deleted single identity in a workforce identity pool. For example, deleted:principal://iam.googleapis.com/locations/global/workforcePools/my-pool-id/subject/my-subject-attribute-value.
     
     pub members: Option<Vec<String>>,
-    /// Role that is assigned to the list of members, or principals. For example, roles/viewer, roles/editor, or roles/owner.
+    /// Role that is assigned to the list of members, or principals. For example, roles/viewer, roles/editor, or roles/owner.For an overview of the IAM roles and permissions, see the IAM documentation (https://cloud.google.com/iam/docs/roles-overview). For a list of the available pre-defined roles, see here (https://cloud.google.com/iam/docs/understanding-roles).
     
     pub role: Option<String>,
 }
@@ -3563,13 +3789,15 @@ pub struct GoogleIamV1Binding {
 impl client::Part for GoogleIamV1Binding {}
 
 
-/// An Identity and Access Management (IAM) policy, which specifies access controls for Google Cloud resources.A Policy is a collection of bindings. A binding binds one or more members, or principals, to a single role. Principals can be user accounts, service accounts, Google groups, and domains (such as G Suite). A role is a named list of permissions; each role can be an IAM predefined role or a user-created custom role.For some types of Google Cloud resources, a binding can also specify a condition, which is a logical expression that allows access to a resource only if the expression evaluates to true. A condition can add constraints based on attributes of the request, the resource, or both. To learn which resources support conditions in their IAM policies, see the IAM documentation (https://cloud.google.com/iam/help/conditions/resource-policies).JSON example: { "bindings": [ { "role": "roles/resourcemanager.organizationAdmin", "members": [ "user:mike@example.com", "group:admins@example.com", "domain:google.com", "serviceAccount:my-project-id@appspot.gserviceaccount.com" ] }, { "role": "roles/resourcemanager.organizationViewer", "members": [ "user:eve@example.com" ], "condition": { "title": "expirable access", "description": "Does not grant access after Sep 2020", "expression": "request.time < timestamp('2020-10-01T00:00:00.000Z')", } } ], "etag": "BwWWja0YfJA=", "version": 3 } YAML example: bindings: - members: - user:mike@example.com - group:admins@example.com - domain:google.com - serviceAccount:my-project-id@appspot.gserviceaccount.com role: roles/resourcemanager.organizationAdmin - members: - user:eve@example.com role: roles/resourcemanager.organizationViewer condition: title: expirable access description: Does not grant access after Sep 2020 expression: request.time < timestamp('2020-10-01T00:00:00.000Z') etag: BwWWja0YfJA= version: 3 For a description of IAM and its features, see the IAM documentation (https://cloud.google.com/iam/docs/).
+/// An Identity and Access Management (IAM) policy, which specifies access controls for Google Cloud resources.A Policy is a collection of bindings. A binding binds one or more members, or principals, to a single role. Principals can be user accounts, service accounts, Google groups, and domains (such as G Suite). A role is a named list of permissions; each role can be an IAM predefined role or a user-created custom role.For some types of Google Cloud resources, a binding can also specify a condition, which is a logical expression that allows access to a resource only if the expression evaluates to true. A condition can add constraints based on attributes of the request, the resource, or both. To learn which resources support conditions in their IAM policies, see the IAM documentation (https://cloud.google.com/iam/help/conditions/resource-policies).JSON example: { “bindings”: \[ { “role”: “roles/resourcemanager.organizationAdmin”, “members”: \[ “user:mike@example.com”, “group:admins@example.com”, “domain:google.com”, “serviceAccount:my-project-id@appspot.gserviceaccount.com” \] }, { “role”: “roles/resourcemanager.organizationViewer”, “members”: \[ “user:eve@example.com” \], “condition”: { “title”: “expirable access”, “description”: “Does not grant access after Sep 2020”, “expression”: “request.time \< timestamp(‘2020-10-01T00:00:00.000Z’)”, } } \], “etag”: “BwWWja0YfJA=”, “version”: 3 } YAML example: bindings: - members: - user:mike@example.com - group:admins@example.com - domain:google.com - serviceAccount:my-project-id@appspot.gserviceaccount.com role: roles/resourcemanager.organizationAdmin - members: - user:eve@example.com role: roles/resourcemanager.organizationViewer condition: title: expirable access description: Does not grant access after Sep 2020 expression: request.time \< timestamp(‘2020-10-01T00:00:00.000Z’) etag: BwWWja0YfJA= version: 3 For a description of IAM and its features, see the IAM documentation (https://cloud.google.com/iam/docs/).
 /// 
 /// # Activities
 /// 
 /// This type is used in activities, which are methods you may call on this type or where this type is involved in. 
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
+/// * [locations aspect types get iam policy projects](ProjectLocationAspectTypeGetIamPolicyCall) (response)
+/// * [locations aspect types set iam policy projects](ProjectLocationAspectTypeSetIamPolicyCall) (response)
 /// * [locations data attribute bindings get iam policy projects](ProjectLocationDataAttributeBindingGetIamPolicyCall) (response)
 /// * [locations data attribute bindings set iam policy projects](ProjectLocationDataAttributeBindingSetIamPolicyCall) (response)
 /// * [locations data scans get iam policy projects](ProjectLocationDataScanGetIamPolicyCall) (response)
@@ -3578,6 +3806,12 @@ impl client::Part for GoogleIamV1Binding {}
 /// * [locations data taxonomies attributes set iam policy projects](ProjectLocationDataTaxonomyAttributeSetIamPolicyCall) (response)
 /// * [locations data taxonomies get iam policy projects](ProjectLocationDataTaxonomyGetIamPolicyCall) (response)
 /// * [locations data taxonomies set iam policy projects](ProjectLocationDataTaxonomySetIamPolicyCall) (response)
+/// * [locations entry groups get iam policy projects](ProjectLocationEntryGroupGetIamPolicyCall) (response)
+/// * [locations entry groups set iam policy projects](ProjectLocationEntryGroupSetIamPolicyCall) (response)
+/// * [locations entry types get iam policy projects](ProjectLocationEntryTypeGetIamPolicyCall) (response)
+/// * [locations entry types set iam policy projects](ProjectLocationEntryTypeSetIamPolicyCall) (response)
+/// * [locations governance rules get iam policy projects](ProjectLocationGovernanceRuleGetIamPolicyCall) (response)
+/// * [locations governance rules set iam policy projects](ProjectLocationGovernanceRuleSetIamPolicyCall) (response)
 /// * [locations lakes content get iam policy projects](ProjectLocationLakeContentGetIamPolicyCall) (response)
 /// * [locations lakes content set iam policy projects](ProjectLocationLakeContentSetIamPolicyCall) (response)
 /// * [locations lakes contentitems get iam policy projects](ProjectLocationLakeContentitemGetIamPolicyCall) (response)
@@ -3592,7 +3826,6 @@ impl client::Part for GoogleIamV1Binding {}
 /// * [locations lakes zones set iam policy projects](ProjectLocationLakeZoneSetIamPolicyCall) (response)
 /// * [locations lakes get iam policy projects](ProjectLocationLakeGetIamPolicyCall) (response)
 /// * [locations lakes set iam policy projects](ProjectLocationLakeSetIamPolicyCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleIamV1Policy {
@@ -3605,7 +3838,7 @@ pub struct GoogleIamV1Policy {
     pub bindings: Option<Vec<GoogleIamV1Binding>>,
     /// etag is used for optimistic concurrency control as a way to help prevent simultaneous updates of a policy from overwriting each other. It is strongly suggested that systems make use of the etag in the read-modify-write cycle to perform policy updates in order to avoid race conditions: An etag is returned in the response to getIamPolicy, and systems are expected to put that etag in the request to setIamPolicy to ensure that their change will be applied to the same version of the policy.Important: If you use IAM Conditions, you must include the etag field whenever you call setIamPolicy. If you omit this field, then IAM allows you to overwrite a version 3 policy with a version 1 policy, and all of the conditions in the version 3 policy are lost.
     
-    #[serde_as(as = "Option<::client::serde::urlsafe_base64::Wrapper>")]
+    #[serde_as(as = "Option<::client::serde::standard_base64::Wrapper>")]
     pub etag: Option<Vec<u8>>,
     /// Specifies the format of the policy.Valid values are 0, 1, and 3. Requests that specify an invalid value are rejected.Any operation that affects conditional role bindings must specify version 3. This requirement applies to the following operations: Getting a policy that includes a conditional role binding Adding a conditional role binding to a policy Changing a conditional role binding in a policy Removing any role binding, with or without a condition, from a policy that includes conditionsImportant: If you use IAM Conditions, you must include the etag field whenever you call setIamPolicy. If you omit this field, then IAM allows you to overwrite a version 3 policy with a version 1 policy, and all of the conditions in the version 3 policy are lost.If a policy does not include any conditions, operations on that policy may specify any valid version or leave the field unset.To learn which resources support conditions in their IAM policies, see the IAM documentation (https://cloud.google.com/iam/help/conditions/resource-policies).
     
@@ -3622,10 +3855,14 @@ impl client::ResponseResult for GoogleIamV1Policy {}
 /// This type is used in activities, which are methods you may call on this type or where this type is involved in. 
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
+/// * [locations aspect types set iam policy projects](ProjectLocationAspectTypeSetIamPolicyCall) (request)
 /// * [locations data attribute bindings set iam policy projects](ProjectLocationDataAttributeBindingSetIamPolicyCall) (request)
 /// * [locations data scans set iam policy projects](ProjectLocationDataScanSetIamPolicyCall) (request)
 /// * [locations data taxonomies attributes set iam policy projects](ProjectLocationDataTaxonomyAttributeSetIamPolicyCall) (request)
 /// * [locations data taxonomies set iam policy projects](ProjectLocationDataTaxonomySetIamPolicyCall) (request)
+/// * [locations entry groups set iam policy projects](ProjectLocationEntryGroupSetIamPolicyCall) (request)
+/// * [locations entry types set iam policy projects](ProjectLocationEntryTypeSetIamPolicyCall) (request)
+/// * [locations governance rules set iam policy projects](ProjectLocationGovernanceRuleSetIamPolicyCall) (request)
 /// * [locations lakes content set iam policy projects](ProjectLocationLakeContentSetIamPolicyCall) (request)
 /// * [locations lakes contentitems set iam policy projects](ProjectLocationLakeContentitemSetIamPolicyCall) (request)
 /// * [locations lakes environments set iam policy projects](ProjectLocationLakeEnvironmentSetIamPolicyCall) (request)
@@ -3633,7 +3870,6 @@ impl client::ResponseResult for GoogleIamV1Policy {}
 /// * [locations lakes zones assets set iam policy projects](ProjectLocationLakeZoneAssetSetIamPolicyCall) (request)
 /// * [locations lakes zones set iam policy projects](ProjectLocationLakeZoneSetIamPolicyCall) (request)
 /// * [locations lakes set iam policy projects](ProjectLocationLakeSetIamPolicyCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleIamV1SetIamPolicyRequest {
@@ -3656,10 +3892,14 @@ impl client::RequestValue for GoogleIamV1SetIamPolicyRequest {}
 /// This type is used in activities, which are methods you may call on this type or where this type is involved in. 
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
+/// * [locations aspect types test iam permissions projects](ProjectLocationAspectTypeTestIamPermissionCall) (request)
 /// * [locations data attribute bindings test iam permissions projects](ProjectLocationDataAttributeBindingTestIamPermissionCall) (request)
 /// * [locations data scans test iam permissions projects](ProjectLocationDataScanTestIamPermissionCall) (request)
 /// * [locations data taxonomies attributes test iam permissions projects](ProjectLocationDataTaxonomyAttributeTestIamPermissionCall) (request)
 /// * [locations data taxonomies test iam permissions projects](ProjectLocationDataTaxonomyTestIamPermissionCall) (request)
+/// * [locations entry groups test iam permissions projects](ProjectLocationEntryGroupTestIamPermissionCall) (request)
+/// * [locations entry types test iam permissions projects](ProjectLocationEntryTypeTestIamPermissionCall) (request)
+/// * [locations governance rules test iam permissions projects](ProjectLocationGovernanceRuleTestIamPermissionCall) (request)
 /// * [locations lakes content test iam permissions projects](ProjectLocationLakeContentTestIamPermissionCall) (request)
 /// * [locations lakes contentitems test iam permissions projects](ProjectLocationLakeContentitemTestIamPermissionCall) (request)
 /// * [locations lakes environments test iam permissions projects](ProjectLocationLakeEnvironmentTestIamPermissionCall) (request)
@@ -3667,7 +3907,6 @@ impl client::RequestValue for GoogleIamV1SetIamPolicyRequest {}
 /// * [locations lakes zones assets test iam permissions projects](ProjectLocationLakeZoneAssetTestIamPermissionCall) (request)
 /// * [locations lakes zones test iam permissions projects](ProjectLocationLakeZoneTestIamPermissionCall) (request)
 /// * [locations lakes test iam permissions projects](ProjectLocationLakeTestIamPermissionCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleIamV1TestIamPermissionsRequest {
@@ -3686,10 +3925,14 @@ impl client::RequestValue for GoogleIamV1TestIamPermissionsRequest {}
 /// This type is used in activities, which are methods you may call on this type or where this type is involved in. 
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
+/// * [locations aspect types test iam permissions projects](ProjectLocationAspectTypeTestIamPermissionCall) (response)
 /// * [locations data attribute bindings test iam permissions projects](ProjectLocationDataAttributeBindingTestIamPermissionCall) (response)
 /// * [locations data scans test iam permissions projects](ProjectLocationDataScanTestIamPermissionCall) (response)
 /// * [locations data taxonomies attributes test iam permissions projects](ProjectLocationDataTaxonomyAttributeTestIamPermissionCall) (response)
 /// * [locations data taxonomies test iam permissions projects](ProjectLocationDataTaxonomyTestIamPermissionCall) (response)
+/// * [locations entry groups test iam permissions projects](ProjectLocationEntryGroupTestIamPermissionCall) (response)
+/// * [locations entry types test iam permissions projects](ProjectLocationEntryTypeTestIamPermissionCall) (response)
+/// * [locations governance rules test iam permissions projects](ProjectLocationGovernanceRuleTestIamPermissionCall) (response)
 /// * [locations lakes content test iam permissions projects](ProjectLocationLakeContentTestIamPermissionCall) (response)
 /// * [locations lakes contentitems test iam permissions projects](ProjectLocationLakeContentitemTestIamPermissionCall) (response)
 /// * [locations lakes environments test iam permissions projects](ProjectLocationLakeEnvironmentTestIamPermissionCall) (response)
@@ -3697,7 +3940,6 @@ impl client::RequestValue for GoogleIamV1TestIamPermissionsRequest {}
 /// * [locations lakes zones assets test iam permissions projects](ProjectLocationLakeZoneAssetTestIamPermissionCall) (response)
 /// * [locations lakes zones test iam permissions projects](ProjectLocationLakeZoneTestIamPermissionCall) (response)
 /// * [locations lakes test iam permissions projects](ProjectLocationLakeTestIamPermissionCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleIamV1TestIamPermissionsResponse {
@@ -3717,7 +3959,6 @@ impl client::ResponseResult for GoogleIamV1TestIamPermissionsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations operations cancel projects](ProjectLocationOperationCancelCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleLongrunningCancelOperationRequest { _never_set: Option<bool> }
@@ -3733,7 +3974,6 @@ impl client::RequestValue for GoogleLongrunningCancelOperationRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations operations list projects](ProjectLocationOperationListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleLongrunningListOperationsResponse {
@@ -3784,7 +4024,6 @@ impl client::ResponseResult for GoogleLongrunningListOperationsResponse {}
 /// * [locations lakes delete projects](ProjectLocationLakeDeleteCall) (response)
 /// * [locations lakes patch projects](ProjectLocationLakePatchCall) (response)
 /// * [locations operations get projects](ProjectLocationOperationGetCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleLongrunningOperation {
@@ -3800,7 +4039,7 @@ pub struct GoogleLongrunningOperation {
     /// The server-assigned name, which is only unique within the same service that originally returns it. If you use the default HTTP mapping, the name should be a resource name ending with operations/{unique_id}.
     
     pub name: Option<String>,
-    /// The normal response of the operation in case of success. If the original method returns no data on success, such as Delete, the response is google.protobuf.Empty. If the original method is standard Get/Create/Update, the response should be the resource. For other methods, the response should have the type XxxResponse, where Xxx is the original method name. For example, if the original method name is TakeSnapshot(), the inferred response type is TakeSnapshotResponse.
+    /// The normal, successful response of the operation. If the original method returns no data on success, such as Delete, the response is google.protobuf.Empty. If the original method is standard Get/Create/Update, the response should be the resource. For other methods, the response should have the type XxxResponse, where Xxx is the original method name. For example, if the original method name is TakeSnapshot(), the inferred response type is TakeSnapshotResponse.
     
     pub response: Option<HashMap<String, json::Value>>,
 }
@@ -3879,9 +4118,9 @@ impl client::Part for GoogleTypeExpr {}
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
-/// // like `locations_data_attribute_bindings_create(...)`, `locations_data_attribute_bindings_delete(...)`, `locations_data_attribute_bindings_get(...)`, `locations_data_attribute_bindings_get_iam_policy(...)`, `locations_data_attribute_bindings_list(...)`, `locations_data_attribute_bindings_patch(...)`, `locations_data_attribute_bindings_set_iam_policy(...)`, `locations_data_attribute_bindings_test_iam_permissions(...)`, `locations_data_scans_create(...)`, `locations_data_scans_delete(...)`, `locations_data_scans_get(...)`, `locations_data_scans_get_iam_policy(...)`, `locations_data_scans_jobs_get(...)`, `locations_data_scans_jobs_list(...)`, `locations_data_scans_list(...)`, `locations_data_scans_patch(...)`, `locations_data_scans_run(...)`, `locations_data_scans_set_iam_policy(...)`, `locations_data_scans_test_iam_permissions(...)`, `locations_data_taxonomies_attributes_create(...)`, `locations_data_taxonomies_attributes_delete(...)`, `locations_data_taxonomies_attributes_get(...)`, `locations_data_taxonomies_attributes_get_iam_policy(...)`, `locations_data_taxonomies_attributes_list(...)`, `locations_data_taxonomies_attributes_patch(...)`, `locations_data_taxonomies_attributes_set_iam_policy(...)`, `locations_data_taxonomies_attributes_test_iam_permissions(...)`, `locations_data_taxonomies_create(...)`, `locations_data_taxonomies_delete(...)`, `locations_data_taxonomies_get(...)`, `locations_data_taxonomies_get_iam_policy(...)`, `locations_data_taxonomies_list(...)`, `locations_data_taxonomies_patch(...)`, `locations_data_taxonomies_set_iam_policy(...)`, `locations_data_taxonomies_test_iam_permissions(...)`, `locations_get(...)`, `locations_lakes_actions_list(...)`, `locations_lakes_content_create(...)`, `locations_lakes_content_delete(...)`, `locations_lakes_content_get(...)`, `locations_lakes_content_get_iam_policy(...)`, `locations_lakes_content_list(...)`, `locations_lakes_content_patch(...)`, `locations_lakes_content_set_iam_policy(...)`, `locations_lakes_content_test_iam_permissions(...)`, `locations_lakes_contentitems_create(...)`, `locations_lakes_contentitems_delete(...)`, `locations_lakes_contentitems_get(...)`, `locations_lakes_contentitems_get_iam_policy(...)`, `locations_lakes_contentitems_list(...)`, `locations_lakes_contentitems_patch(...)`, `locations_lakes_contentitems_set_iam_policy(...)`, `locations_lakes_contentitems_test_iam_permissions(...)`, `locations_lakes_create(...)`, `locations_lakes_delete(...)`, `locations_lakes_environments_create(...)`, `locations_lakes_environments_delete(...)`, `locations_lakes_environments_get(...)`, `locations_lakes_environments_get_iam_policy(...)`, `locations_lakes_environments_list(...)`, `locations_lakes_environments_patch(...)`, `locations_lakes_environments_sessions_list(...)`, `locations_lakes_environments_set_iam_policy(...)`, `locations_lakes_environments_test_iam_permissions(...)`, `locations_lakes_get(...)`, `locations_lakes_get_iam_policy(...)`, `locations_lakes_list(...)`, `locations_lakes_patch(...)`, `locations_lakes_set_iam_policy(...)`, `locations_lakes_tasks_create(...)`, `locations_lakes_tasks_delete(...)`, `locations_lakes_tasks_get(...)`, `locations_lakes_tasks_get_iam_policy(...)`, `locations_lakes_tasks_jobs_cancel(...)`, `locations_lakes_tasks_jobs_get(...)`, `locations_lakes_tasks_jobs_list(...)`, `locations_lakes_tasks_list(...)`, `locations_lakes_tasks_patch(...)`, `locations_lakes_tasks_run(...)`, `locations_lakes_tasks_set_iam_policy(...)`, `locations_lakes_tasks_test_iam_permissions(...)`, `locations_lakes_test_iam_permissions(...)`, `locations_lakes_zones_actions_list(...)`, `locations_lakes_zones_assets_actions_list(...)`, `locations_lakes_zones_assets_create(...)`, `locations_lakes_zones_assets_delete(...)`, `locations_lakes_zones_assets_get(...)`, `locations_lakes_zones_assets_get_iam_policy(...)`, `locations_lakes_zones_assets_list(...)`, `locations_lakes_zones_assets_patch(...)`, `locations_lakes_zones_assets_set_iam_policy(...)`, `locations_lakes_zones_assets_test_iam_permissions(...)`, `locations_lakes_zones_create(...)`, `locations_lakes_zones_delete(...)`, `locations_lakes_zones_entities_create(...)`, `locations_lakes_zones_entities_delete(...)`, `locations_lakes_zones_entities_get(...)`, `locations_lakes_zones_entities_list(...)`, `locations_lakes_zones_entities_partitions_create(...)`, `locations_lakes_zones_entities_partitions_delete(...)`, `locations_lakes_zones_entities_partitions_get(...)`, `locations_lakes_zones_entities_partitions_list(...)`, `locations_lakes_zones_entities_update(...)`, `locations_lakes_zones_get(...)`, `locations_lakes_zones_get_iam_policy(...)`, `locations_lakes_zones_list(...)`, `locations_lakes_zones_patch(...)`, `locations_lakes_zones_set_iam_policy(...)`, `locations_lakes_zones_test_iam_permissions(...)`, `locations_list(...)`, `locations_operations_cancel(...)`, `locations_operations_delete(...)`, `locations_operations_get(...)` and `locations_operations_list(...)`
+/// // like `locations_aspect_types_get_iam_policy(...)`, `locations_aspect_types_set_iam_policy(...)`, `locations_aspect_types_test_iam_permissions(...)`, `locations_data_attribute_bindings_create(...)`, `locations_data_attribute_bindings_delete(...)`, `locations_data_attribute_bindings_get(...)`, `locations_data_attribute_bindings_get_iam_policy(...)`, `locations_data_attribute_bindings_list(...)`, `locations_data_attribute_bindings_patch(...)`, `locations_data_attribute_bindings_set_iam_policy(...)`, `locations_data_attribute_bindings_test_iam_permissions(...)`, `locations_data_scans_create(...)`, `locations_data_scans_delete(...)`, `locations_data_scans_get(...)`, `locations_data_scans_get_iam_policy(...)`, `locations_data_scans_jobs_get(...)`, `locations_data_scans_jobs_list(...)`, `locations_data_scans_list(...)`, `locations_data_scans_patch(...)`, `locations_data_scans_run(...)`, `locations_data_scans_set_iam_policy(...)`, `locations_data_scans_test_iam_permissions(...)`, `locations_data_taxonomies_attributes_create(...)`, `locations_data_taxonomies_attributes_delete(...)`, `locations_data_taxonomies_attributes_get(...)`, `locations_data_taxonomies_attributes_get_iam_policy(...)`, `locations_data_taxonomies_attributes_list(...)`, `locations_data_taxonomies_attributes_patch(...)`, `locations_data_taxonomies_attributes_set_iam_policy(...)`, `locations_data_taxonomies_attributes_test_iam_permissions(...)`, `locations_data_taxonomies_create(...)`, `locations_data_taxonomies_delete(...)`, `locations_data_taxonomies_get(...)`, `locations_data_taxonomies_get_iam_policy(...)`, `locations_data_taxonomies_list(...)`, `locations_data_taxonomies_patch(...)`, `locations_data_taxonomies_set_iam_policy(...)`, `locations_data_taxonomies_test_iam_permissions(...)`, `locations_entry_groups_get_iam_policy(...)`, `locations_entry_groups_set_iam_policy(...)`, `locations_entry_groups_test_iam_permissions(...)`, `locations_entry_types_get_iam_policy(...)`, `locations_entry_types_set_iam_policy(...)`, `locations_entry_types_test_iam_permissions(...)`, `locations_get(...)`, `locations_governance_rules_get_iam_policy(...)`, `locations_governance_rules_set_iam_policy(...)`, `locations_governance_rules_test_iam_permissions(...)`, `locations_lakes_actions_list(...)`, `locations_lakes_content_create(...)`, `locations_lakes_content_delete(...)`, `locations_lakes_content_get(...)`, `locations_lakes_content_get_iam_policy(...)`, `locations_lakes_content_list(...)`, `locations_lakes_content_patch(...)`, `locations_lakes_content_set_iam_policy(...)`, `locations_lakes_content_test_iam_permissions(...)`, `locations_lakes_contentitems_create(...)`, `locations_lakes_contentitems_delete(...)`, `locations_lakes_contentitems_get(...)`, `locations_lakes_contentitems_get_iam_policy(...)`, `locations_lakes_contentitems_list(...)`, `locations_lakes_contentitems_patch(...)`, `locations_lakes_contentitems_set_iam_policy(...)`, `locations_lakes_contentitems_test_iam_permissions(...)`, `locations_lakes_create(...)`, `locations_lakes_delete(...)`, `locations_lakes_environments_create(...)`, `locations_lakes_environments_delete(...)`, `locations_lakes_environments_get(...)`, `locations_lakes_environments_get_iam_policy(...)`, `locations_lakes_environments_list(...)`, `locations_lakes_environments_patch(...)`, `locations_lakes_environments_sessions_list(...)`, `locations_lakes_environments_set_iam_policy(...)`, `locations_lakes_environments_test_iam_permissions(...)`, `locations_lakes_get(...)`, `locations_lakes_get_iam_policy(...)`, `locations_lakes_list(...)`, `locations_lakes_patch(...)`, `locations_lakes_set_iam_policy(...)`, `locations_lakes_tasks_create(...)`, `locations_lakes_tasks_delete(...)`, `locations_lakes_tasks_get(...)`, `locations_lakes_tasks_get_iam_policy(...)`, `locations_lakes_tasks_jobs_cancel(...)`, `locations_lakes_tasks_jobs_get(...)`, `locations_lakes_tasks_jobs_list(...)`, `locations_lakes_tasks_list(...)`, `locations_lakes_tasks_patch(...)`, `locations_lakes_tasks_run(...)`, `locations_lakes_tasks_set_iam_policy(...)`, `locations_lakes_tasks_test_iam_permissions(...)`, `locations_lakes_test_iam_permissions(...)`, `locations_lakes_zones_actions_list(...)`, `locations_lakes_zones_assets_actions_list(...)`, `locations_lakes_zones_assets_create(...)`, `locations_lakes_zones_assets_delete(...)`, `locations_lakes_zones_assets_get(...)`, `locations_lakes_zones_assets_get_iam_policy(...)`, `locations_lakes_zones_assets_list(...)`, `locations_lakes_zones_assets_patch(...)`, `locations_lakes_zones_assets_set_iam_policy(...)`, `locations_lakes_zones_assets_test_iam_permissions(...)`, `locations_lakes_zones_create(...)`, `locations_lakes_zones_delete(...)`, `locations_lakes_zones_entities_create(...)`, `locations_lakes_zones_entities_delete(...)`, `locations_lakes_zones_entities_get(...)`, `locations_lakes_zones_entities_list(...)`, `locations_lakes_zones_entities_partitions_create(...)`, `locations_lakes_zones_entities_partitions_delete(...)`, `locations_lakes_zones_entities_partitions_get(...)`, `locations_lakes_zones_entities_partitions_list(...)`, `locations_lakes_zones_entities_update(...)`, `locations_lakes_zones_get(...)`, `locations_lakes_zones_get_iam_policy(...)`, `locations_lakes_zones_list(...)`, `locations_lakes_zones_patch(...)`, `locations_lakes_zones_set_iam_policy(...)`, `locations_lakes_zones_test_iam_permissions(...)`, `locations_list(...)`, `locations_operations_cancel(...)`, `locations_operations_delete(...)`, `locations_operations_get(...)` and `locations_operations_list(...)`
 /// // to build up your call.
 /// let rb = hub.projects();
 /// # }
@@ -3895,6 +4134,62 @@ pub struct ProjectMethods<'a, S>
 impl<'a, S> client::MethodsBuilder for ProjectMethods<'a, S> {}
 
 impl<'a, S> ProjectMethods<'a, S> {
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
+    /// 
+    /// # Arguments
+    ///
+    /// * `resource` - REQUIRED: The resource for which the policy is being requested. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    pub fn locations_aspect_types_get_iam_policy(&self, resource: &str) -> ProjectLocationAspectTypeGetIamPolicyCall<'a, S> {
+        ProjectLocationAspectTypeGetIamPolicyCall {
+            hub: self.hub,
+            _resource: resource.to_string(),
+            _options_requested_policy_version: Default::default(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// Sets the access control policy on the specified resource. Replaces any existing policy.Can return NOT_FOUND, INVALID_ARGUMENT, and PERMISSION_DENIED errors.
+    /// 
+    /// # Arguments
+    ///
+    /// * `request` - No description provided.
+    /// * `resource` - REQUIRED: The resource for which the policy is being specified. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    pub fn locations_aspect_types_set_iam_policy(&self, request: GoogleIamV1SetIamPolicyRequest, resource: &str) -> ProjectLocationAspectTypeSetIamPolicyCall<'a, S> {
+        ProjectLocationAspectTypeSetIamPolicyCall {
+            hub: self.hub,
+            _request: request,
+            _resource: resource.to_string(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// Returns permissions that a caller has on the specified resource. If the resource does not exist, this will return an empty set of permissions, not a NOT_FOUND error.Note: This operation is designed to be used for building permission-aware UIs and command-line tools, not for authorization checking. This operation may "fail open" without warning.
+    /// 
+    /// # Arguments
+    ///
+    /// * `request` - No description provided.
+    /// * `resource` - REQUIRED: The resource for which the policy detail is being requested. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    pub fn locations_aspect_types_test_iam_permissions(&self, request: GoogleIamV1TestIamPermissionsRequest, resource: &str) -> ProjectLocationAspectTypeTestIamPermissionCall<'a, S> {
+        ProjectLocationAspectTypeTestIamPermissionCall {
+            hub: self.hub,
+            _request: request,
+            _resource: resource.to_string(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
     
     /// Create a builder to help you perform the following task:
     ///
@@ -4056,7 +4351,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// 
     /// # Arguments
     ///
-    /// * `name` - Required. The resource name of the DataScanJob: projects/{project}/locations/{location_id}/dataScans/{data_scan_id}/dataScanJobs/{data_scan_job_id} where project refers to a project_id or project_number and location_id refers to a GCP region.
+    /// * `name` - Required. The resource name of the DataScanJob: projects/{project}/locations/{location_id}/dataScans/{data_scan_id}/jobs/{data_scan_job_id} where project refers to a project_id or project_number and location_id refers to a GCP region.
     pub fn locations_data_scans_jobs_get(&self, name: &str) -> ProjectLocationDataScanJobGetCall<'a, S> {
         ProjectLocationDataScanJobGetCall {
             hub: self.hub,
@@ -4081,6 +4376,7 @@ impl<'a, S> ProjectMethods<'a, S> {
             _parent: parent.to_string(),
             _page_token: Default::default(),
             _page_size: Default::default(),
+            _filter: Default::default(),
             _delegate: Default::default(),
             _additional_params: Default::default(),
             _scopes: Default::default(),
@@ -4100,6 +4396,7 @@ impl<'a, S> ProjectMethods<'a, S> {
             hub: self.hub,
             _request: request,
             _parent: parent.to_string(),
+            _validate_only: Default::default(),
             _data_scan_id: Default::default(),
             _delegate: Default::default(),
             _additional_params: Default::default(),
@@ -4194,6 +4491,7 @@ impl<'a, S> ProjectMethods<'a, S> {
             hub: self.hub,
             _request: request,
             _name: name.to_string(),
+            _validate_only: Default::default(),
             _update_mask: Default::default(),
             _delegate: Default::default(),
             _additional_params: Default::default(),
@@ -4557,6 +4855,174 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// * `resource` - REQUIRED: The resource for which the policy detail is being requested. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
     pub fn locations_data_taxonomies_test_iam_permissions(&self, request: GoogleIamV1TestIamPermissionsRequest, resource: &str) -> ProjectLocationDataTaxonomyTestIamPermissionCall<'a, S> {
         ProjectLocationDataTaxonomyTestIamPermissionCall {
+            hub: self.hub,
+            _request: request,
+            _resource: resource.to_string(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
+    /// 
+    /// # Arguments
+    ///
+    /// * `resource` - REQUIRED: The resource for which the policy is being requested. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    pub fn locations_entry_groups_get_iam_policy(&self, resource: &str) -> ProjectLocationEntryGroupGetIamPolicyCall<'a, S> {
+        ProjectLocationEntryGroupGetIamPolicyCall {
+            hub: self.hub,
+            _resource: resource.to_string(),
+            _options_requested_policy_version: Default::default(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// Sets the access control policy on the specified resource. Replaces any existing policy.Can return NOT_FOUND, INVALID_ARGUMENT, and PERMISSION_DENIED errors.
+    /// 
+    /// # Arguments
+    ///
+    /// * `request` - No description provided.
+    /// * `resource` - REQUIRED: The resource for which the policy is being specified. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    pub fn locations_entry_groups_set_iam_policy(&self, request: GoogleIamV1SetIamPolicyRequest, resource: &str) -> ProjectLocationEntryGroupSetIamPolicyCall<'a, S> {
+        ProjectLocationEntryGroupSetIamPolicyCall {
+            hub: self.hub,
+            _request: request,
+            _resource: resource.to_string(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// Returns permissions that a caller has on the specified resource. If the resource does not exist, this will return an empty set of permissions, not a NOT_FOUND error.Note: This operation is designed to be used for building permission-aware UIs and command-line tools, not for authorization checking. This operation may "fail open" without warning.
+    /// 
+    /// # Arguments
+    ///
+    /// * `request` - No description provided.
+    /// * `resource` - REQUIRED: The resource for which the policy detail is being requested. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    pub fn locations_entry_groups_test_iam_permissions(&self, request: GoogleIamV1TestIamPermissionsRequest, resource: &str) -> ProjectLocationEntryGroupTestIamPermissionCall<'a, S> {
+        ProjectLocationEntryGroupTestIamPermissionCall {
+            hub: self.hub,
+            _request: request,
+            _resource: resource.to_string(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
+    /// 
+    /// # Arguments
+    ///
+    /// * `resource` - REQUIRED: The resource for which the policy is being requested. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    pub fn locations_entry_types_get_iam_policy(&self, resource: &str) -> ProjectLocationEntryTypeGetIamPolicyCall<'a, S> {
+        ProjectLocationEntryTypeGetIamPolicyCall {
+            hub: self.hub,
+            _resource: resource.to_string(),
+            _options_requested_policy_version: Default::default(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// Sets the access control policy on the specified resource. Replaces any existing policy.Can return NOT_FOUND, INVALID_ARGUMENT, and PERMISSION_DENIED errors.
+    /// 
+    /// # Arguments
+    ///
+    /// * `request` - No description provided.
+    /// * `resource` - REQUIRED: The resource for which the policy is being specified. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    pub fn locations_entry_types_set_iam_policy(&self, request: GoogleIamV1SetIamPolicyRequest, resource: &str) -> ProjectLocationEntryTypeSetIamPolicyCall<'a, S> {
+        ProjectLocationEntryTypeSetIamPolicyCall {
+            hub: self.hub,
+            _request: request,
+            _resource: resource.to_string(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// Returns permissions that a caller has on the specified resource. If the resource does not exist, this will return an empty set of permissions, not a NOT_FOUND error.Note: This operation is designed to be used for building permission-aware UIs and command-line tools, not for authorization checking. This operation may "fail open" without warning.
+    /// 
+    /// # Arguments
+    ///
+    /// * `request` - No description provided.
+    /// * `resource` - REQUIRED: The resource for which the policy detail is being requested. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    pub fn locations_entry_types_test_iam_permissions(&self, request: GoogleIamV1TestIamPermissionsRequest, resource: &str) -> ProjectLocationEntryTypeTestIamPermissionCall<'a, S> {
+        ProjectLocationEntryTypeTestIamPermissionCall {
+            hub: self.hub,
+            _request: request,
+            _resource: resource.to_string(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
+    /// 
+    /// # Arguments
+    ///
+    /// * `resource` - REQUIRED: The resource for which the policy is being requested. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    pub fn locations_governance_rules_get_iam_policy(&self, resource: &str) -> ProjectLocationGovernanceRuleGetIamPolicyCall<'a, S> {
+        ProjectLocationGovernanceRuleGetIamPolicyCall {
+            hub: self.hub,
+            _resource: resource.to_string(),
+            _options_requested_policy_version: Default::default(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// Sets the access control policy on the specified resource. Replaces any existing policy.Can return NOT_FOUND, INVALID_ARGUMENT, and PERMISSION_DENIED errors.
+    /// 
+    /// # Arguments
+    ///
+    /// * `request` - No description provided.
+    /// * `resource` - REQUIRED: The resource for which the policy is being specified. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    pub fn locations_governance_rules_set_iam_policy(&self, request: GoogleIamV1SetIamPolicyRequest, resource: &str) -> ProjectLocationGovernanceRuleSetIamPolicyCall<'a, S> {
+        ProjectLocationGovernanceRuleSetIamPolicyCall {
+            hub: self.hub,
+            _request: request,
+            _resource: resource.to_string(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// Returns permissions that a caller has on the specified resource. If the resource does not exist, this will return an empty set of permissions, not a NOT_FOUND error.Note: This operation is designed to be used for building permission-aware UIs and command-line tools, not for authorization checking. This operation may "fail open" without warning.
+    /// 
+    /// # Arguments
+    ///
+    /// * `request` - No description provided.
+    /// * `resource` - REQUIRED: The resource for which the policy detail is being requested. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    pub fn locations_governance_rules_test_iam_permissions(&self, request: GoogleIamV1TestIamPermissionsRequest, resource: &str) -> ProjectLocationGovernanceRuleTestIamPermissionCall<'a, S> {
+        ProjectLocationGovernanceRuleTestIamPermissionCall {
             hub: self.hub,
             _request: request,
             _resource: resource.to_string(),
@@ -6013,7 +6479,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns UNIMPLEMENTED.NOTE: the name binding allows API services to override the binding to use different resource name schemes, such as users/*/operations. To override the binding, API services can add a binding such as "/v1/{name=users/*}/operations" to their service configuration. For backwards compatibility, the default name includes the operations collection id, however overriding users must ensure the name binding is the parent resource, without the operations collection id.
+    /// Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns UNIMPLEMENTED.
     /// 
     /// # Arguments
     ///
@@ -6077,6 +6543,864 @@ impl<'a, S> ProjectMethods<'a, S> {
 // CallBuilders   ###
 // #################
 
+/// Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
+///
+/// A builder for the *locations.aspectTypes.getIamPolicy* method supported by a *project* resource.
+/// It is not used directly, but through a [`ProjectMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_dataplex1 as dataplex1;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use dataplex1::{CloudDataplex, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.projects().locations_aspect_types_get_iam_policy("resource")
+///              .options_requested_policy_version(-80)
+///              .doit().await;
+/// # }
+/// ```
+pub struct ProjectLocationAspectTypeGetIamPolicyCall<'a, S>
+    where S: 'a {
+
+    hub: &'a CloudDataplex<S>,
+    _resource: String,
+    _options_requested_policy_version: Option<i32>,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for ProjectLocationAspectTypeGetIamPolicyCall<'a, S> {}
+
+impl<'a, S> ProjectLocationAspectTypeGetIamPolicyCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, GoogleIamV1Policy)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "dataplex.projects.locations.aspectTypes.getIamPolicy",
+                               http_method: hyper::Method::GET });
+
+        for &field in ["alt", "resource", "options.requestedPolicyVersion"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(4 + self._additional_params.len());
+        params.push("resource", self._resource);
+        if let Some(value) = self._options_requested_policy_version.as_ref() {
+            params.push("options.requestedPolicyVersion", value.to_string());
+        }
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+resource}:getIamPolicy";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["resource"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::GET)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .body(hyper::body::Body::empty());
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    /// REQUIRED: The resource for which the policy is being requested. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    ///
+    /// Sets the *resource* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn resource(mut self, new_value: &str) -> ProjectLocationAspectTypeGetIamPolicyCall<'a, S> {
+        self._resource = new_value.to_string();
+        self
+    }
+    /// Optional. The maximum policy version that will be used to format the policy.Valid values are 0, 1, and 3. Requests specifying an invalid value will be rejected.Requests for policies with any conditional role bindings must specify version 3. Policies with no conditional role bindings may specify any valid value or leave the field unset.The policy in the response might use the policy version that you specified, or it might use a lower policy version. For example, if you specify version 3, but the policy has no conditional role bindings, the response uses version 1.To learn which resources support conditions in their IAM policies, see the IAM documentation (https://cloud.google.com/iam/help/conditions/resource-policies).
+    ///
+    /// Sets the *options.requested policy version* query property to the given value.
+    pub fn options_requested_policy_version(mut self, new_value: i32) -> ProjectLocationAspectTypeGetIamPolicyCall<'a, S> {
+        self._options_requested_policy_version = Some(new_value);
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationAspectTypeGetIamPolicyCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationAspectTypeGetIamPolicyCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::CloudPlatform`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationAspectTypeGetIamPolicyCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationAspectTypeGetIamPolicyCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> ProjectLocationAspectTypeGetIamPolicyCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
+/// Sets the access control policy on the specified resource. Replaces any existing policy.Can return NOT_FOUND, INVALID_ARGUMENT, and PERMISSION_DENIED errors.
+///
+/// A builder for the *locations.aspectTypes.setIamPolicy* method supported by a *project* resource.
+/// It is not used directly, but through a [`ProjectMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_dataplex1 as dataplex1;
+/// use dataplex1::api::GoogleIamV1SetIamPolicyRequest;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use dataplex1::{CloudDataplex, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // As the method needs a request, you would usually fill it with the desired information
+/// // into the respective structure. Some of the parts shown here might not be applicable !
+/// // Values shown here are possibly random and not representative !
+/// let mut req = GoogleIamV1SetIamPolicyRequest::default();
+/// 
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.projects().locations_aspect_types_set_iam_policy(req, "resource")
+///              .doit().await;
+/// # }
+/// ```
+pub struct ProjectLocationAspectTypeSetIamPolicyCall<'a, S>
+    where S: 'a {
+
+    hub: &'a CloudDataplex<S>,
+    _request: GoogleIamV1SetIamPolicyRequest,
+    _resource: String,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for ProjectLocationAspectTypeSetIamPolicyCall<'a, S> {}
+
+impl<'a, S> ProjectLocationAspectTypeSetIamPolicyCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, GoogleIamV1Policy)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "dataplex.projects.locations.aspectTypes.setIamPolicy",
+                               http_method: hyper::Method::POST });
+
+        for &field in ["alt", "resource"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(4 + self._additional_params.len());
+        params.push("resource", self._resource);
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+resource}:setIamPolicy";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["resource"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+        let mut json_mime_type = mime::APPLICATION_JSON;
+        let mut request_value_reader =
+            {
+                let mut value = json::value::to_value(&self._request).expect("serde to work");
+                client::remove_json_null_values(&mut value);
+                let mut dst = io::Cursor::new(Vec::with_capacity(128));
+                json::to_writer(&mut dst, &value).unwrap();
+                dst
+            };
+        let request_size = request_value_reader.seek(io::SeekFrom::End(0)).unwrap();
+        request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::POST)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .header(CONTENT_TYPE, json_mime_type.to_string())
+                        .header(CONTENT_LENGTH, request_size as u64)
+                        .body(hyper::body::Body::from(request_value_reader.get_ref().clone()));
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    ///
+    /// Sets the *request* property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn request(mut self, new_value: GoogleIamV1SetIamPolicyRequest) -> ProjectLocationAspectTypeSetIamPolicyCall<'a, S> {
+        self._request = new_value;
+        self
+    }
+    /// REQUIRED: The resource for which the policy is being specified. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    ///
+    /// Sets the *resource* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn resource(mut self, new_value: &str) -> ProjectLocationAspectTypeSetIamPolicyCall<'a, S> {
+        self._resource = new_value.to_string();
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationAspectTypeSetIamPolicyCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationAspectTypeSetIamPolicyCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::CloudPlatform`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationAspectTypeSetIamPolicyCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationAspectTypeSetIamPolicyCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> ProjectLocationAspectTypeSetIamPolicyCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
+/// Returns permissions that a caller has on the specified resource. If the resource does not exist, this will return an empty set of permissions, not a NOT_FOUND error.Note: This operation is designed to be used for building permission-aware UIs and command-line tools, not for authorization checking. This operation may "fail open" without warning.
+///
+/// A builder for the *locations.aspectTypes.testIamPermissions* method supported by a *project* resource.
+/// It is not used directly, but through a [`ProjectMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_dataplex1 as dataplex1;
+/// use dataplex1::api::GoogleIamV1TestIamPermissionsRequest;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use dataplex1::{CloudDataplex, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // As the method needs a request, you would usually fill it with the desired information
+/// // into the respective structure. Some of the parts shown here might not be applicable !
+/// // Values shown here are possibly random and not representative !
+/// let mut req = GoogleIamV1TestIamPermissionsRequest::default();
+/// 
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.projects().locations_aspect_types_test_iam_permissions(req, "resource")
+///              .doit().await;
+/// # }
+/// ```
+pub struct ProjectLocationAspectTypeTestIamPermissionCall<'a, S>
+    where S: 'a {
+
+    hub: &'a CloudDataplex<S>,
+    _request: GoogleIamV1TestIamPermissionsRequest,
+    _resource: String,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for ProjectLocationAspectTypeTestIamPermissionCall<'a, S> {}
+
+impl<'a, S> ProjectLocationAspectTypeTestIamPermissionCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, GoogleIamV1TestIamPermissionsResponse)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "dataplex.projects.locations.aspectTypes.testIamPermissions",
+                               http_method: hyper::Method::POST });
+
+        for &field in ["alt", "resource"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(4 + self._additional_params.len());
+        params.push("resource", self._resource);
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+resource}:testIamPermissions";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["resource"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+        let mut json_mime_type = mime::APPLICATION_JSON;
+        let mut request_value_reader =
+            {
+                let mut value = json::value::to_value(&self._request).expect("serde to work");
+                client::remove_json_null_values(&mut value);
+                let mut dst = io::Cursor::new(Vec::with_capacity(128));
+                json::to_writer(&mut dst, &value).unwrap();
+                dst
+            };
+        let request_size = request_value_reader.seek(io::SeekFrom::End(0)).unwrap();
+        request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::POST)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .header(CONTENT_TYPE, json_mime_type.to_string())
+                        .header(CONTENT_LENGTH, request_size as u64)
+                        .body(hyper::body::Body::from(request_value_reader.get_ref().clone()));
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    ///
+    /// Sets the *request* property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn request(mut self, new_value: GoogleIamV1TestIamPermissionsRequest) -> ProjectLocationAspectTypeTestIamPermissionCall<'a, S> {
+        self._request = new_value;
+        self
+    }
+    /// REQUIRED: The resource for which the policy detail is being requested. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    ///
+    /// Sets the *resource* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn resource(mut self, new_value: &str) -> ProjectLocationAspectTypeTestIamPermissionCall<'a, S> {
+        self._resource = new_value.to_string();
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationAspectTypeTestIamPermissionCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationAspectTypeTestIamPermissionCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::CloudPlatform`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationAspectTypeTestIamPermissionCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationAspectTypeTestIamPermissionCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> ProjectLocationAspectTypeTestIamPermissionCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
 /// Create a DataAttributeBinding resource.
 ///
 /// A builder for the *locations.dataAttributeBindings.create* method supported by a *project* resource.
@@ -6100,7 +7424,7 @@ impl<'a, S> ProjectMethods<'a, S> {
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -6111,7 +7435,7 @@ impl<'a, S> ProjectMethods<'a, S> {
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_data_attribute_bindings_create(req, "parent")
 ///              .validate_only(true)
-///              .data_attribute_binding_id("Lorem")
+///              .data_attribute_binding_id("gubergren")
 ///              .doit().await;
 /// # }
 /// ```
@@ -6321,7 +7645,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataAttributeBindingCreateCall<'a, S> {
@@ -6414,12 +7739,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_data_attribute_bindings_delete("name")
-///              .etag("eos")
+///              .etag("gubergren")
 ///              .doit().await;
 /// # }
 /// ```
@@ -6594,7 +7919,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataAttributeBindingDeleteCall<'a, S> {
@@ -6687,7 +8013,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -6855,7 +8181,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataAttributeBindingGetCall<'a, S> {
@@ -6948,12 +8275,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_data_attribute_bindings_get_iam_policy("resource")
-///              .options_requested_policy_version(-55)
+///              .options_requested_policy_version(-17)
 ///              .doit().await;
 /// # }
 /// ```
@@ -7128,7 +8455,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataAttributeBindingGetIamPolicyCall<'a, S> {
@@ -7221,15 +8549,15 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_data_attribute_bindings_list("parent")
-///              .page_token("amet")
-///              .page_size(-20)
-///              .order_by("ipsum")
-///              .filter("sed")
+///              .page_token("invidunt")
+///              .page_size(-47)
+///              .order_by("duo")
+///              .filter("ipsum")
 ///              .doit().await;
 /// # }
 /// ```
@@ -7437,7 +8765,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataAttributeBindingListCall<'a, S> {
@@ -7531,7 +8860,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -7752,7 +9081,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataAttributeBindingPatchCall<'a, S> {
@@ -7846,7 +9176,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -8043,7 +9373,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataAttributeBindingSetIamPolicyCall<'a, S> {
@@ -8137,7 +9468,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -8334,7 +9665,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataAttributeBindingTestIamPermissionCall<'a, S> {
@@ -8427,7 +9759,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -8586,7 +9918,7 @@ where
     }
 
 
-    /// Required. The resource name of the DataScanJob: projects/{project}/locations/{location_id}/dataScans/{data_scan_id}/dataScanJobs/{data_scan_job_id} where project refers to a project_id or project_number and location_id refers to a GCP region.
+    /// Required. The resource name of the DataScanJob: projects/{project}/locations/{location_id}/dataScans/{data_scan_id}/jobs/{data_scan_job_id} where project refers to a project_id or project_number and location_id refers to a GCP region.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -8607,7 +9939,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataScanJobGetCall<'a, S> {
@@ -8700,13 +10033,14 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_data_scans_jobs_list("parent")
 ///              .page_token("dolor")
 ///              .page_size(-56)
+///              .filter("eos")
 ///              .doit().await;
 /// # }
 /// ```
@@ -8717,6 +10051,7 @@ pub struct ProjectLocationDataScanJobListCall<'a, S>
     _parent: String,
     _page_token: Option<String>,
     _page_size: Option<i32>,
+    _filter: Option<String>,
     _delegate: Option<&'a mut dyn client::Delegate>,
     _additional_params: HashMap<String, String>,
     _scopes: BTreeSet<String>
@@ -8745,20 +10080,23 @@ where
         dlg.begin(client::MethodInfo { id: "dataplex.projects.locations.dataScans.jobs.list",
                                http_method: hyper::Method::GET });
 
-        for &field in ["alt", "parent", "pageToken", "pageSize"].iter() {
+        for &field in ["alt", "parent", "pageToken", "pageSize", "filter"].iter() {
             if self._additional_params.contains_key(field) {
                 dlg.finished(false);
                 return Err(client::Error::FieldClash(field));
             }
         }
 
-        let mut params = Params::with_capacity(5 + self._additional_params.len());
+        let mut params = Params::with_capacity(6 + self._additional_params.len());
         params.push("parent", self._parent);
         if let Some(value) = self._page_token.as_ref() {
             params.push("pageToken", value);
         }
         if let Some(value) = self._page_size.as_ref() {
             params.push("pageSize", value.to_string());
+        }
+        if let Some(value) = self._filter.as_ref() {
+            params.push("filter", value);
         }
 
         params.extend(self._additional_params.iter());
@@ -8888,11 +10226,19 @@ where
         self._page_size = Some(new_value);
         self
     }
+    /// Optional. An expression for filtering the results of the ListDataScanJobs request.If unspecified, all datascan jobs will be returned. Multiple filters can be applied (with AND, OR logical operators). Filters are case-sensitive.Allowed fields are: start_time end_timestart_time and end_time expect RFC-3339 formatted strings (e.g. 2018-10-08T18:30:00-07:00).For instance, 'start_time > 2018-10-08T00:00:00.123456789Z AND end_time < 2018-10-09T00:00:00.123456789Z' limits results to DataScanJobs between specified start and end times.
+    ///
+    /// Sets the *filter* query property to the given value.
+    pub fn filter(mut self, new_value: &str) -> ProjectLocationDataScanJobListCall<'a, S> {
+        self._filter = Some(new_value.to_string());
+        self
+    }
     /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataScanJobListCall<'a, S> {
@@ -8986,7 +10332,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -8996,7 +10342,8 @@ where
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_data_scans_create(req, "parent")
-///              .data_scan_id("labore")
+///              .validate_only(true)
+///              .data_scan_id("duo")
 ///              .doit().await;
 /// # }
 /// ```
@@ -9006,6 +10353,7 @@ pub struct ProjectLocationDataScanCreateCall<'a, S>
     hub: &'a CloudDataplex<S>,
     _request: GoogleCloudDataplexV1DataScan,
     _parent: String,
+    _validate_only: Option<bool>,
     _data_scan_id: Option<String>,
     _delegate: Option<&'a mut dyn client::Delegate>,
     _additional_params: HashMap<String, String>,
@@ -9035,15 +10383,18 @@ where
         dlg.begin(client::MethodInfo { id: "dataplex.projects.locations.dataScans.create",
                                http_method: hyper::Method::POST });
 
-        for &field in ["alt", "parent", "dataScanId"].iter() {
+        for &field in ["alt", "parent", "validateOnly", "dataScanId"].iter() {
             if self._additional_params.contains_key(field) {
                 dlg.finished(false);
                 return Err(client::Error::FieldClash(field));
             }
         }
 
-        let mut params = Params::with_capacity(5 + self._additional_params.len());
+        let mut params = Params::with_capacity(6 + self._additional_params.len());
         params.push("parent", self._parent);
+        if let Some(value) = self._validate_only.as_ref() {
+            params.push("validateOnly", value.to_string());
+        }
         if let Some(value) = self._data_scan_id.as_ref() {
             params.push("dataScanId", value);
         }
@@ -9184,6 +10535,13 @@ where
         self._parent = new_value.to_string();
         self
     }
+    /// Optional. Only validate the request, but do not perform mutations. The default is false.
+    ///
+    /// Sets the *validate only* query property to the given value.
+    pub fn validate_only(mut self, new_value: bool) -> ProjectLocationDataScanCreateCall<'a, S> {
+        self._validate_only = Some(new_value);
+        self
+    }
     /// Required. DataScan identifier. Must contain only lowercase letters, numbers and hyphens. Must start with a letter. Must end with a number or a letter. Must be between 1-63 characters. Must be unique within the customer project / location.
     ///
     /// Sets the *data scan id* query property to the given value.
@@ -9195,7 +10553,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataScanCreateCall<'a, S> {
@@ -9288,7 +10647,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -9456,7 +10815,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataScanDeleteCall<'a, S> {
@@ -9549,12 +10909,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_data_scans_get("name")
-///              .view("sed")
+///              .view("Stet")
 ///              .doit().await;
 /// # }
 /// ```
@@ -9729,7 +11089,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataScanGetCall<'a, S> {
@@ -9822,12 +11183,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_data_scans_get_iam_policy("resource")
-///              .options_requested_policy_version(-15)
+///              .options_requested_policy_version(-24)
 ///              .doit().await;
 /// # }
 /// ```
@@ -10002,7 +11363,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataScanGetIamPolicyCall<'a, S> {
@@ -10095,15 +11457,15 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_data_scans_list("parent")
 ///              .page_token("et")
-///              .page_size(-43)
-///              .order_by("et")
-///              .filter("et")
+///              .page_size(-68)
+///              .order_by("vero")
+///              .filter("erat")
 ///              .doit().await;
 /// # }
 /// ```
@@ -10286,7 +11648,7 @@ where
         self._page_token = Some(new_value.to_string());
         self
     }
-    /// Optional. Maximum number of dataScans to return. The service may return fewer than this value. If unspecified, at most 10 scans will be returned. The maximum value is 1000; values above 1000 will be coerced to 1000.
+    /// Optional. Maximum number of dataScans to return. The service may return fewer than this value. If unspecified, at most 500 scans will be returned. The maximum value is 1000; values above 1000 will be coerced to 1000.
     ///
     /// Sets the *page size* query property to the given value.
     pub fn page_size(mut self, new_value: i32) -> ProjectLocationDataScanListCall<'a, S> {
@@ -10311,7 +11673,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataScanListCall<'a, S> {
@@ -10405,7 +11768,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -10415,6 +11778,7 @@ where
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_data_scans_patch(req, "name")
+///              .validate_only(false)
 ///              .update_mask(&Default::default())
 ///              .doit().await;
 /// # }
@@ -10425,6 +11789,7 @@ pub struct ProjectLocationDataScanPatchCall<'a, S>
     hub: &'a CloudDataplex<S>,
     _request: GoogleCloudDataplexV1DataScan,
     _name: String,
+    _validate_only: Option<bool>,
     _update_mask: Option<client::FieldMask>,
     _delegate: Option<&'a mut dyn client::Delegate>,
     _additional_params: HashMap<String, String>,
@@ -10454,15 +11819,18 @@ where
         dlg.begin(client::MethodInfo { id: "dataplex.projects.locations.dataScans.patch",
                                http_method: hyper::Method::PATCH });
 
-        for &field in ["alt", "name", "updateMask"].iter() {
+        for &field in ["alt", "name", "validateOnly", "updateMask"].iter() {
             if self._additional_params.contains_key(field) {
                 dlg.finished(false);
                 return Err(client::Error::FieldClash(field));
             }
         }
 
-        let mut params = Params::with_capacity(5 + self._additional_params.len());
+        let mut params = Params::with_capacity(6 + self._additional_params.len());
         params.push("name", self._name);
+        if let Some(value) = self._validate_only.as_ref() {
+            params.push("validateOnly", value.to_string());
+        }
         if let Some(value) = self._update_mask.as_ref() {
             params.push("updateMask", value.to_string());
         }
@@ -10603,6 +11971,13 @@ where
         self._name = new_value.to_string();
         self
     }
+    /// Optional. Only validate the request, but do not perform mutations. The default is false.
+    ///
+    /// Sets the *validate only* query property to the given value.
+    pub fn validate_only(mut self, new_value: bool) -> ProjectLocationDataScanPatchCall<'a, S> {
+        self._validate_only = Some(new_value);
+        self
+    }
     /// Required. Mask of fields to update.
     ///
     /// Sets the *update mask* query property to the given value.
@@ -10614,7 +11989,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataScanPatchCall<'a, S> {
@@ -10708,7 +12084,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -10905,7 +12281,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataScanRunCall<'a, S> {
@@ -10999,7 +12376,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -11196,7 +12573,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataScanSetIamPolicyCall<'a, S> {
@@ -11290,7 +12668,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -11487,7 +12865,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataScanTestIamPermissionCall<'a, S> {
@@ -11581,7 +12960,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -11592,7 +12971,7 @@ where
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_data_taxonomies_attributes_create(req, "parent")
 ///              .validate_only(false)
-///              .data_attribute_id("diam")
+///              .data_attribute_id("Stet")
 ///              .doit().await;
 /// # }
 /// ```
@@ -11802,7 +13181,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataTaxonomyAttributeCreateCall<'a, S> {
@@ -11895,12 +13275,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_data_taxonomies_attributes_delete("name")
-///              .etag("et")
+///              .etag("duo")
 ///              .doit().await;
 /// # }
 /// ```
@@ -12075,7 +13455,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataTaxonomyAttributeDeleteCall<'a, S> {
@@ -12168,7 +13549,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -12336,7 +13717,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataTaxonomyAttributeGetCall<'a, S> {
@@ -12429,12 +13811,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_data_taxonomies_attributes_get_iam_policy("resource")
-///              .options_requested_policy_version(-15)
+///              .options_requested_policy_version(-88)
 ///              .doit().await;
 /// # }
 /// ```
@@ -12609,7 +13991,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataTaxonomyAttributeGetIamPolicyCall<'a, S> {
@@ -12702,15 +14085,15 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_data_taxonomies_attributes_list("parent")
-///              .page_token("duo")
-///              .page_size(-76)
-///              .order_by("vero")
-///              .filter("invidunt")
+///              .page_token("vero")
+///              .page_size(-44)
+///              .order_by("Lorem")
+///              .filter("diam")
 ///              .doit().await;
 /// # }
 /// ```
@@ -12918,7 +14301,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataTaxonomyAttributeListCall<'a, S> {
@@ -13012,7 +14396,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -13233,7 +14617,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataTaxonomyAttributePatchCall<'a, S> {
@@ -13327,7 +14712,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -13524,7 +14909,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataTaxonomyAttributeSetIamPolicyCall<'a, S> {
@@ -13618,7 +15004,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -13815,7 +15201,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataTaxonomyAttributeTestIamPermissionCall<'a, S> {
@@ -13909,7 +15296,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -13919,8 +15306,8 @@ where
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_data_taxonomies_create(req, "parent")
-///              .validate_only(true)
-///              .data_taxonomy_id("ipsum")
+///              .validate_only(false)
+///              .data_taxonomy_id("erat")
 ///              .doit().await;
 /// # }
 /// ```
@@ -14130,7 +15517,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataTaxonomyCreateCall<'a, S> {
@@ -14223,12 +15611,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_data_taxonomies_delete("name")
-///              .etag("takimata")
+///              .etag("amet.")
 ///              .doit().await;
 /// # }
 /// ```
@@ -14403,7 +15791,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataTaxonomyDeleteCall<'a, S> {
@@ -14496,7 +15885,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -14664,7 +16053,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataTaxonomyGetCall<'a, S> {
@@ -14757,12 +16147,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_data_taxonomies_get_iam_policy("resource")
-///              .options_requested_policy_version(-72)
+///              .options_requested_policy_version(-19)
 ///              .doit().await;
 /// # }
 /// ```
@@ -14937,7 +16327,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataTaxonomyGetIamPolicyCall<'a, S> {
@@ -15030,15 +16421,15 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_data_taxonomies_list("parent")
-///              .page_token("consetetur")
-///              .page_size(-2)
-///              .order_by("sed")
-///              .filter("takimata")
+///              .page_token("et")
+///              .page_size(-23)
+///              .order_by("voluptua.")
+///              .filter("dolore")
 ///              .doit().await;
 /// # }
 /// ```
@@ -15246,7 +16637,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataTaxonomyListCall<'a, S> {
@@ -15340,7 +16732,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -15350,7 +16742,7 @@ where
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_data_taxonomies_patch(req, "name")
-///              .validate_only(true)
+///              .validate_only(false)
 ///              .update_mask(&Default::default())
 ///              .doit().await;
 /// # }
@@ -15561,7 +16953,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataTaxonomyPatchCall<'a, S> {
@@ -15655,7 +17048,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -15852,7 +17245,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataTaxonomySetIamPolicyCall<'a, S> {
@@ -15946,7 +17340,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -16143,7 +17537,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDataTaxonomyTestIamPermissionCall<'a, S> {
@@ -16214,6 +17609,2580 @@ where
 }
 
 
+/// Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
+///
+/// A builder for the *locations.entryGroups.getIamPolicy* method supported by a *project* resource.
+/// It is not used directly, but through a [`ProjectMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_dataplex1 as dataplex1;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use dataplex1::{CloudDataplex, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.projects().locations_entry_groups_get_iam_policy("resource")
+///              .options_requested_policy_version(-6)
+///              .doit().await;
+/// # }
+/// ```
+pub struct ProjectLocationEntryGroupGetIamPolicyCall<'a, S>
+    where S: 'a {
+
+    hub: &'a CloudDataplex<S>,
+    _resource: String,
+    _options_requested_policy_version: Option<i32>,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for ProjectLocationEntryGroupGetIamPolicyCall<'a, S> {}
+
+impl<'a, S> ProjectLocationEntryGroupGetIamPolicyCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, GoogleIamV1Policy)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "dataplex.projects.locations.entryGroups.getIamPolicy",
+                               http_method: hyper::Method::GET });
+
+        for &field in ["alt", "resource", "options.requestedPolicyVersion"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(4 + self._additional_params.len());
+        params.push("resource", self._resource);
+        if let Some(value) = self._options_requested_policy_version.as_ref() {
+            params.push("options.requestedPolicyVersion", value.to_string());
+        }
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+resource}:getIamPolicy";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["resource"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::GET)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .body(hyper::body::Body::empty());
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    /// REQUIRED: The resource for which the policy is being requested. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    ///
+    /// Sets the *resource* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn resource(mut self, new_value: &str) -> ProjectLocationEntryGroupGetIamPolicyCall<'a, S> {
+        self._resource = new_value.to_string();
+        self
+    }
+    /// Optional. The maximum policy version that will be used to format the policy.Valid values are 0, 1, and 3. Requests specifying an invalid value will be rejected.Requests for policies with any conditional role bindings must specify version 3. Policies with no conditional role bindings may specify any valid value or leave the field unset.The policy in the response might use the policy version that you specified, or it might use a lower policy version. For example, if you specify version 3, but the policy has no conditional role bindings, the response uses version 1.To learn which resources support conditions in their IAM policies, see the IAM documentation (https://cloud.google.com/iam/help/conditions/resource-policies).
+    ///
+    /// Sets the *options.requested policy version* query property to the given value.
+    pub fn options_requested_policy_version(mut self, new_value: i32) -> ProjectLocationEntryGroupGetIamPolicyCall<'a, S> {
+        self._options_requested_policy_version = Some(new_value);
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationEntryGroupGetIamPolicyCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationEntryGroupGetIamPolicyCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::CloudPlatform`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationEntryGroupGetIamPolicyCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationEntryGroupGetIamPolicyCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> ProjectLocationEntryGroupGetIamPolicyCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
+/// Sets the access control policy on the specified resource. Replaces any existing policy.Can return NOT_FOUND, INVALID_ARGUMENT, and PERMISSION_DENIED errors.
+///
+/// A builder for the *locations.entryGroups.setIamPolicy* method supported by a *project* resource.
+/// It is not used directly, but through a [`ProjectMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_dataplex1 as dataplex1;
+/// use dataplex1::api::GoogleIamV1SetIamPolicyRequest;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use dataplex1::{CloudDataplex, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // As the method needs a request, you would usually fill it with the desired information
+/// // into the respective structure. Some of the parts shown here might not be applicable !
+/// // Values shown here are possibly random and not representative !
+/// let mut req = GoogleIamV1SetIamPolicyRequest::default();
+/// 
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.projects().locations_entry_groups_set_iam_policy(req, "resource")
+///              .doit().await;
+/// # }
+/// ```
+pub struct ProjectLocationEntryGroupSetIamPolicyCall<'a, S>
+    where S: 'a {
+
+    hub: &'a CloudDataplex<S>,
+    _request: GoogleIamV1SetIamPolicyRequest,
+    _resource: String,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for ProjectLocationEntryGroupSetIamPolicyCall<'a, S> {}
+
+impl<'a, S> ProjectLocationEntryGroupSetIamPolicyCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, GoogleIamV1Policy)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "dataplex.projects.locations.entryGroups.setIamPolicy",
+                               http_method: hyper::Method::POST });
+
+        for &field in ["alt", "resource"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(4 + self._additional_params.len());
+        params.push("resource", self._resource);
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+resource}:setIamPolicy";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["resource"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+        let mut json_mime_type = mime::APPLICATION_JSON;
+        let mut request_value_reader =
+            {
+                let mut value = json::value::to_value(&self._request).expect("serde to work");
+                client::remove_json_null_values(&mut value);
+                let mut dst = io::Cursor::new(Vec::with_capacity(128));
+                json::to_writer(&mut dst, &value).unwrap();
+                dst
+            };
+        let request_size = request_value_reader.seek(io::SeekFrom::End(0)).unwrap();
+        request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::POST)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .header(CONTENT_TYPE, json_mime_type.to_string())
+                        .header(CONTENT_LENGTH, request_size as u64)
+                        .body(hyper::body::Body::from(request_value_reader.get_ref().clone()));
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    ///
+    /// Sets the *request* property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn request(mut self, new_value: GoogleIamV1SetIamPolicyRequest) -> ProjectLocationEntryGroupSetIamPolicyCall<'a, S> {
+        self._request = new_value;
+        self
+    }
+    /// REQUIRED: The resource for which the policy is being specified. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    ///
+    /// Sets the *resource* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn resource(mut self, new_value: &str) -> ProjectLocationEntryGroupSetIamPolicyCall<'a, S> {
+        self._resource = new_value.to_string();
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationEntryGroupSetIamPolicyCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationEntryGroupSetIamPolicyCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::CloudPlatform`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationEntryGroupSetIamPolicyCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationEntryGroupSetIamPolicyCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> ProjectLocationEntryGroupSetIamPolicyCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
+/// Returns permissions that a caller has on the specified resource. If the resource does not exist, this will return an empty set of permissions, not a NOT_FOUND error.Note: This operation is designed to be used for building permission-aware UIs and command-line tools, not for authorization checking. This operation may "fail open" without warning.
+///
+/// A builder for the *locations.entryGroups.testIamPermissions* method supported by a *project* resource.
+/// It is not used directly, but through a [`ProjectMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_dataplex1 as dataplex1;
+/// use dataplex1::api::GoogleIamV1TestIamPermissionsRequest;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use dataplex1::{CloudDataplex, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // As the method needs a request, you would usually fill it with the desired information
+/// // into the respective structure. Some of the parts shown here might not be applicable !
+/// // Values shown here are possibly random and not representative !
+/// let mut req = GoogleIamV1TestIamPermissionsRequest::default();
+/// 
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.projects().locations_entry_groups_test_iam_permissions(req, "resource")
+///              .doit().await;
+/// # }
+/// ```
+pub struct ProjectLocationEntryGroupTestIamPermissionCall<'a, S>
+    where S: 'a {
+
+    hub: &'a CloudDataplex<S>,
+    _request: GoogleIamV1TestIamPermissionsRequest,
+    _resource: String,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for ProjectLocationEntryGroupTestIamPermissionCall<'a, S> {}
+
+impl<'a, S> ProjectLocationEntryGroupTestIamPermissionCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, GoogleIamV1TestIamPermissionsResponse)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "dataplex.projects.locations.entryGroups.testIamPermissions",
+                               http_method: hyper::Method::POST });
+
+        for &field in ["alt", "resource"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(4 + self._additional_params.len());
+        params.push("resource", self._resource);
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+resource}:testIamPermissions";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["resource"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+        let mut json_mime_type = mime::APPLICATION_JSON;
+        let mut request_value_reader =
+            {
+                let mut value = json::value::to_value(&self._request).expect("serde to work");
+                client::remove_json_null_values(&mut value);
+                let mut dst = io::Cursor::new(Vec::with_capacity(128));
+                json::to_writer(&mut dst, &value).unwrap();
+                dst
+            };
+        let request_size = request_value_reader.seek(io::SeekFrom::End(0)).unwrap();
+        request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::POST)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .header(CONTENT_TYPE, json_mime_type.to_string())
+                        .header(CONTENT_LENGTH, request_size as u64)
+                        .body(hyper::body::Body::from(request_value_reader.get_ref().clone()));
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    ///
+    /// Sets the *request* property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn request(mut self, new_value: GoogleIamV1TestIamPermissionsRequest) -> ProjectLocationEntryGroupTestIamPermissionCall<'a, S> {
+        self._request = new_value;
+        self
+    }
+    /// REQUIRED: The resource for which the policy detail is being requested. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    ///
+    /// Sets the *resource* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn resource(mut self, new_value: &str) -> ProjectLocationEntryGroupTestIamPermissionCall<'a, S> {
+        self._resource = new_value.to_string();
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationEntryGroupTestIamPermissionCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationEntryGroupTestIamPermissionCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::CloudPlatform`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationEntryGroupTestIamPermissionCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationEntryGroupTestIamPermissionCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> ProjectLocationEntryGroupTestIamPermissionCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
+/// Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
+///
+/// A builder for the *locations.entryTypes.getIamPolicy* method supported by a *project* resource.
+/// It is not used directly, but through a [`ProjectMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_dataplex1 as dataplex1;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use dataplex1::{CloudDataplex, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.projects().locations_entry_types_get_iam_policy("resource")
+///              .options_requested_policy_version(-27)
+///              .doit().await;
+/// # }
+/// ```
+pub struct ProjectLocationEntryTypeGetIamPolicyCall<'a, S>
+    where S: 'a {
+
+    hub: &'a CloudDataplex<S>,
+    _resource: String,
+    _options_requested_policy_version: Option<i32>,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for ProjectLocationEntryTypeGetIamPolicyCall<'a, S> {}
+
+impl<'a, S> ProjectLocationEntryTypeGetIamPolicyCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, GoogleIamV1Policy)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "dataplex.projects.locations.entryTypes.getIamPolicy",
+                               http_method: hyper::Method::GET });
+
+        for &field in ["alt", "resource", "options.requestedPolicyVersion"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(4 + self._additional_params.len());
+        params.push("resource", self._resource);
+        if let Some(value) = self._options_requested_policy_version.as_ref() {
+            params.push("options.requestedPolicyVersion", value.to_string());
+        }
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+resource}:getIamPolicy";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["resource"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::GET)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .body(hyper::body::Body::empty());
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    /// REQUIRED: The resource for which the policy is being requested. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    ///
+    /// Sets the *resource* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn resource(mut self, new_value: &str) -> ProjectLocationEntryTypeGetIamPolicyCall<'a, S> {
+        self._resource = new_value.to_string();
+        self
+    }
+    /// Optional. The maximum policy version that will be used to format the policy.Valid values are 0, 1, and 3. Requests specifying an invalid value will be rejected.Requests for policies with any conditional role bindings must specify version 3. Policies with no conditional role bindings may specify any valid value or leave the field unset.The policy in the response might use the policy version that you specified, or it might use a lower policy version. For example, if you specify version 3, but the policy has no conditional role bindings, the response uses version 1.To learn which resources support conditions in their IAM policies, see the IAM documentation (https://cloud.google.com/iam/help/conditions/resource-policies).
+    ///
+    /// Sets the *options.requested policy version* query property to the given value.
+    pub fn options_requested_policy_version(mut self, new_value: i32) -> ProjectLocationEntryTypeGetIamPolicyCall<'a, S> {
+        self._options_requested_policy_version = Some(new_value);
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationEntryTypeGetIamPolicyCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationEntryTypeGetIamPolicyCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::CloudPlatform`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationEntryTypeGetIamPolicyCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationEntryTypeGetIamPolicyCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> ProjectLocationEntryTypeGetIamPolicyCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
+/// Sets the access control policy on the specified resource. Replaces any existing policy.Can return NOT_FOUND, INVALID_ARGUMENT, and PERMISSION_DENIED errors.
+///
+/// A builder for the *locations.entryTypes.setIamPolicy* method supported by a *project* resource.
+/// It is not used directly, but through a [`ProjectMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_dataplex1 as dataplex1;
+/// use dataplex1::api::GoogleIamV1SetIamPolicyRequest;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use dataplex1::{CloudDataplex, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // As the method needs a request, you would usually fill it with the desired information
+/// // into the respective structure. Some of the parts shown here might not be applicable !
+/// // Values shown here are possibly random and not representative !
+/// let mut req = GoogleIamV1SetIamPolicyRequest::default();
+/// 
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.projects().locations_entry_types_set_iam_policy(req, "resource")
+///              .doit().await;
+/// # }
+/// ```
+pub struct ProjectLocationEntryTypeSetIamPolicyCall<'a, S>
+    where S: 'a {
+
+    hub: &'a CloudDataplex<S>,
+    _request: GoogleIamV1SetIamPolicyRequest,
+    _resource: String,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for ProjectLocationEntryTypeSetIamPolicyCall<'a, S> {}
+
+impl<'a, S> ProjectLocationEntryTypeSetIamPolicyCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, GoogleIamV1Policy)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "dataplex.projects.locations.entryTypes.setIamPolicy",
+                               http_method: hyper::Method::POST });
+
+        for &field in ["alt", "resource"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(4 + self._additional_params.len());
+        params.push("resource", self._resource);
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+resource}:setIamPolicy";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["resource"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+        let mut json_mime_type = mime::APPLICATION_JSON;
+        let mut request_value_reader =
+            {
+                let mut value = json::value::to_value(&self._request).expect("serde to work");
+                client::remove_json_null_values(&mut value);
+                let mut dst = io::Cursor::new(Vec::with_capacity(128));
+                json::to_writer(&mut dst, &value).unwrap();
+                dst
+            };
+        let request_size = request_value_reader.seek(io::SeekFrom::End(0)).unwrap();
+        request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::POST)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .header(CONTENT_TYPE, json_mime_type.to_string())
+                        .header(CONTENT_LENGTH, request_size as u64)
+                        .body(hyper::body::Body::from(request_value_reader.get_ref().clone()));
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    ///
+    /// Sets the *request* property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn request(mut self, new_value: GoogleIamV1SetIamPolicyRequest) -> ProjectLocationEntryTypeSetIamPolicyCall<'a, S> {
+        self._request = new_value;
+        self
+    }
+    /// REQUIRED: The resource for which the policy is being specified. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    ///
+    /// Sets the *resource* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn resource(mut self, new_value: &str) -> ProjectLocationEntryTypeSetIamPolicyCall<'a, S> {
+        self._resource = new_value.to_string();
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationEntryTypeSetIamPolicyCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationEntryTypeSetIamPolicyCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::CloudPlatform`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationEntryTypeSetIamPolicyCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationEntryTypeSetIamPolicyCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> ProjectLocationEntryTypeSetIamPolicyCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
+/// Returns permissions that a caller has on the specified resource. If the resource does not exist, this will return an empty set of permissions, not a NOT_FOUND error.Note: This operation is designed to be used for building permission-aware UIs and command-line tools, not for authorization checking. This operation may "fail open" without warning.
+///
+/// A builder for the *locations.entryTypes.testIamPermissions* method supported by a *project* resource.
+/// It is not used directly, but through a [`ProjectMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_dataplex1 as dataplex1;
+/// use dataplex1::api::GoogleIamV1TestIamPermissionsRequest;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use dataplex1::{CloudDataplex, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // As the method needs a request, you would usually fill it with the desired information
+/// // into the respective structure. Some of the parts shown here might not be applicable !
+/// // Values shown here are possibly random and not representative !
+/// let mut req = GoogleIamV1TestIamPermissionsRequest::default();
+/// 
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.projects().locations_entry_types_test_iam_permissions(req, "resource")
+///              .doit().await;
+/// # }
+/// ```
+pub struct ProjectLocationEntryTypeTestIamPermissionCall<'a, S>
+    where S: 'a {
+
+    hub: &'a CloudDataplex<S>,
+    _request: GoogleIamV1TestIamPermissionsRequest,
+    _resource: String,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for ProjectLocationEntryTypeTestIamPermissionCall<'a, S> {}
+
+impl<'a, S> ProjectLocationEntryTypeTestIamPermissionCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, GoogleIamV1TestIamPermissionsResponse)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "dataplex.projects.locations.entryTypes.testIamPermissions",
+                               http_method: hyper::Method::POST });
+
+        for &field in ["alt", "resource"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(4 + self._additional_params.len());
+        params.push("resource", self._resource);
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+resource}:testIamPermissions";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["resource"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+        let mut json_mime_type = mime::APPLICATION_JSON;
+        let mut request_value_reader =
+            {
+                let mut value = json::value::to_value(&self._request).expect("serde to work");
+                client::remove_json_null_values(&mut value);
+                let mut dst = io::Cursor::new(Vec::with_capacity(128));
+                json::to_writer(&mut dst, &value).unwrap();
+                dst
+            };
+        let request_size = request_value_reader.seek(io::SeekFrom::End(0)).unwrap();
+        request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::POST)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .header(CONTENT_TYPE, json_mime_type.to_string())
+                        .header(CONTENT_LENGTH, request_size as u64)
+                        .body(hyper::body::Body::from(request_value_reader.get_ref().clone()));
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    ///
+    /// Sets the *request* property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn request(mut self, new_value: GoogleIamV1TestIamPermissionsRequest) -> ProjectLocationEntryTypeTestIamPermissionCall<'a, S> {
+        self._request = new_value;
+        self
+    }
+    /// REQUIRED: The resource for which the policy detail is being requested. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    ///
+    /// Sets the *resource* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn resource(mut self, new_value: &str) -> ProjectLocationEntryTypeTestIamPermissionCall<'a, S> {
+        self._resource = new_value.to_string();
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationEntryTypeTestIamPermissionCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationEntryTypeTestIamPermissionCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::CloudPlatform`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationEntryTypeTestIamPermissionCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationEntryTypeTestIamPermissionCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> ProjectLocationEntryTypeTestIamPermissionCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
+/// Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
+///
+/// A builder for the *locations.governanceRules.getIamPolicy* method supported by a *project* resource.
+/// It is not used directly, but through a [`ProjectMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_dataplex1 as dataplex1;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use dataplex1::{CloudDataplex, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.projects().locations_governance_rules_get_iam_policy("resource")
+///              .options_requested_policy_version(-39)
+///              .doit().await;
+/// # }
+/// ```
+pub struct ProjectLocationGovernanceRuleGetIamPolicyCall<'a, S>
+    where S: 'a {
+
+    hub: &'a CloudDataplex<S>,
+    _resource: String,
+    _options_requested_policy_version: Option<i32>,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for ProjectLocationGovernanceRuleGetIamPolicyCall<'a, S> {}
+
+impl<'a, S> ProjectLocationGovernanceRuleGetIamPolicyCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, GoogleIamV1Policy)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "dataplex.projects.locations.governanceRules.getIamPolicy",
+                               http_method: hyper::Method::GET });
+
+        for &field in ["alt", "resource", "options.requestedPolicyVersion"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(4 + self._additional_params.len());
+        params.push("resource", self._resource);
+        if let Some(value) = self._options_requested_policy_version.as_ref() {
+            params.push("options.requestedPolicyVersion", value.to_string());
+        }
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+resource}:getIamPolicy";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["resource"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::GET)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .body(hyper::body::Body::empty());
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    /// REQUIRED: The resource for which the policy is being requested. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    ///
+    /// Sets the *resource* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn resource(mut self, new_value: &str) -> ProjectLocationGovernanceRuleGetIamPolicyCall<'a, S> {
+        self._resource = new_value.to_string();
+        self
+    }
+    /// Optional. The maximum policy version that will be used to format the policy.Valid values are 0, 1, and 3. Requests specifying an invalid value will be rejected.Requests for policies with any conditional role bindings must specify version 3. Policies with no conditional role bindings may specify any valid value or leave the field unset.The policy in the response might use the policy version that you specified, or it might use a lower policy version. For example, if you specify version 3, but the policy has no conditional role bindings, the response uses version 1.To learn which resources support conditions in their IAM policies, see the IAM documentation (https://cloud.google.com/iam/help/conditions/resource-policies).
+    ///
+    /// Sets the *options.requested policy version* query property to the given value.
+    pub fn options_requested_policy_version(mut self, new_value: i32) -> ProjectLocationGovernanceRuleGetIamPolicyCall<'a, S> {
+        self._options_requested_policy_version = Some(new_value);
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationGovernanceRuleGetIamPolicyCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationGovernanceRuleGetIamPolicyCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::CloudPlatform`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationGovernanceRuleGetIamPolicyCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationGovernanceRuleGetIamPolicyCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> ProjectLocationGovernanceRuleGetIamPolicyCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
+/// Sets the access control policy on the specified resource. Replaces any existing policy.Can return NOT_FOUND, INVALID_ARGUMENT, and PERMISSION_DENIED errors.
+///
+/// A builder for the *locations.governanceRules.setIamPolicy* method supported by a *project* resource.
+/// It is not used directly, but through a [`ProjectMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_dataplex1 as dataplex1;
+/// use dataplex1::api::GoogleIamV1SetIamPolicyRequest;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use dataplex1::{CloudDataplex, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // As the method needs a request, you would usually fill it with the desired information
+/// // into the respective structure. Some of the parts shown here might not be applicable !
+/// // Values shown here are possibly random and not representative !
+/// let mut req = GoogleIamV1SetIamPolicyRequest::default();
+/// 
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.projects().locations_governance_rules_set_iam_policy(req, "resource")
+///              .doit().await;
+/// # }
+/// ```
+pub struct ProjectLocationGovernanceRuleSetIamPolicyCall<'a, S>
+    where S: 'a {
+
+    hub: &'a CloudDataplex<S>,
+    _request: GoogleIamV1SetIamPolicyRequest,
+    _resource: String,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for ProjectLocationGovernanceRuleSetIamPolicyCall<'a, S> {}
+
+impl<'a, S> ProjectLocationGovernanceRuleSetIamPolicyCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, GoogleIamV1Policy)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "dataplex.projects.locations.governanceRules.setIamPolicy",
+                               http_method: hyper::Method::POST });
+
+        for &field in ["alt", "resource"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(4 + self._additional_params.len());
+        params.push("resource", self._resource);
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+resource}:setIamPolicy";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["resource"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+        let mut json_mime_type = mime::APPLICATION_JSON;
+        let mut request_value_reader =
+            {
+                let mut value = json::value::to_value(&self._request).expect("serde to work");
+                client::remove_json_null_values(&mut value);
+                let mut dst = io::Cursor::new(Vec::with_capacity(128));
+                json::to_writer(&mut dst, &value).unwrap();
+                dst
+            };
+        let request_size = request_value_reader.seek(io::SeekFrom::End(0)).unwrap();
+        request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::POST)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .header(CONTENT_TYPE, json_mime_type.to_string())
+                        .header(CONTENT_LENGTH, request_size as u64)
+                        .body(hyper::body::Body::from(request_value_reader.get_ref().clone()));
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    ///
+    /// Sets the *request* property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn request(mut self, new_value: GoogleIamV1SetIamPolicyRequest) -> ProjectLocationGovernanceRuleSetIamPolicyCall<'a, S> {
+        self._request = new_value;
+        self
+    }
+    /// REQUIRED: The resource for which the policy is being specified. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    ///
+    /// Sets the *resource* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn resource(mut self, new_value: &str) -> ProjectLocationGovernanceRuleSetIamPolicyCall<'a, S> {
+        self._resource = new_value.to_string();
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationGovernanceRuleSetIamPolicyCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationGovernanceRuleSetIamPolicyCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::CloudPlatform`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationGovernanceRuleSetIamPolicyCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationGovernanceRuleSetIamPolicyCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> ProjectLocationGovernanceRuleSetIamPolicyCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
+/// Returns permissions that a caller has on the specified resource. If the resource does not exist, this will return an empty set of permissions, not a NOT_FOUND error.Note: This operation is designed to be used for building permission-aware UIs and command-line tools, not for authorization checking. This operation may "fail open" without warning.
+///
+/// A builder for the *locations.governanceRules.testIamPermissions* method supported by a *project* resource.
+/// It is not used directly, but through a [`ProjectMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_dataplex1 as dataplex1;
+/// use dataplex1::api::GoogleIamV1TestIamPermissionsRequest;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use dataplex1::{CloudDataplex, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // As the method needs a request, you would usually fill it with the desired information
+/// // into the respective structure. Some of the parts shown here might not be applicable !
+/// // Values shown here are possibly random and not representative !
+/// let mut req = GoogleIamV1TestIamPermissionsRequest::default();
+/// 
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.projects().locations_governance_rules_test_iam_permissions(req, "resource")
+///              .doit().await;
+/// # }
+/// ```
+pub struct ProjectLocationGovernanceRuleTestIamPermissionCall<'a, S>
+    where S: 'a {
+
+    hub: &'a CloudDataplex<S>,
+    _request: GoogleIamV1TestIamPermissionsRequest,
+    _resource: String,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for ProjectLocationGovernanceRuleTestIamPermissionCall<'a, S> {}
+
+impl<'a, S> ProjectLocationGovernanceRuleTestIamPermissionCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, GoogleIamV1TestIamPermissionsResponse)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "dataplex.projects.locations.governanceRules.testIamPermissions",
+                               http_method: hyper::Method::POST });
+
+        for &field in ["alt", "resource"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(4 + self._additional_params.len());
+        params.push("resource", self._resource);
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+resource}:testIamPermissions";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["resource"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+        let mut json_mime_type = mime::APPLICATION_JSON;
+        let mut request_value_reader =
+            {
+                let mut value = json::value::to_value(&self._request).expect("serde to work");
+                client::remove_json_null_values(&mut value);
+                let mut dst = io::Cursor::new(Vec::with_capacity(128));
+                json::to_writer(&mut dst, &value).unwrap();
+                dst
+            };
+        let request_size = request_value_reader.seek(io::SeekFrom::End(0)).unwrap();
+        request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::POST)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .header(CONTENT_TYPE, json_mime_type.to_string())
+                        .header(CONTENT_LENGTH, request_size as u64)
+                        .body(hyper::body::Body::from(request_value_reader.get_ref().clone()));
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    ///
+    /// Sets the *request* property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn request(mut self, new_value: GoogleIamV1TestIamPermissionsRequest) -> ProjectLocationGovernanceRuleTestIamPermissionCall<'a, S> {
+        self._request = new_value;
+        self
+    }
+    /// REQUIRED: The resource for which the policy detail is being requested. See Resource names (https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    ///
+    /// Sets the *resource* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn resource(mut self, new_value: &str) -> ProjectLocationGovernanceRuleTestIamPermissionCall<'a, S> {
+        self._resource = new_value.to_string();
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationGovernanceRuleTestIamPermissionCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationGovernanceRuleTestIamPermissionCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::CloudPlatform`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationGovernanceRuleTestIamPermissionCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationGovernanceRuleTestIamPermissionCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> ProjectLocationGovernanceRuleTestIamPermissionCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
 /// Lists action resources in a lake.
 ///
 /// A builder for the *locations.lakes.actions.list* method supported by a *project* resource.
@@ -16236,13 +20205,13 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_actions_list("parent")
-///              .page_token("dolore")
-///              .page_size(-34)
+///              .page_token("sanctus")
+///              .page_size(-56)
 ///              .doit().await;
 /// # }
 /// ```
@@ -16428,7 +20397,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeActionListCall<'a, S> {
@@ -16522,7 +20492,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -16532,7 +20502,7 @@ where
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_content_create(req, "parent")
-///              .validate_only(false)
+///              .validate_only(true)
 ///              .doit().await;
 /// # }
 /// ```
@@ -16731,7 +20701,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeContentCreateCall<'a, S> {
@@ -16824,7 +20795,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -16992,7 +20963,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeContentDeleteCall<'a, S> {
@@ -17085,12 +21057,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_content_get("name")
-///              .view("sadipscing")
+///              .view("no")
 ///              .doit().await;
 /// # }
 /// ```
@@ -17265,7 +21237,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeContentGetCall<'a, S> {
@@ -17358,12 +21331,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_content_get_iam_policy("resource")
-///              .options_requested_policy_version(-38)
+///              .options_requested_policy_version(-94)
 ///              .doit().await;
 /// # }
 /// ```
@@ -17538,7 +21511,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeContentGetIamPolicyCall<'a, S> {
@@ -17631,14 +21605,14 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_content_list("parent")
-///              .page_token("est")
-///              .page_size(-27)
-///              .filter("sed")
+///              .page_token("no")
+///              .page_size(-91)
+///              .filter("At")
 ///              .doit().await;
 /// # }
 /// ```
@@ -17835,7 +21809,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeContentListCall<'a, S> {
@@ -17929,7 +21904,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -18150,7 +22125,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeContentPatchCall<'a, S> {
@@ -18244,7 +22220,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -18441,7 +22417,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeContentSetIamPolicyCall<'a, S> {
@@ -18535,7 +22512,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -18732,7 +22709,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeContentTestIamPermissionCall<'a, S> {
@@ -18826,7 +22804,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -19035,7 +23013,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeContentitemCreateCall<'a, S> {
@@ -19128,7 +23107,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -19296,7 +23275,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeContentitemDeleteCall<'a, S> {
@@ -19389,12 +23369,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_contentitems_get("name")
-///              .view("diam")
+///              .view("sea")
 ///              .doit().await;
 /// # }
 /// ```
@@ -19569,7 +23549,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeContentitemGetCall<'a, S> {
@@ -19662,12 +23643,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_contentitems_get_iam_policy("resource")
-///              .options_requested_policy_version(-69)
+///              .options_requested_policy_version(-46)
 ///              .doit().await;
 /// # }
 /// ```
@@ -19842,7 +23823,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeContentitemGetIamPolicyCall<'a, S> {
@@ -19935,14 +23917,14 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_contentitems_list("parent")
-///              .page_token("sed")
-///              .page_size(-11)
-///              .filter("et")
+///              .page_token("est")
+///              .page_size(-82)
+///              .filter("elitr")
 ///              .doit().await;
 /// # }
 /// ```
@@ -20139,7 +24121,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeContentitemListCall<'a, S> {
@@ -20233,7 +24216,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -20243,7 +24226,7 @@ where
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_contentitems_patch(req, "name")
-///              .validate_only(false)
+///              .validate_only(true)
 ///              .update_mask(&Default::default())
 ///              .doit().await;
 /// # }
@@ -20454,7 +24437,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeContentitemPatchCall<'a, S> {
@@ -20548,7 +24532,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -20745,7 +24729,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeContentitemSetIamPolicyCall<'a, S> {
@@ -20839,7 +24824,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -21036,7 +25021,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeContentitemTestIamPermissionCall<'a, S> {
@@ -21129,14 +25115,14 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_environments_sessions_list("parent")
-///              .page_token("sadipscing")
-///              .page_size(-32)
-///              .filter("dolores")
+///              .page_token("eos")
+///              .page_size(-56)
+///              .filter("ea")
 ///              .doit().await;
 /// # }
 /// ```
@@ -21333,7 +25319,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeEnvironmentSessionListCall<'a, S> {
@@ -21427,7 +25414,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -21437,8 +25424,8 @@ where
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_environments_create(req, "parent")
-///              .validate_only(false)
-///              .environment_id("amet")
+///              .validate_only(true)
+///              .environment_id("sea")
 ///              .doit().await;
 /// # }
 /// ```
@@ -21648,7 +25635,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeEnvironmentCreateCall<'a, S> {
@@ -21741,7 +25729,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -21909,7 +25897,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeEnvironmentDeleteCall<'a, S> {
@@ -22002,7 +25991,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -22170,7 +26159,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeEnvironmentGetCall<'a, S> {
@@ -22263,12 +26253,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_environments_get_iam_policy("resource")
-///              .options_requested_policy_version(-96)
+///              .options_requested_policy_version(-40)
 ///              .doit().await;
 /// # }
 /// ```
@@ -22443,7 +26433,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeEnvironmentGetIamPolicyCall<'a, S> {
@@ -22536,15 +26527,15 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_environments_list("parent")
-///              .page_token("Stet")
-///              .page_size(-7)
-///              .order_by("aliquyam")
-///              .filter("elitr")
+///              .page_token("accusam")
+///              .page_size(-47)
+///              .order_by("erat")
+///              .filter("dolores")
 ///              .doit().await;
 /// # }
 /// ```
@@ -22752,7 +26743,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeEnvironmentListCall<'a, S> {
@@ -22846,7 +26838,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -22856,7 +26848,7 @@ where
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_environments_patch(req, "name")
-///              .validate_only(true)
+///              .validate_only(false)
 ///              .update_mask(&Default::default())
 ///              .doit().await;
 /// # }
@@ -23067,7 +27059,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeEnvironmentPatchCall<'a, S> {
@@ -23161,7 +27154,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -23358,7 +27351,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeEnvironmentSetIamPolicyCall<'a, S> {
@@ -23452,7 +27446,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -23649,7 +27643,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeEnvironmentTestIamPermissionCall<'a, S> {
@@ -23743,7 +27738,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -23940,7 +27935,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeTaskJobCancelCall<'a, S> {
@@ -24033,7 +28029,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -24201,7 +28197,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeTaskJobGetCall<'a, S> {
@@ -24294,13 +28291,13 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_tasks_jobs_list("parent")
-///              .page_token("ea")
-///              .page_size(-15)
+///              .page_token("dolor")
+///              .page_size(-22)
 ///              .doit().await;
 /// # }
 /// ```
@@ -24486,7 +28483,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeTaskJobListCall<'a, S> {
@@ -24580,7 +28578,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -24590,7 +28588,7 @@ where
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_tasks_create(req, "parent")
-///              .validate_only(true)
+///              .validate_only(false)
 ///              .task_id("sea")
 ///              .doit().await;
 /// # }
@@ -24801,7 +28799,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeTaskCreateCall<'a, S> {
@@ -24894,7 +28893,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -25062,7 +29061,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeTaskDeleteCall<'a, S> {
@@ -25155,7 +29155,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -25323,7 +29323,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeTaskGetCall<'a, S> {
@@ -25416,12 +29417,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_tasks_get_iam_policy("resource")
-///              .options_requested_policy_version(-40)
+///              .options_requested_policy_version(-21)
 ///              .doit().await;
 /// # }
 /// ```
@@ -25596,7 +29597,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeTaskGetIamPolicyCall<'a, S> {
@@ -25689,15 +29691,15 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_tasks_list("parent")
-///              .page_token("accusam")
-///              .page_size(-47)
-///              .order_by("erat")
-///              .filter("dolores")
+///              .page_token("consetetur")
+///              .page_size(-98)
+///              .order_by("aliquyam")
+///              .filter("eos")
 ///              .doit().await;
 /// # }
 /// ```
@@ -25905,7 +29907,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeTaskListCall<'a, S> {
@@ -25999,7 +30002,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -26009,7 +30012,7 @@ where
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_tasks_patch(req, "name")
-///              .validate_only(false)
+///              .validate_only(true)
 ///              .update_mask(&Default::default())
 ///              .doit().await;
 /// # }
@@ -26220,7 +30223,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeTaskPatchCall<'a, S> {
@@ -26314,7 +30318,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -26511,7 +30515,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeTaskRunCall<'a, S> {
@@ -26605,7 +30610,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -26802,7 +30807,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeTaskSetIamPolicyCall<'a, S> {
@@ -26896,7 +30902,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -27093,7 +31099,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeTaskTestIamPermissionCall<'a, S> {
@@ -27186,13 +31193,13 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_zones_actions_list("parent")
-///              .page_token("At")
-///              .page_size(-4)
+///              .page_token("amet.")
+///              .page_size(-50)
 ///              .doit().await;
 /// # }
 /// ```
@@ -27378,7 +31385,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneActionListCall<'a, S> {
@@ -27471,13 +31479,13 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_zones_assets_actions_list("parent")
-///              .page_token("sit")
-///              .page_size(-81)
+///              .page_token("accusam")
+///              .page_size(-62)
 ///              .doit().await;
 /// # }
 /// ```
@@ -27663,7 +31671,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneAssetActionListCall<'a, S> {
@@ -27757,7 +31766,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -27768,7 +31777,7 @@ where
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_zones_assets_create(req, "parent")
 ///              .validate_only(true)
-///              .asset_id("et")
+///              .asset_id("duo")
 ///              .doit().await;
 /// # }
 /// ```
@@ -27978,7 +31987,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneAssetCreateCall<'a, S> {
@@ -28071,7 +32081,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -28239,7 +32249,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneAssetDeleteCall<'a, S> {
@@ -28332,7 +32343,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -28500,7 +32511,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneAssetGetCall<'a, S> {
@@ -28593,12 +32605,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_zones_assets_get_iam_policy("resource")
-///              .options_requested_policy_version(-96)
+///              .options_requested_policy_version(-66)
 ///              .doit().await;
 /// # }
 /// ```
@@ -28773,7 +32785,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneAssetGetIamPolicyCall<'a, S> {
@@ -28866,15 +32879,15 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_zones_assets_list("parent")
-///              .page_token("aliquyam")
-///              .page_size(-25)
-///              .order_by("At")
-///              .filter("dolores")
+///              .page_token("Lorem")
+///              .page_size(-71)
+///              .order_by("amet.")
+///              .filter("no")
 ///              .doit().await;
 /// # }
 /// ```
@@ -29082,7 +33095,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneAssetListCall<'a, S> {
@@ -29176,7 +33190,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -29397,7 +33411,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneAssetPatchCall<'a, S> {
@@ -29491,7 +33506,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -29688,7 +33703,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneAssetSetIamPolicyCall<'a, S> {
@@ -29782,7 +33798,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -29979,7 +33995,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneAssetTestIamPermissionCall<'a, S> {
@@ -30073,7 +34090,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -30083,7 +34100,7 @@ where
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_zones_entities_partitions_create(req, "parent")
-///              .validate_only(true)
+///              .validate_only(false)
 ///              .doit().await;
 /// # }
 /// ```
@@ -30282,7 +34299,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneEntityPartitionCreateCall<'a, S> {
@@ -30375,12 +34393,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_zones_entities_partitions_delete("name")
-///              .etag("accusam")
+///              .etag("tempor")
 ///              .doit().await;
 /// # }
 /// ```
@@ -30555,7 +34573,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneEntityPartitionDeleteCall<'a, S> {
@@ -30648,7 +34667,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -30816,7 +34835,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneEntityPartitionGetCall<'a, S> {
@@ -30909,14 +34929,14 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_zones_entities_partitions_list("parent")
-///              .page_token("At")
-///              .page_size(-53)
-///              .filter("duo")
+///              .page_token("amet.")
+///              .page_size(-84)
+///              .filter("amet")
 ///              .doit().await;
 /// # }
 /// ```
@@ -31113,7 +35133,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneEntityPartitionListCall<'a, S> {
@@ -31207,7 +35228,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -31217,7 +35238,7 @@ where
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_zones_entities_create(req, "parent")
-///              .validate_only(false)
+///              .validate_only(true)
 ///              .doit().await;
 /// # }
 /// ```
@@ -31416,7 +35437,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneEntityCreateCall<'a, S> {
@@ -31509,12 +35531,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_zones_entities_delete("name")
-///              .etag("rebum.")
+///              .etag("duo")
 ///              .doit().await;
 /// # }
 /// ```
@@ -31689,7 +35711,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneEntityDeleteCall<'a, S> {
@@ -31782,12 +35805,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_zones_entities_get("name")
-///              .view("Lorem")
+///              .view("ut")
 ///              .doit().await;
 /// # }
 /// ```
@@ -31962,7 +35985,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneEntityGetCall<'a, S> {
@@ -32055,15 +36079,15 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_zones_entities_list("parent")
-///              .view("amet.")
-///              .page_token("no")
-///              .page_size(-91)
-///              .filter("sed")
+///              .view("duo")
+///              .page_token("kasd")
+///              .page_size(-95)
+///              .filter("tempor")
 ///              .doit().await;
 /// # }
 /// ```
@@ -32271,7 +36295,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneEntityListCall<'a, S> {
@@ -32365,7 +36390,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -32574,7 +36599,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneEntityUpdateCall<'a, S> {
@@ -32668,7 +36694,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -32678,7 +36704,7 @@ where
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_zones_create(req, "parent")
-///              .zone_id("nonumy")
+///              .zone_id("magna")
 ///              .validate_only(true)
 ///              .doit().await;
 /// # }
@@ -32889,7 +36915,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneCreateCall<'a, S> {
@@ -32982,7 +37009,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -33150,7 +37177,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneDeleteCall<'a, S> {
@@ -33243,7 +37271,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -33411,7 +37439,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneGetCall<'a, S> {
@@ -33504,12 +37533,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_zones_get_iam_policy("resource")
-///              .options_requested_policy_version(-52)
+///              .options_requested_policy_version(-14)
 ///              .doit().await;
 /// # }
 /// ```
@@ -33684,7 +37713,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneGetIamPolicyCall<'a, S> {
@@ -33777,15 +37807,15 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_zones_list("parent")
-///              .page_token("amet")
+///              .page_token("aliquyam")
 ///              .page_size(-37)
-///              .order_by("At")
-///              .filter("sit")
+///              .order_by("sit")
+///              .filter("vero")
 ///              .doit().await;
 /// # }
 /// ```
@@ -33993,7 +38023,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneListCall<'a, S> {
@@ -34087,7 +38118,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -34097,7 +38128,7 @@ where
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_zones_patch(req, "name")
-///              .validate_only(true)
+///              .validate_only(false)
 ///              .update_mask(&Default::default())
 ///              .doit().await;
 /// # }
@@ -34308,7 +38339,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZonePatchCall<'a, S> {
@@ -34402,7 +38434,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -34599,7 +38631,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneSetIamPolicyCall<'a, S> {
@@ -34693,7 +38726,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -34890,7 +38923,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeZoneTestIamPermissionCall<'a, S> {
@@ -34984,7 +39018,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -34995,7 +39029,7 @@ where
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_create(req, "parent")
 ///              .validate_only(true)
-///              .lake_id("sadipscing")
+///              .lake_id("dolor")
 ///              .doit().await;
 /// # }
 /// ```
@@ -35205,7 +39239,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeCreateCall<'a, S> {
@@ -35298,7 +39333,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -35466,7 +39501,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeDeleteCall<'a, S> {
@@ -35559,7 +39595,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -35727,7 +39763,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeGetCall<'a, S> {
@@ -35820,12 +39857,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_get_iam_policy("resource")
-///              .options_requested_policy_version(-56)
+///              .options_requested_policy_version(-91)
 ///              .doit().await;
 /// # }
 /// ```
@@ -36000,7 +40037,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeGetIamPolicyCall<'a, S> {
@@ -36093,15 +40131,15 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_lakes_list("parent")
-///              .page_token("takimata")
-///              .page_size(-66)
-///              .order_by("At")
-///              .filter("invidunt")
+///              .page_token("sanctus")
+///              .page_size(-23)
+///              .order_by("tempor")
+///              .filter("sed")
 ///              .doit().await;
 /// # }
 /// ```
@@ -36309,7 +40347,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeListCall<'a, S> {
@@ -36403,7 +40442,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -36624,7 +40663,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakePatchCall<'a, S> {
@@ -36718,7 +40758,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -36915,7 +40955,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeSetIamPolicyCall<'a, S> {
@@ -37009,7 +41050,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -37206,7 +41247,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationLakeTestIamPermissionCall<'a, S> {
@@ -37300,7 +41342,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -37497,7 +41539,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationOperationCancelCall<'a, S> {
@@ -37590,7 +41633,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -37758,7 +41801,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationOperationDeleteCall<'a, S> {
@@ -37851,7 +41895,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -38019,7 +42063,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationOperationGetCall<'a, S> {
@@ -38090,7 +42135,7 @@ where
 }
 
 
-/// Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns UNIMPLEMENTED.NOTE: the name binding allows API services to override the binding to use different resource name schemes, such as users/*/operations. To override the binding, API services can add a binding such as "/v1/{name=users/*}/operations" to their service configuration. For backwards compatibility, the default name includes the operations collection id, however overriding users must ensure the name binding is the parent resource, without the operations collection id.
+/// Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns UNIMPLEMENTED.
 ///
 /// A builder for the *locations.operations.list* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -38112,14 +42157,14 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_operations_list("name")
 ///              .page_token("dolores")
-///              .page_size(-30)
-///              .filter("invidunt")
+///              .page_size(-96)
+///              .filter("no")
 ///              .doit().await;
 /// # }
 /// ```
@@ -38316,7 +42361,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationOperationListCall<'a, S> {
@@ -38409,7 +42455,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -38577,7 +42623,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationGetCall<'a, S> {
@@ -38670,14 +42717,14 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudDataplex::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_list("name")
-///              .page_token("aliquyam")
-///              .page_size(-83)
-///              .filter("diam")
+///              .page_token("diam")
+///              .page_size(-10)
+///              .filter("ipsum")
 ///              .doit().await;
 /// # }
 /// ```
@@ -38874,7 +42921,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationListCall<'a, S> {

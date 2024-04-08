@@ -23,7 +23,7 @@ use crate::{client, client::GetToken, client::serde_with};
 /// Identifies the an OAuth2 authorization scope.
 /// A scope is needed when requesting an
 /// [authorization token](https://developers.google.com/youtube/v3/guides/authentication).
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Ord, PartialOrd, Hash, Debug, Clone, Copy)]
 pub enum Scope {
     /// Manage users on your domain
     AppOrder,
@@ -81,7 +81,7 @@ impl Default for Scope {
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -129,7 +129,7 @@ impl<'a, S> Cloudchannel<S> {
         Cloudchannel {
             client,
             auth: Box::new(auth),
-            _user_agent: "google-api-rust-client/5.0.2".to_string(),
+            _user_agent: "google-api-rust-client/5.0.4".to_string(),
             _base_url: "https://cloudchannel.googleapis.com/".to_string(),
             _root_url: "https://cloudchannel.googleapis.com/".to_string(),
         }
@@ -146,7 +146,7 @@ impl<'a, S> Cloudchannel<S> {
     }
 
     /// Set the user-agent header field to use in all requests to the server.
-    /// It defaults to `google-api-rust-client/5.0.2`.
+    /// It defaults to `google-api-rust-client/5.0.4`.
     ///
     /// Returns the previously set user-agent.
     pub fn user_agent(&mut self, agent_name: String) -> String {
@@ -182,7 +182,6 @@ impl<'a, S> Cloudchannel<S> {
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [customers entitlements activate accounts](AccountCustomerEntitlementActivateCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1ActivateEntitlementRequest {
@@ -234,6 +233,79 @@ pub struct GoogleCloudChannelV1AssociationInfo {
 impl client::Part for GoogleCloudChannelV1AssociationInfo {}
 
 
+/// Represents the Billable SKU information.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleCloudChannelV1BillableSku {
+    /// Resource name of Service which contains Repricing SKU. Format: services/{service}. Example: "services/B7D9-FDCB-15D8".
+    
+    pub service: Option<String>,
+    /// Unique human readable name for the Service.
+    #[serde(rename="serviceDisplayName")]
+    
+    pub service_display_name: Option<String>,
+    /// Resource name of Billable SKU. Format: billableSkus/{sku}. Example: billableSkus/6E1B-6634-470F".
+    
+    pub sku: Option<String>,
+    /// Unique human readable name for the SKU.
+    #[serde(rename="skuDisplayName")]
+    
+    pub sku_display_name: Option<String>,
+}
+
+impl client::Part for GoogleCloudChannelV1BillableSku {}
+
+
+/// Represents a billing account.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleCloudChannelV1BillingAccount {
+    /// Output only. The time when this billing account was created.
+    #[serde(rename="createTime")]
+    
+    pub create_time: Option<client::chrono::DateTime<client::chrono::offset::Utc>>,
+    /// Output only. The 3-letter currency code defined in ISO 4217.
+    #[serde(rename="currencyCode")]
+    
+    pub currency_code: Option<String>,
+    /// Display name of the billing account.
+    #[serde(rename="displayName")]
+    
+    pub display_name: Option<String>,
+    /// Output only. Resource name of the billing account. Format: accounts/{account_id}/billingAccounts/{billing_account_id}.
+    
+    pub name: Option<String>,
+    /// Output only. The CLDR region code.
+    #[serde(rename="regionCode")]
+    
+    pub region_code: Option<String>,
+}
+
+impl client::Part for GoogleCloudChannelV1BillingAccount {}
+
+
+/// Represents a billing account that can be used to make a purchase.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleCloudChannelV1BillingAccountPurchaseInfo {
+    /// The billing account resource.
+    #[serde(rename="billingAccount")]
+    
+    pub billing_account: Option<GoogleCloudChannelV1BillingAccount>,
+}
+
+impl client::Part for GoogleCloudChannelV1BillingAccountPurchaseInfo {}
+
+
 /// Request message for CloudChannelService.CancelEntitlement.
 /// 
 /// # Activities
@@ -242,7 +314,6 @@ impl client::Part for GoogleCloudChannelV1AssociationInfo {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [customers entitlements cancel accounts](AccountCustomerEntitlementCancelCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1CancelEntitlementRequest {
@@ -263,10 +334,13 @@ impl client::RequestValue for GoogleCloudChannelV1CancelEntitlementRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [customers entitlements change offer accounts](AccountCustomerEntitlementChangeOfferCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1ChangeOfferRequest {
+    /// Optional. The billing account resource name that is used to pay for this entitlement when setting up billing on a trial subscription. This field is only relevant for multi-currency accounts. It should be left empty for single currency accounts.
+    #[serde(rename="billingAccount")]
+    
+    pub billing_account: Option<String>,
     /// Required. New Offer. Format: accounts/{account_id}/offers/{offer_id}.
     
     pub offer: Option<String>,
@@ -294,7 +368,6 @@ impl client::RequestValue for GoogleCloudChannelV1ChangeOfferRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [customers entitlements change parameters accounts](AccountCustomerEntitlementChangeParameterCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1ChangeParametersRequest {
@@ -322,7 +395,6 @@ impl client::RequestValue for GoogleCloudChannelV1ChangeParametersRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [customers entitlements change renewal settings accounts](AccountCustomerEntitlementChangeRenewalSettingCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1ChangeRenewalSettingsRequest {
@@ -349,7 +421,6 @@ impl client::RequestValue for GoogleCloudChannelV1ChangeRenewalSettingsRequest {
 /// * [channel partner links create accounts](AccountChannelPartnerLinkCreateCall) (request|response)
 /// * [channel partner links get accounts](AccountChannelPartnerLinkGetCall) (response)
 /// * [channel partner links patch accounts](AccountChannelPartnerLinkPatchCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1ChannelPartnerLink {
@@ -400,7 +471,6 @@ impl client::ResponseResult for GoogleCloudChannelV1ChannelPartnerLink {}
 /// * [channel partner links channel partner repricing configs create accounts](AccountChannelPartnerLinkChannelPartnerRepricingConfigCreateCall) (request|response)
 /// * [channel partner links channel partner repricing configs get accounts](AccountChannelPartnerLinkChannelPartnerRepricingConfigGetCall) (response)
 /// * [channel partner links channel partner repricing configs patch accounts](AccountChannelPartnerLinkChannelPartnerRepricingConfigPatchCall) (request|response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1ChannelPartnerRepricingConfig {
@@ -429,11 +499,10 @@ impl client::ResponseResult for GoogleCloudChannelV1ChannelPartnerRepricingConfi
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [check cloud identity accounts exist accounts](AccountCheckCloudIdentityAccountsExistCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1CheckCloudIdentityAccountsExistRequest {
-    /// Required. Domain to fetch for Cloud Identity account customer.
+    /// Required. Domain to fetch for Cloud Identity account customers, including domained and domainless.
     
     pub domain: Option<String>,
 }
@@ -449,7 +518,6 @@ impl client::RequestValue for GoogleCloudChannelV1CheckCloudIdentityAccountsExis
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [check cloud identity accounts exist accounts](AccountCheckCloudIdentityAccountsExistCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1CheckCloudIdentityAccountsExistResponse {
@@ -660,7 +728,6 @@ impl client::Part for GoogleCloudChannelV1ContactInfo {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [customers entitlements create accounts](AccountCustomerEntitlementCreateCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1CreateEntitlementRequest {
@@ -691,7 +758,6 @@ impl client::RequestValue for GoogleCloudChannelV1CreateEntitlementRequest {}
 /// * [customers get accounts](AccountCustomerGetCall) (response)
 /// * [customers import accounts](AccountCustomerImportCall) (response)
 /// * [customers patch accounts](AccountCustomerPatchCall) (request|response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1Customer {
@@ -711,6 +777,10 @@ pub struct GoogleCloudChannelV1Customer {
     #[serde(rename="cloudIdentityInfo")]
     
     pub cloud_identity_info: Option<GoogleCloudChannelV1CloudIdentityInfo>,
+    /// Optional. External CRM ID for the customer. Populated only if a CRM ID exists for this customer.
+    #[serde(rename="correlationId")]
+    
+    pub correlation_id: Option<String>,
     /// Output only. Time when the customer was created.
     #[serde(rename="createTime")]
     
@@ -729,7 +799,7 @@ pub struct GoogleCloudChannelV1Customer {
     #[serde(rename="orgDisplayName")]
     
     pub org_display_name: Option<String>,
-    /// Required. The organization address for the customer. To enforce US laws and embargoes, we require a region and zip code. You must provide valid addresses for every customer. To set the customer's language, use the Customer-level language code.
+    /// Required. The organization address for the customer. To enforce US laws and embargoes, we require a region, postal code, and address lines. You must provide valid addresses for every customer. To set the customer's language, use the Customer-level language code.
     #[serde(rename="orgPostalAddress")]
     
     pub org_postal_address: Option<GoogleTypePostalAddress>,
@@ -781,7 +851,6 @@ impl client::Part for GoogleCloudChannelV1CustomerConstraints {}
 /// * [customers customer repricing configs create accounts](AccountCustomerCustomerRepricingConfigCreateCall) (request|response)
 /// * [customers customer repricing configs get accounts](AccountCustomerCustomerRepricingConfigGetCall) (response)
 /// * [customers customer repricing configs patch accounts](AccountCustomerCustomerRepricingConfigPatchCall) (request|response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1CustomerRepricingConfig {
@@ -809,11 +878,11 @@ impl client::ResponseResult for GoogleCloudChannelV1CustomerRepricingConfig {}
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1DateRange {
-    /// The latest invoice date (exclusive). If your product uses monthly invoices, and this value is not the beginning of a month, this will adjust the date to the first day of the following month.
+    /// The latest invoice date (inclusive). If this value is not the last day of a month, this will move it forward to the last day of the given month.
     #[serde(rename="invoiceEndDate")]
     
     pub invoice_end_date: Option<GoogleTypeDate>,
-    /// The earliest invoice date (inclusive). If your product uses monthly invoices, and this value is not the beginning of a month, this will adjust the date to the first day of the given month.
+    /// The earliest invoice date (inclusive). If this value is not the first day of a month, this will move it back to the first day of the given month.
     #[serde(rename="invoiceStartDate")]
     
     pub invoice_start_date: Option<GoogleTypeDate>,
@@ -853,7 +922,7 @@ pub struct GoogleCloudChannelV1EduData {
 impl client::Part for GoogleCloudChannelV1EduData {}
 
 
-/// An entitlement is a representation of a customer's ability to use a service.
+/// An entitlement is a representation of a customer’s ability to use a service.
 /// 
 /// # Activities
 /// 
@@ -861,7 +930,6 @@ impl client::Part for GoogleCloudChannelV1EduData {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [customers entitlements get accounts](AccountCustomerEntitlementGetCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1Entitlement {
@@ -869,6 +937,10 @@ pub struct GoogleCloudChannelV1Entitlement {
     #[serde(rename="associationInfo")]
     
     pub association_info: Option<GoogleCloudChannelV1AssociationInfo>,
+    /// Optional. The billing account resource name that is used to pay for this entitlement.
+    #[serde(rename="billingAccount")]
+    
+    pub billing_account: Option<String>,
     /// Commitment settings for a commitment-based Offer. Required for commitment based offers.
     #[serde(rename="commitmentSettings")]
     
@@ -883,7 +955,7 @@ pub struct GoogleCloudChannelV1Entitlement {
     /// Required. The offer resource name for which the entitlement is to be created. Takes the form: accounts/{account_id}/offers/{offer_id}.
     
     pub offer: Option<String>,
-    /// Extended entitlement parameters. When creating an entitlement, valid parameter names and values are defined in the Offer.parameter_definitions. For Google Workspace, the following Parameters may be accepted as input: - max_units: The maximum assignable units for a flexible offer OR - num_units: The total commitment for commitment-based offers The response may additionally include the following output-only Parameters: - assigned_units: The number of licenses assigned to users. For GCP billing accounts, the following Parameter may be accepted as input: - display_name: The display name of the billing account.
+    /// Extended entitlement parameters. When creating an entitlement, valid parameter names and values are defined in the Offer.parameter_definitions. For Google Workspace, the following Parameters may be accepted as input: - max_units: The maximum assignable units for a flexible offer OR - num_units: The total commitment for commitment-based offers The response may additionally include the following output-only Parameters: - assigned_units: The number of licenses assigned to users. For Google Cloud billing subaccounts, the following Parameter may be accepted as input: - display_name: The display name of the billing subaccount.
     
     pub parameters: Option<Vec<GoogleCloudChannelV1Parameter>>,
     /// Output only. Service provisioning details for the entitlement.
@@ -915,6 +987,62 @@ pub struct GoogleCloudChannelV1Entitlement {
 impl client::ResponseResult for GoogleCloudChannelV1Entitlement {}
 
 
+/// Change event entry for Entitlement order history
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleCloudChannelV1EntitlementChange {
+    /// The Entitlement's activation reason
+    #[serde(rename="activationReason")]
+    
+    pub activation_reason: Option<String>,
+    /// Cancellation reason for the Entitlement.
+    #[serde(rename="cancellationReason")]
+    
+    pub cancellation_reason: Option<String>,
+    /// The change action type.
+    #[serde(rename="changeType")]
+    
+    pub change_type: Option<String>,
+    /// The submitted time of the change.
+    #[serde(rename="createTime")]
+    
+    pub create_time: Option<client::chrono::DateTime<client::chrono::offset::Utc>>,
+    /// Required. Resource name of an entitlement in the form: accounts/{account_id}/customers/{customer_id}/entitlements/{entitlement_id}
+    
+    pub entitlement: Option<String>,
+    /// Required. Resource name of the Offer at the time of change. Takes the form: accounts/{account_id}/offers/{offer_id}.
+    
+    pub offer: Option<String>,
+    /// Human-readable identifier that shows what operator made a change. When the operator_type is RESELLER, this is the user's email address. For all other operator types, this is empty.
+    
+    pub operator: Option<String>,
+    /// Operator type responsible for the change.
+    #[serde(rename="operatorType")]
+    
+    pub operator_type: Option<String>,
+    /// e.g. purchase_number change reason, entered by CRS.
+    #[serde(rename="otherChangeReason")]
+    
+    pub other_change_reason: Option<String>,
+    /// Extended parameters, such as: purchase_order_number, gcp_details; internal_correlation_id, long_running_operation_id, order_id; etc.
+    
+    pub parameters: Option<Vec<GoogleCloudChannelV1Parameter>>,
+    /// Service provisioned for an Entitlement.
+    #[serde(rename="provisionedService")]
+    
+    pub provisioned_service: Option<GoogleCloudChannelV1ProvisionedService>,
+    /// Suspension reason for the Entitlement.
+    #[serde(rename="suspensionReason")]
+    
+    pub suspension_reason: Option<String>,
+}
+
+impl client::Part for GoogleCloudChannelV1EntitlementChange {}
+
+
 /// Request message for CloudChannelReportsService.FetchReportResults.
 /// 
 /// # Activities
@@ -923,7 +1051,6 @@ impl client::ResponseResult for GoogleCloudChannelV1Entitlement {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [report jobs fetch report results accounts](AccountReportJobFetchReportResultCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1FetchReportResultsRequest {
@@ -935,6 +1062,10 @@ pub struct GoogleCloudChannelV1FetchReportResultsRequest {
     #[serde(rename="pageToken")]
     
     pub page_token: Option<String>,
+    /// Optional. List of keys specifying which report partitions to return. If empty, returns all partitions.
+    #[serde(rename="partitionKeys")]
+    
+    pub partition_keys: Option<Vec<String>>,
 }
 
 impl client::RequestValue for GoogleCloudChannelV1FetchReportResultsRequest {}
@@ -948,7 +1079,6 @@ impl client::RequestValue for GoogleCloudChannelV1FetchReportResultsRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [report jobs fetch report results accounts](AccountReportJobFetchReportResultCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1FetchReportResultsResponse {
@@ -977,7 +1107,6 @@ impl client::ResponseResult for GoogleCloudChannelV1FetchReportResultsResponse {
 /// 
 /// * [channel partner links customers import accounts](AccountChannelPartnerLinkCustomerImportCall) (request)
 /// * [customers import accounts](AccountCustomerImportCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1ImportCustomerRequest {
@@ -1016,7 +1145,6 @@ impl client::RequestValue for GoogleCloudChannelV1ImportCustomerRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [channel partner links list accounts](AccountChannelPartnerLinkListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1ListChannelPartnerLinksResponse {
@@ -1041,7 +1169,6 @@ impl client::ResponseResult for GoogleCloudChannelV1ListChannelPartnerLinksRespo
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [channel partner links channel partner repricing configs list accounts](AccountChannelPartnerLinkChannelPartnerRepricingConfigListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1ListChannelPartnerRepricingConfigsResponse {
@@ -1066,7 +1193,6 @@ impl client::ResponseResult for GoogleCloudChannelV1ListChannelPartnerRepricingC
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [customers customer repricing configs list accounts](AccountCustomerCustomerRepricingConfigListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1ListCustomerRepricingConfigsResponse {
@@ -1092,7 +1218,6 @@ impl client::ResponseResult for GoogleCloudChannelV1ListCustomerRepricingConfigs
 /// 
 /// * [channel partner links customers list accounts](AccountChannelPartnerLinkCustomerListCall) (response)
 /// * [customers list accounts](AccountCustomerListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1ListCustomersResponse {
@@ -1108,6 +1233,30 @@ pub struct GoogleCloudChannelV1ListCustomersResponse {
 impl client::ResponseResult for GoogleCloudChannelV1ListCustomersResponse {}
 
 
+/// Response message for CloudChannelService.ListEntitlementChanges
+/// 
+/// # Activities
+/// 
+/// This type is used in activities, which are methods you may call on this type or where this type is involved in. 
+/// The list links the activity name, along with information about where it is used (one of *request* and *response*).
+/// 
+/// * [customers entitlements list entitlement changes accounts](AccountCustomerEntitlementListEntitlementChangeCall) (response)
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleCloudChannelV1ListEntitlementChangesResponse {
+    /// The list of entitlement changes.
+    #[serde(rename="entitlementChanges")]
+    
+    pub entitlement_changes: Option<Vec<GoogleCloudChannelV1EntitlementChange>>,
+    /// A token to list the next page of results.
+    #[serde(rename="nextPageToken")]
+    
+    pub next_page_token: Option<String>,
+}
+
+impl client::ResponseResult for GoogleCloudChannelV1ListEntitlementChangesResponse {}
+
+
 /// Response message for CloudChannelService.ListEntitlements.
 /// 
 /// # Activities
@@ -1116,7 +1265,6 @@ impl client::ResponseResult for GoogleCloudChannelV1ListCustomersResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [customers entitlements list accounts](AccountCustomerEntitlementListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1ListEntitlementsResponse {
@@ -1140,7 +1288,6 @@ impl client::ResponseResult for GoogleCloudChannelV1ListEntitlementsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [offers list accounts](AccountOfferListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1ListOffersResponse {
@@ -1164,7 +1311,6 @@ impl client::ResponseResult for GoogleCloudChannelV1ListOffersResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [list products](ProductListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1ListProductsResponse {
@@ -1188,7 +1334,6 @@ impl client::ResponseResult for GoogleCloudChannelV1ListProductsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [customers list purchasable offers accounts](AccountCustomerListPurchasableOfferCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1ListPurchasableOffersResponse {
@@ -1213,7 +1358,6 @@ impl client::ResponseResult for GoogleCloudChannelV1ListPurchasableOffersRespons
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [customers list purchasable skus accounts](AccountCustomerListPurchasableSkuCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1ListPurchasableSkusResponse {
@@ -1238,7 +1382,6 @@ impl client::ResponseResult for GoogleCloudChannelV1ListPurchasableSkusResponse 
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [reports list accounts](AccountReportListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1ListReportsResponse {
@@ -1254,6 +1397,54 @@ pub struct GoogleCloudChannelV1ListReportsResponse {
 impl client::ResponseResult for GoogleCloudChannelV1ListReportsResponse {}
 
 
+/// Response message for ListSkuGroupBillableSkus.
+/// 
+/// # Activities
+/// 
+/// This type is used in activities, which are methods you may call on this type or where this type is involved in. 
+/// The list links the activity name, along with information about where it is used (one of *request* and *response*).
+/// 
+/// * [sku groups billable skus list accounts](AccountSkuGroupBillableSkuListCall) (response)
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleCloudChannelV1ListSkuGroupBillableSkusResponse {
+    /// The list of billable SKUs in the requested SKU group.
+    #[serde(rename="billableSkus")]
+    
+    pub billable_skus: Option<Vec<GoogleCloudChannelV1BillableSku>>,
+    /// A token to retrieve the next page of results. Pass to ListSkuGroupBillableSkus.page_token to obtain that page.
+    #[serde(rename="nextPageToken")]
+    
+    pub next_page_token: Option<String>,
+}
+
+impl client::ResponseResult for GoogleCloudChannelV1ListSkuGroupBillableSkusResponse {}
+
+
+/// Response message for ListSkuGroups.
+/// 
+/// # Activities
+/// 
+/// This type is used in activities, which are methods you may call on this type or where this type is involved in. 
+/// The list links the activity name, along with information about where it is used (one of *request* and *response*).
+/// 
+/// * [sku groups list accounts](AccountSkuGroupListCall) (response)
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleCloudChannelV1ListSkuGroupsResponse {
+    /// A token to retrieve the next page of results. Pass to ListSkuGroups.page_token to obtain that page.
+    #[serde(rename="nextPageToken")]
+    
+    pub next_page_token: Option<String>,
+    /// The list of SKU groups requested.
+    #[serde(rename="skuGroups")]
+    
+    pub sku_groups: Option<Vec<GoogleCloudChannelV1SkuGroup>>,
+}
+
+impl client::ResponseResult for GoogleCloudChannelV1ListSkuGroupsResponse {}
+
+
 /// Response message for ListSkus.
 /// 
 /// # Activities
@@ -1262,7 +1453,6 @@ impl client::ResponseResult for GoogleCloudChannelV1ListReportsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [skus list products](ProductSkuListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1ListSkusResponse {
@@ -1286,7 +1476,6 @@ impl client::ResponseResult for GoogleCloudChannelV1ListSkusResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [list subscribers accounts](AccountListSubscriberCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1ListSubscribersResponse {
@@ -1314,10 +1503,13 @@ impl client::ResponseResult for GoogleCloudChannelV1ListSubscribersResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [list transferable offers accounts](AccountListTransferableOfferCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1ListTransferableOffersRequest {
+    /// Optional. The Billing Account to look up Offers for. Format: accounts/{account_id}/billingAccounts/{billing_account_id}. This field is only relevant for multi-currency accounts. It should be left empty for single currency accounts.
+    #[serde(rename="billingAccount")]
+    
+    pub billing_account: Option<String>,
     /// Customer's Cloud Identity ID
     #[serde(rename="cloudIdentityId")]
     
@@ -1354,7 +1546,6 @@ impl client::RequestValue for GoogleCloudChannelV1ListTransferableOffersRequest 
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [list transferable offers accounts](AccountListTransferableOfferCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1ListTransferableOffersResponse {
@@ -1379,7 +1570,6 @@ impl client::ResponseResult for GoogleCloudChannelV1ListTransferableOffersRespon
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [list transferable skus accounts](AccountListTransferableSkuCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1ListTransferableSkusRequest {
@@ -1420,7 +1610,6 @@ impl client::RequestValue for GoogleCloudChannelV1ListTransferableSkusRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [list transferable skus accounts](AccountListTransferableSkuCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1ListTransferableSkusResponse {
@@ -1490,7 +1679,6 @@ impl client::Part for GoogleCloudChannelV1Media {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [customers entitlements lookup offer accounts](AccountCustomerEntitlementLookupOfferCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1Offer {
@@ -1631,7 +1819,7 @@ impl client::Part for GoogleCloudChannelV1Period {}
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1Plan {
-    /// Reseller Billing account to charge after an offer transaction. Only present for Google Cloud Platform offers.
+    /// Reseller Billing account to charge after an offer transaction. Only present for Google Cloud offers.
     #[serde(rename="billingAccount")]
     
     pub billing_account: Option<String>,
@@ -1787,7 +1975,6 @@ impl client::Part for GoogleCloudChannelV1Product {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [customers provision cloud identity accounts](AccountCustomerProvisionCloudIdentityCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1ProvisionCloudIdentityRequest {
@@ -1818,7 +2005,7 @@ pub struct GoogleCloudChannelV1ProvisionedService {
     #[serde(rename="productId")]
     
     pub product_id: Option<String>,
-    /// Output only. Provisioning ID of the entitlement. For Google Workspace, this is the underlying Subscription ID. For Google Cloud Platform, this is the Billing Account ID of the billing subaccount."
+    /// Output only. Provisioning ID of the entitlement. For Google Workspace, this is the underlying Subscription ID. For Google Cloud, this is the Billing Account ID of the billing subaccount.
     #[serde(rename="provisioningId")]
     
     pub provisioning_id: Option<String>,
@@ -1861,6 +2048,26 @@ pub struct GoogleCloudChannelV1PurchasableSku {
 impl client::Part for GoogleCloudChannelV1PurchasableSku {}
 
 
+/// Response message for QueryEligibleBillingAccounts.
+/// 
+/// # Activities
+/// 
+/// This type is used in activities, which are methods you may call on this type or where this type is involved in. 
+/// The list links the activity name, along with information about where it is used (one of *request* and *response*).
+/// 
+/// * [customers query eligible billing accounts accounts](AccountCustomerQueryEligibleBillingAccountCall) (response)
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleCloudChannelV1QueryEligibleBillingAccountsResponse {
+    /// List of SKU purchase groups where each group represents a set of SKUs that must be purchased using the same billing account. Each SKU from [QueryEligibleBillingAccountsRequest.skus] will appear in exactly one SKU group.
+    #[serde(rename="skuPurchaseGroups")]
+    
+    pub sku_purchase_groups: Option<Vec<GoogleCloudChannelV1SkuPurchaseGroup>>,
+}
+
+impl client::ResponseResult for GoogleCloudChannelV1QueryEligibleBillingAccountsResponse {}
+
+
 /// Request Message for RegisterSubscriber.
 /// 
 /// # Activities
@@ -1869,7 +2076,6 @@ impl client::Part for GoogleCloudChannelV1PurchasableSku {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [register accounts](AccountRegisterCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1RegisterSubscriberRequest {
@@ -1890,7 +2096,6 @@ impl client::RequestValue for GoogleCloudChannelV1RegisterSubscriberRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [register accounts](AccountRegisterCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1RegisterSubscriberResponse {
@@ -1930,7 +2135,7 @@ pub struct GoogleCloudChannelV1RenewalSettings {
 impl client::Part for GoogleCloudChannelV1RenewalSettings {}
 
 
-/// The ID and description of a report that was used to generate report data. For example, "GCP Daily Spend", "Google Workspace License Activity", etc.
+/// The ID and description of a report that was used to generate report data. For example, "Google Cloud Daily Spend", "Google Workspace License Activity", etc.
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
 /// 
@@ -2062,7 +2267,7 @@ pub struct GoogleCloudChannelV1RepricingConfig {
     /// Required. Information about the adjustment.
     
     pub adjustment: Option<GoogleCloudChannelV1RepricingAdjustment>,
-    /// Applies the repricing configuration at the channel partner level. This is the only supported value for ChannelPartnerRepricingConfig.
+    /// Applies the repricing configuration at the channel partner level. Only ChannelPartnerRepricingConfig supports this value. Deprecated: This is no longer supported. Use RepricingConfig.entitlement_granularity instead.
     #[serde(rename="channelPartnerGranularity")]
     
     pub channel_partner_granularity: Option<GoogleCloudChannelV1RepricingConfigChannelPartnerGranularity>,
@@ -2074,7 +2279,7 @@ pub struct GoogleCloudChannelV1RepricingConfig {
     #[serde(rename="effectiveInvoiceMonth")]
     
     pub effective_invoice_month: Option<GoogleTypeDate>,
-    /// Applies the repricing configuration at the entitlement level. This is the only supported value for CustomerRepricingConfig.
+    /// Applies the repricing configuration at the entitlement level. Note: If a ChannelPartnerRepricingConfig using RepricingConfig.EntitlementGranularity becomes effective, then no existing or future RepricingConfig.ChannelPartnerGranularity will apply to the RepricingConfig.EntitlementGranularity.entitlement. This is the recommended value for both CustomerRepricingConfig and ChannelPartnerRepricingConfig.
     #[serde(rename="entitlementGranularity")]
     
     pub entitlement_granularity: Option<GoogleCloudChannelV1RepricingConfigEntitlementGranularity>,
@@ -2087,7 +2292,7 @@ pub struct GoogleCloudChannelV1RepricingConfig {
 impl client::Part for GoogleCloudChannelV1RepricingConfig {}
 
 
-/// Applies the repricing configuration at the channel partner level. The channel partner value is derived from the resource name. Takes an empty json object.
+/// Applies the repricing configuration at the channel partner level. The channel partner value is derived from the resource name. Takes an empty json object. Deprecated: This is no longer supported. Use RepricingConfig.EntitlementGranularity instead.
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
 /// 
@@ -2120,6 +2325,10 @@ impl client::Part for GoogleCloudChannelV1RepricingConfigEntitlementGranularity 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1Row {
+    /// The key for the partition this row belongs to. This field is empty if the report is not partitioned.
+    #[serde(rename="partitionKey")]
+    
+    pub partition_key: Option<String>,
     /// The list of values in the row.
     
     pub values: Option<Vec<GoogleCloudChannelV1ReportValue>>,
@@ -2136,7 +2345,6 @@ impl client::Part for GoogleCloudChannelV1Row {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [reports run accounts](AccountReportRunCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1RunReportJobRequest {
@@ -2178,6 +2386,25 @@ pub struct GoogleCloudChannelV1Sku {
 impl client::Part for GoogleCloudChannelV1Sku {}
 
 
+/// Represents the SKU group information.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleCloudChannelV1SkuGroup {
+    /// Unique human readable identifier for the SKU group.
+    #[serde(rename="displayName")]
+    
+    pub display_name: Option<String>,
+    /// Resource name of SKU group. Format: accounts/{account}/skuGroups/{sku_group}. Example: "accounts/C01234/skuGroups/3d50fd57-3157-4577-a5a9-a219b8490041".
+    
+    pub name: Option<String>,
+}
+
+impl client::Part for GoogleCloudChannelV1SkuGroup {}
+
+
 /// A condition that applies the override if a line item SKU is found in the SKU group.
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
@@ -2194,6 +2421,25 @@ pub struct GoogleCloudChannelV1SkuGroupCondition {
 impl client::Part for GoogleCloudChannelV1SkuGroupCondition {}
 
 
+/// Represents a set of SKUs that must be purchased using the same billing account.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleCloudChannelV1SkuPurchaseGroup {
+    /// List of billing accounts that are eligible to purhcase these SKUs.
+    #[serde(rename="billingAccountPurchaseInfos")]
+    
+    pub billing_account_purchase_infos: Option<Vec<GoogleCloudChannelV1BillingAccountPurchaseInfo>>,
+    /// Resource names of the SKUs included in this group. Format: products/{product_id}/skus/{sku_id}.
+    
+    pub skus: Option<Vec<String>>,
+}
+
+impl client::Part for GoogleCloudChannelV1SkuPurchaseGroup {}
+
+
 /// Request message for CloudChannelService.StartPaidService.
 /// 
 /// # Activities
@@ -2202,7 +2448,6 @@ impl client::Part for GoogleCloudChannelV1SkuGroupCondition {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [customers entitlements start paid service accounts](AccountCustomerEntitlementStartPaidServiceCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1StartPaidServiceRequest {
@@ -2223,7 +2468,6 @@ impl client::RequestValue for GoogleCloudChannelV1StartPaidServiceRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [customers entitlements suspend accounts](AccountCustomerEntitlementSuspendCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1SuspendEntitlementRequest {
@@ -2267,7 +2511,6 @@ impl client::Part for GoogleCloudChannelV1TransferEligibility {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [customers transfer entitlements accounts](AccountCustomerTransferEntitlementCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1TransferEntitlementsRequest {
@@ -2295,7 +2538,6 @@ impl client::RequestValue for GoogleCloudChannelV1TransferEntitlementsRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [customers transfer entitlements to google accounts](AccountCustomerTransferEntitlementsToGoogleCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1TransferEntitlementsToGoogleRequest {
@@ -2376,7 +2618,6 @@ impl client::Part for GoogleCloudChannelV1TrialSettings {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [unregister accounts](AccountUnregisterCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1UnregisterSubscriberRequest {
@@ -2397,7 +2638,6 @@ impl client::RequestValue for GoogleCloudChannelV1UnregisterSubscriberRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [unregister accounts](AccountUnregisterCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1UnregisterSubscriberResponse {
@@ -2417,7 +2657,6 @@ impl client::ResponseResult for GoogleCloudChannelV1UnregisterSubscriberResponse
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [channel partner links patch accounts](AccountChannelPartnerLinkPatchCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleCloudChannelV1UpdateChannelPartnerLinkRequest {
@@ -2475,7 +2714,6 @@ impl client::Part for GoogleCloudChannelV1Value {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [cancel operations](OperationCancelCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleLongrunningCancelOperationRequest { _never_set: Option<bool> }
@@ -2491,7 +2729,6 @@ impl client::RequestValue for GoogleLongrunningCancelOperationRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [list operations](OperationListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleLongrunningListOperationsResponse {
@@ -2527,7 +2764,6 @@ impl client::ResponseResult for GoogleLongrunningListOperationsResponse {}
 /// * [customers transfer entitlements to google accounts](AccountCustomerTransferEntitlementsToGoogleCall) (response)
 /// * [reports run accounts](AccountReportRunCall) (response)
 /// * [get operations](OperationGetCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleLongrunningOperation {
@@ -2543,7 +2779,7 @@ pub struct GoogleLongrunningOperation {
     /// The server-assigned name, which is only unique within the same service that originally returns it. If you use the default HTTP mapping, the `name` should be a resource name ending with `operations/{unique_id}`.
     
     pub name: Option<String>,
-    /// The normal response of the operation in case of success. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.
+    /// The normal, successful response of the operation. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.
     
     pub response: Option<HashMap<String, json::Value>>,
 }
@@ -2564,7 +2800,6 @@ impl client::ResponseResult for GoogleLongrunningOperation {}
 /// * [customers delete accounts](AccountCustomerDeleteCall) (response)
 /// * [cancel operations](OperationCancelCall) (response)
 /// * [delete operations](OperationDeleteCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleProtobufEmpty { _never_set: Option<bool> }
@@ -2789,9 +3024,9 @@ impl client::Part for GoogleTypeTimeZone {}
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
-/// // like `channel_partner_links_channel_partner_repricing_configs_create(...)`, `channel_partner_links_channel_partner_repricing_configs_delete(...)`, `channel_partner_links_channel_partner_repricing_configs_get(...)`, `channel_partner_links_channel_partner_repricing_configs_list(...)`, `channel_partner_links_channel_partner_repricing_configs_patch(...)`, `channel_partner_links_create(...)`, `channel_partner_links_customers_create(...)`, `channel_partner_links_customers_delete(...)`, `channel_partner_links_customers_get(...)`, `channel_partner_links_customers_import(...)`, `channel_partner_links_customers_list(...)`, `channel_partner_links_customers_patch(...)`, `channel_partner_links_get(...)`, `channel_partner_links_list(...)`, `channel_partner_links_patch(...)`, `check_cloud_identity_accounts_exist(...)`, `customers_create(...)`, `customers_customer_repricing_configs_create(...)`, `customers_customer_repricing_configs_delete(...)`, `customers_customer_repricing_configs_get(...)`, `customers_customer_repricing_configs_list(...)`, `customers_customer_repricing_configs_patch(...)`, `customers_delete(...)`, `customers_entitlements_activate(...)`, `customers_entitlements_cancel(...)`, `customers_entitlements_change_offer(...)`, `customers_entitlements_change_parameters(...)`, `customers_entitlements_change_renewal_settings(...)`, `customers_entitlements_create(...)`, `customers_entitlements_get(...)`, `customers_entitlements_list(...)`, `customers_entitlements_lookup_offer(...)`, `customers_entitlements_start_paid_service(...)`, `customers_entitlements_suspend(...)`, `customers_get(...)`, `customers_import(...)`, `customers_list(...)`, `customers_list_purchasable_offers(...)`, `customers_list_purchasable_skus(...)`, `customers_patch(...)`, `customers_provision_cloud_identity(...)`, `customers_transfer_entitlements(...)`, `customers_transfer_entitlements_to_google(...)`, `list_subscribers(...)`, `list_transferable_offers(...)`, `list_transferable_skus(...)`, `offers_list(...)`, `register(...)`, `report_jobs_fetch_report_results(...)`, `reports_list(...)`, `reports_run(...)` and `unregister(...)`
+/// // like `channel_partner_links_channel_partner_repricing_configs_create(...)`, `channel_partner_links_channel_partner_repricing_configs_delete(...)`, `channel_partner_links_channel_partner_repricing_configs_get(...)`, `channel_partner_links_channel_partner_repricing_configs_list(...)`, `channel_partner_links_channel_partner_repricing_configs_patch(...)`, `channel_partner_links_create(...)`, `channel_partner_links_customers_create(...)`, `channel_partner_links_customers_delete(...)`, `channel_partner_links_customers_get(...)`, `channel_partner_links_customers_import(...)`, `channel_partner_links_customers_list(...)`, `channel_partner_links_customers_patch(...)`, `channel_partner_links_get(...)`, `channel_partner_links_list(...)`, `channel_partner_links_patch(...)`, `check_cloud_identity_accounts_exist(...)`, `customers_create(...)`, `customers_customer_repricing_configs_create(...)`, `customers_customer_repricing_configs_delete(...)`, `customers_customer_repricing_configs_get(...)`, `customers_customer_repricing_configs_list(...)`, `customers_customer_repricing_configs_patch(...)`, `customers_delete(...)`, `customers_entitlements_activate(...)`, `customers_entitlements_cancel(...)`, `customers_entitlements_change_offer(...)`, `customers_entitlements_change_parameters(...)`, `customers_entitlements_change_renewal_settings(...)`, `customers_entitlements_create(...)`, `customers_entitlements_get(...)`, `customers_entitlements_list(...)`, `customers_entitlements_list_entitlement_changes(...)`, `customers_entitlements_lookup_offer(...)`, `customers_entitlements_start_paid_service(...)`, `customers_entitlements_suspend(...)`, `customers_get(...)`, `customers_import(...)`, `customers_list(...)`, `customers_list_purchasable_offers(...)`, `customers_list_purchasable_skus(...)`, `customers_patch(...)`, `customers_provision_cloud_identity(...)`, `customers_query_eligible_billing_accounts(...)`, `customers_transfer_entitlements(...)`, `customers_transfer_entitlements_to_google(...)`, `list_subscribers(...)`, `list_transferable_offers(...)`, `list_transferable_skus(...)`, `offers_list(...)`, `register(...)`, `report_jobs_fetch_report_results(...)`, `reports_list(...)`, `reports_run(...)`, `sku_groups_billable_skus_list(...)`, `sku_groups_list(...)` and `unregister(...)`
 /// // to build up your call.
 /// let rb = hub.accounts();
 /// # }
@@ -2808,7 +3043,7 @@ impl<'a, S> AccountMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// Creates a ChannelPartnerRepricingConfig. Call this method to set modifications for a specific ChannelPartner's bill. You can only create configs if the RepricingConfig.effective_invoice_month is a future month. If needed, you can create a config for the current month, with some restrictions. When creating a config for a future month, make sure there are no existing configs for that RepricingConfig.effective_invoice_month. The following restrictions are for creating configs in the current month. * This functionality is reserved for recovering from an erroneous config, and should not be used for regular business cases. * The new config will not modify exports used with other configs. Changes to the config may be immediate, but may take up to 24 hours. * There is a limit of ten configs for any ChannelPartner or RepricingConfig.effective_invoice_month. * The contained ChannelPartnerRepricingConfig.repricing_config vaule must be different from the value used in the current config for a ChannelPartner. Possible Error Codes: * PERMISSION_DENIED: If the account making the request and the account being queried are different. * INVALID_ARGUMENT: Missing or invalid required parameters in the request. Also displays if the updated config is for the current month or past months. * NOT_FOUND: The ChannelPartnerRepricingConfig specified does not exist or is not associated with the given account. * INTERNAL: Any non-user error related to technical issues in the backend. In this case, contact Cloud Channel support. Return Value: If successful, the updated ChannelPartnerRepricingConfig resource, otherwise returns an error.
+    /// Creates a ChannelPartnerRepricingConfig. Call this method to set modifications for a specific ChannelPartner's bill. You can only create configs if the RepricingConfig.effective_invoice_month is a future month. If needed, you can create a config for the current month, with some restrictions. When creating a config for a future month, make sure there are no existing configs for that RepricingConfig.effective_invoice_month. The following restrictions are for creating configs in the current month. * This functionality is reserved for recovering from an erroneous config, and should not be used for regular business cases. * The new config will not modify exports used with other configs. Changes to the config may be immediate, but may take up to 24 hours. * There is a limit of ten configs for any ChannelPartner or RepricingConfig.EntitlementGranularity.entitlement, for any RepricingConfig.effective_invoice_month. * The contained ChannelPartnerRepricingConfig.repricing_config value must be different from the value used in the current config for a ChannelPartner. Possible Error Codes: * PERMISSION_DENIED: If the account making the request and the account being queried are different. * INVALID_ARGUMENT: Missing or invalid required parameters in the request. Also displays if the updated config is for the current month or past months. * NOT_FOUND: The ChannelPartnerRepricingConfig specified does not exist or is not associated with the given account. * INTERNAL: Any non-user error related to technical issues in the backend. In this case, contact Cloud Channel support. Return Value: If successful, the updated ChannelPartnerRepricingConfig resource, otherwise returns an error.
     /// 
     /// # Arguments
     ///
@@ -2861,7 +3096,7 @@ impl<'a, S> AccountMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// Lists information about how a Reseller modifies their bill before sending it to a ChannelPartner. Possible Error Codes: * PERMISSION_DENIED: If the account making the request and the account being queried are different. * NOT_FOUND: The ChannelPartnerRepricingConfig specified does not exist or is not associated with the given account. * INTERNAL: Any non-user error related to technical issues in the backend. In this case, contact Cloud Channel support. Return Value: If successful, the ChannelPartnerRepricingConfig resources. The data for each resource is displayed in the ascending order of: * channel partner ID * RepricingConfig.effective_invoice_month * ChannelPartnerRepricingConfig.update_time If unsuccessful, returns an error.
+    /// Lists information about how a Reseller modifies their bill before sending it to a ChannelPartner. Possible Error Codes: * PERMISSION_DENIED: If the account making the request and the account being queried are different. * NOT_FOUND: The ChannelPartnerRepricingConfig specified does not exist or is not associated with the given account. * INTERNAL: Any non-user error related to technical issues in the backend. In this case, contact Cloud Channel support. Return Value: If successful, the ChannelPartnerRepricingConfig resources. The data for each resource is displayed in the ascending order of: * Channel Partner ID * RepricingConfig.effective_invoice_month * ChannelPartnerRepricingConfig.update_time If unsuccessful, returns an error.
     /// 
     /// # Arguments
     ///
@@ -2900,7 +3135,7 @@ impl<'a, S> AccountMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// Creates a new Customer resource under the reseller or distributor account. Possible error codes: * PERMISSION_DENIED: The reseller account making the request is different from the reseller account in the API request. * INVALID_ARGUMENT: * Required request parameters are missing or invalid. * Domain field value doesn't match the primary email domain. Return value: The newly created Customer resource.
+    /// Creates a new Customer resource under the reseller or distributor account. Possible error codes: * PERMISSION_DENIED: * The reseller account making the request is different from the reseller account in the API request. * You are not authorized to create a customer. See https://support.google.com/channelservices/answer/9759265 * INVALID_ARGUMENT: * Required request parameters are missing or invalid. * Domain field value doesn't match the primary email domain. Return value: The newly created Customer resource.
     /// 
     /// # Arguments
     ///
@@ -2953,7 +3188,7 @@ impl<'a, S> AccountMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// Imports a Customer from the Cloud Identity associated with the provided Cloud Identity ID or domain before a TransferEntitlements call. If a linked Customer already exists and overwrite_if_exists is true, it will update that Customer's data. Possible error codes: * PERMISSION_DENIED: The reseller account making the request is different from the reseller account in the API request. * NOT_FOUND: Cloud Identity doesn't exist or was deleted. * INVALID_ARGUMENT: Required parameters are missing, or the auth_token is expired or invalid. * ALREADY_EXISTS: A customer already exists and has conflicting critical fields. Requires an overwrite. Return value: The Customer.
+    /// Imports a Customer from the Cloud Identity associated with the provided Cloud Identity ID or domain before a TransferEntitlements call. If a linked Customer already exists and overwrite_if_exists is true, it will update that Customer's data. Possible error codes: * PERMISSION_DENIED: * The reseller account making the request is different from the reseller account in the API request. * You are not authorized to import the customer. See https://support.google.com/channelservices/answer/9759265 * NOT_FOUND: Cloud Identity doesn't exist or was deleted. * INVALID_ARGUMENT: Required parameters are missing, or the auth_token is expired or invalid. * ALREADY_EXISTS: A customer already exists and has conflicting critical fields. Requires an overwrite. Return value: The Customer.
     /// 
     /// # Arguments
     ///
@@ -3088,7 +3323,7 @@ impl<'a, S> AccountMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// Creates a CustomerRepricingConfig. Call this method to set modifications for a specific customer's bill. You can only create configs if the RepricingConfig.effective_invoice_month is a future month. If needed, you can create a config for the current month, with some restrictions. When creating a config for a future month, make sure there are no existing configs for that RepricingConfig.effective_invoice_month. The following restrictions are for creating configs in the current month. * This functionality is reserved for recovering from an erroneous config, and should not be used for regular business cases. * The new config will not modify exports used with other configs. Changes to the config may be immediate, but may take up to 24 hours. * There is a limit of ten configs for any RepricingConfig.EntitlementGranularity.entitlement or RepricingConfig.effective_invoice_month. * The contained CustomerRepricingConfig.repricing_config vaule must be different from the value used in the current config for a RepricingConfig.EntitlementGranularity.entitlement. Possible Error Codes: * PERMISSION_DENIED: If the account making the request and the account being queried are different. * INVALID_ARGUMENT: Missing or invalid required parameters in the request. Also displays if the updated config is for the current month or past months. * NOT_FOUND: The CustomerRepricingConfig specified does not exist or is not associated with the given account. * INTERNAL: Any non-user error related to technical issues in the backend. In this case, contact Cloud Channel support. Return Value: If successful, the updated CustomerRepricingConfig resource, otherwise returns an error.
+    /// Creates a CustomerRepricingConfig. Call this method to set modifications for a specific customer's bill. You can only create configs if the RepricingConfig.effective_invoice_month is a future month. If needed, you can create a config for the current month, with some restrictions. When creating a config for a future month, make sure there are no existing configs for that RepricingConfig.effective_invoice_month. The following restrictions are for creating configs in the current month. * This functionality is reserved for recovering from an erroneous config, and should not be used for regular business cases. * The new config will not modify exports used with other configs. Changes to the config may be immediate, but may take up to 24 hours. * There is a limit of ten configs for any RepricingConfig.EntitlementGranularity.entitlement, for any RepricingConfig.effective_invoice_month. * The contained CustomerRepricingConfig.repricing_config value must be different from the value used in the current config for a RepricingConfig.EntitlementGranularity.entitlement. Possible Error Codes: * PERMISSION_DENIED: If the account making the request and the account being queried are different. * INVALID_ARGUMENT: Missing or invalid required parameters in the request. Also displays if the updated config is for the current month or past months. * NOT_FOUND: The CustomerRepricingConfig specified does not exist or is not associated with the given account. * INTERNAL: Any non-user error related to technical issues in the backend. In this case, contact Cloud Channel support. Return Value: If successful, the updated CustomerRepricingConfig resource, otherwise returns an error.
     /// 
     /// # Arguments
     ///
@@ -3141,7 +3376,7 @@ impl<'a, S> AccountMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// Lists information about how a Reseller modifies their bill before sending it to a Customer. Possible Error Codes: * PERMISSION_DENIED: If the account making the request and the account being queried are different. * NOT_FOUND: The CustomerRepricingConfig specified does not exist or is not associated with the given account. * INTERNAL: Any non-user error related to technical issues in the backend. In this case, contact Cloud Channel support. Return Value: If successful, the CustomerRepricingConfig resources. The data for each resource is displayed in the ascending order of: * customer ID * RepricingConfig.EntitlementGranularity.entitlement * RepricingConfig.effective_invoice_month * CustomerRepricingConfig.update_time If unsuccessful, returns an error.
+    /// Lists information about how a Reseller modifies their bill before sending it to a Customer. Possible Error Codes: * PERMISSION_DENIED: If the account making the request and the account being queried are different. * NOT_FOUND: The CustomerRepricingConfig specified does not exist or is not associated with the given account. * INTERNAL: Any non-user error related to technical issues in the backend. In this case, contact Cloud Channel support. Return Value: If successful, the CustomerRepricingConfig resources. The data for each resource is displayed in the ascending order of: * Customer ID * RepricingConfig.EntitlementGranularity.entitlement * RepricingConfig.effective_invoice_month * CustomerRepricingConfig.update_time If unsuccessful, returns an error.
     /// 
     /// # Arguments
     ///
@@ -3275,7 +3510,7 @@ impl<'a, S> AccountMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// Creates an entitlement for a customer. Possible error codes: * PERMISSION_DENIED: The customer doesn't belong to the reseller. * INVALID_ARGUMENT: * Required request parameters are missing or invalid. * There is already a customer entitlement for a SKU from the same product family. * INVALID_VALUE: Make sure the OfferId is valid. If it is, contact Google Channel support for further troubleshooting. * NOT_FOUND: The customer or offer resource was not found. * ALREADY_EXISTS: * The SKU was already purchased for the customer. * The customer's primary email already exists. Retry after changing the customer's primary contact email. * CONDITION_NOT_MET or FAILED_PRECONDITION: * The domain required for purchasing a SKU has not been verified. * A pre-requisite SKU required to purchase an Add-On SKU is missing. For example, Google Workspace Business Starter is required to purchase Vault or Drive. * (Developer accounts only) Reseller and resold domain must meet the following naming requirements: * Domain names must start with goog-test. * Domain names must include the reseller domain. * INTERNAL: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. * UNKNOWN: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. Return value: The ID of a long-running operation. To get the results of the operation, call the GetOperation method of CloudChannelOperationsService. The Operation metadata will contain an instance of OperationMetadata.
+    /// Creates an entitlement for a customer. Possible error codes: * PERMISSION_DENIED: * The customer doesn't belong to the reseller. * The reseller is not authorized to transact on this Product. See https://support.google.com/channelservices/answer/9759265 * INVALID_ARGUMENT: * Required request parameters are missing or invalid. * There is already a customer entitlement for a SKU from the same product family. * INVALID_VALUE: Make sure the OfferId is valid. If it is, contact Google Channel support for further troubleshooting. * NOT_FOUND: The customer or offer resource was not found. * ALREADY_EXISTS: * The SKU was already purchased for the customer. * The customer's primary email already exists. Retry after changing the customer's primary contact email. * CONDITION_NOT_MET or FAILED_PRECONDITION: * The domain required for purchasing a SKU has not been verified. * A pre-requisite SKU required to purchase an Add-On SKU is missing. For example, Google Workspace Business Starter is required to purchase Vault or Drive. * (Developer accounts only) Reseller and resold domain must meet the following naming requirements: * Domain names must start with goog-test. * Domain names must include the reseller domain. * INTERNAL: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. * UNKNOWN: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. Return value: The ID of a long-running operation. To get the results of the operation, call the GetOperation method of CloudChannelOperationsService. The Operation metadata will contain an instance of OperationMetadata.
     /// 
     /// # Arguments
     ///
@@ -3322,6 +3557,26 @@ impl<'a, S> AccountMethods<'a, S> {
             _parent: parent.to_string(),
             _page_token: Default::default(),
             _page_size: Default::default(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// List entitlement history. Possible error codes: * PERMISSION_DENIED: The reseller account making the request and the provided reseller account are different. * INVALID_ARGUMENT: Missing or invalid required fields in the request. * NOT_FOUND: The parent resource doesn't exist. Usually the result of an invalid name parameter. * INTERNAL: Any non-user error related to a technical issue in the backend. In this case, contact CloudChannel support. * UNKNOWN: Any non-user error related to a technical issue in the backend. In this case, contact Cloud Channel support. Return value: List of EntitlementChanges.
+    /// 
+    /// # Arguments
+    ///
+    /// * `parent` - Required. The resource name of the entitlement for which to list entitlement changes. The `-` wildcard may be used to match entitlements across a customer. Formats: * accounts/{account_id}/customers/{customer_id}/entitlements/{entitlement_id} * accounts/{account_id}/customers/{customer_id}/entitlements/-
+    pub fn customers_entitlements_list_entitlement_changes(&self, parent: &str) -> AccountCustomerEntitlementListEntitlementChangeCall<'a, S> {
+        AccountCustomerEntitlementListEntitlementChangeCall {
+            hub: self.hub,
+            _parent: parent.to_string(),
+            _page_token: Default::default(),
+            _page_size: Default::default(),
+            _filter: Default::default(),
             _delegate: Default::default(),
             _additional_params: Default::default(),
             _scopes: Default::default(),
@@ -3385,7 +3640,7 @@ impl<'a, S> AccountMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// Creates a new Customer resource under the reseller or distributor account. Possible error codes: * PERMISSION_DENIED: The reseller account making the request is different from the reseller account in the API request. * INVALID_ARGUMENT: * Required request parameters are missing or invalid. * Domain field value doesn't match the primary email domain. Return value: The newly created Customer resource.
+    /// Creates a new Customer resource under the reseller or distributor account. Possible error codes: * PERMISSION_DENIED: * The reseller account making the request is different from the reseller account in the API request. * You are not authorized to create a customer. See https://support.google.com/channelservices/answer/9759265 * INVALID_ARGUMENT: * Required request parameters are missing or invalid. * Domain field value doesn't match the primary email domain. Return value: The newly created Customer resource.
     /// 
     /// # Arguments
     ///
@@ -3438,7 +3693,7 @@ impl<'a, S> AccountMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// Imports a Customer from the Cloud Identity associated with the provided Cloud Identity ID or domain before a TransferEntitlements call. If a linked Customer already exists and overwrite_if_exists is true, it will update that Customer's data. Possible error codes: * PERMISSION_DENIED: The reseller account making the request is different from the reseller account in the API request. * NOT_FOUND: Cloud Identity doesn't exist or was deleted. * INVALID_ARGUMENT: Required parameters are missing, or the auth_token is expired or invalid. * ALREADY_EXISTS: A customer already exists and has conflicting critical fields. Requires an overwrite. Return value: The Customer.
+    /// Imports a Customer from the Cloud Identity associated with the provided Cloud Identity ID or domain before a TransferEntitlements call. If a linked Customer already exists and overwrite_if_exists is true, it will update that Customer's data. Possible error codes: * PERMISSION_DENIED: * The reseller account making the request is different from the reseller account in the API request. * You are not authorized to import the customer. See https://support.google.com/channelservices/answer/9759265 * NOT_FOUND: Cloud Identity doesn't exist or was deleted. * INVALID_ARGUMENT: Required parameters are missing, or the auth_token is expired or invalid. * ALREADY_EXISTS: A customer already exists and has conflicting critical fields. Requires an overwrite. Return value: The Customer.
     /// 
     /// # Arguments
     ///
@@ -3477,7 +3732,7 @@ impl<'a, S> AccountMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// Lists the following: * Offers that you can purchase for a customer. * Offers that you can change for an entitlement. Possible error codes: * PERMISSION_DENIED: The customer doesn't belong to the reseller * INVALID_ARGUMENT: Required request parameters are missing or invalid.
+    /// Lists the following: * Offers that you can purchase for a customer. * Offers that you can change for an entitlement. Possible error codes: * PERMISSION_DENIED: * The customer doesn't belong to the reseller * The reseller is not authorized to transact on this Product. See https://support.google.com/channelservices/answer/9759265 * INVALID_ARGUMENT: Required request parameters are missing or invalid.
     /// 
     /// # Arguments
     ///
@@ -3490,8 +3745,10 @@ impl<'a, S> AccountMethods<'a, S> {
             _page_size: Default::default(),
             _language_code: Default::default(),
             _create_entitlement_purchase_sku: Default::default(),
+            _create_entitlement_purchase_billing_account: Default::default(),
             _change_offer_purchase_new_sku: Default::default(),
             _change_offer_purchase_entitlement: Default::default(),
+            _change_offer_purchase_billing_account: Default::default(),
             _delegate: Default::default(),
             _additional_params: Default::default(),
             _scopes: Default::default(),
@@ -3543,7 +3800,7 @@ impl<'a, S> AccountMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// Creates a Cloud Identity for the given customer using the customer's information, or the information provided here. Possible error codes: * PERMISSION_DENIED: The customer doesn't belong to the reseller. * INVALID_ARGUMENT: Required request parameters are missing or invalid. * NOT_FOUND: The customer was not found. * ALREADY_EXISTS: The customer's primary email already exists. Retry after changing the customer's primary contact email. * INTERNAL: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. * UNKNOWN: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. Return value: The ID of a long-running operation. To get the results of the operation, call the GetOperation method of CloudChannelOperationsService. The Operation metadata contains an instance of OperationMetadata.
+    /// Creates a Cloud Identity for the given customer using the customer's information, or the information provided here. Possible error codes: * PERMISSION_DENIED: * The customer doesn't belong to the reseller. * You are not authorized to provision cloud identity id. See https://support.google.com/channelservices/answer/9759265 * INVALID_ARGUMENT: Required request parameters are missing or invalid. * NOT_FOUND: The customer was not found. * ALREADY_EXISTS: The customer's primary email already exists. Retry after changing the customer's primary contact email. * INTERNAL: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. * UNKNOWN: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. Return value: The ID of a long-running operation. To get the results of the operation, call the GetOperation method of CloudChannelOperationsService. The Operation metadata contains an instance of OperationMetadata.
     /// 
     /// # Arguments
     ///
@@ -3562,7 +3819,25 @@ impl<'a, S> AccountMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// Transfers customer entitlements to new reseller. Possible error codes: * PERMISSION_DENIED: The customer doesn't belong to the reseller. * INVALID_ARGUMENT: Required request parameters are missing or invalid. * NOT_FOUND: The customer or offer resource was not found. * ALREADY_EXISTS: The SKU was already transferred for the customer. * CONDITION_NOT_MET or FAILED_PRECONDITION: * The SKU requires domain verification to transfer, but the domain is not verified. * An Add-On SKU (example, Vault or Drive) is missing the pre-requisite SKU (example, G Suite Basic). * (Developer accounts only) Reseller and resold domain must meet the following naming requirements: * Domain names must start with goog-test. * Domain names must include the reseller domain. * Specify all transferring entitlements. * INTERNAL: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. * UNKNOWN: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. Return value: The ID of a long-running operation. To get the results of the operation, call the GetOperation method of CloudChannelOperationsService. The Operation metadata will contain an instance of OperationMetadata.
+    /// Lists the billing accounts that are eligible to purchase particular SKUs for a given customer. Possible error codes: * PERMISSION_DENIED: The customer doesn't belong to the reseller. * INVALID_ARGUMENT: Required request parameters are missing or invalid. Return value: Based on the provided list of SKUs, returns a list of SKU groups that must be purchased using the same billing account and the billing accounts eligible to purchase each SKU group.
+    /// 
+    /// # Arguments
+    ///
+    /// * `customer` - Required. The resource name of the customer to list eligible billing accounts for. Format: accounts/{account_id}/customers/{customer_id}.
+    pub fn customers_query_eligible_billing_accounts(&self, customer: &str) -> AccountCustomerQueryEligibleBillingAccountCall<'a, S> {
+        AccountCustomerQueryEligibleBillingAccountCall {
+            hub: self.hub,
+            _customer: customer.to_string(),
+            _skus: Default::default(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// Transfers customer entitlements to new reseller. Possible error codes: * PERMISSION_DENIED: * The customer doesn't belong to the reseller. * The reseller is not authorized to transact on this Product. See https://support.google.com/channelservices/answer/9759265 * INVALID_ARGUMENT: Required request parameters are missing or invalid. * NOT_FOUND: The customer or offer resource was not found. * ALREADY_EXISTS: The SKU was already transferred for the customer. * CONDITION_NOT_MET or FAILED_PRECONDITION: * The SKU requires domain verification to transfer, but the domain is not verified. * An Add-On SKU (example, Vault or Drive) is missing the pre-requisite SKU (example, G Suite Basic). * (Developer accounts only) Reseller and resold domain must meet the following naming requirements: * Domain names must start with goog-test. * Domain names must include the reseller domain. * Specify all transferring entitlements. * INTERNAL: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. * UNKNOWN: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. Return value: The ID of a long-running operation. To get the results of the operation, call the GetOperation method of CloudChannelOperationsService. The Operation metadata will contain an instance of OperationMetadata.
     /// 
     /// # Arguments
     ///
@@ -3609,6 +3884,7 @@ impl<'a, S> AccountMethods<'a, S> {
         AccountOfferListCall {
             hub: self.hub,
             _parent: parent.to_string(),
+            _show_future_offers: Default::default(),
             _page_token: Default::default(),
             _page_size: Default::default(),
             _language_code: Default::default(),
@@ -3621,7 +3897,7 @@ impl<'a, S> AccountMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// Retrieves data generated by CloudChannelReportsService.RunReportJob.
+    /// Retrieves data generated by CloudChannelReportsService.RunReportJob. Deprecated: Please use [Export Channel Services data to BigQuery](https://cloud.google.com/channel/docs/rebilling/export-data-to-bigquery) instead.
     /// 
     /// # Arguments
     ///
@@ -3640,7 +3916,7 @@ impl<'a, S> AccountMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// Lists the reports that RunReportJob can run. These reports include an ID, a description, and the list of columns that will be in the result.
+    /// Lists the reports that RunReportJob can run. These reports include an ID, a description, and the list of columns that will be in the result. Deprecated: Please use [Export Channel Services data to BigQuery](https://cloud.google.com/channel/docs/rebilling/export-data-to-bigquery) instead.
     /// 
     /// # Arguments
     ///
@@ -3660,7 +3936,7 @@ impl<'a, S> AccountMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// Begins generation of data for a given report. The report identifier is a UID (for example, `613bf59q`). Possible error codes: * PERMISSION_DENIED: The user doesn't have access to this report. * INVALID_ARGUMENT: Required request parameters are missing or invalid. * NOT_FOUND: The report identifier was not found. * INTERNAL: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. * UNKNOWN: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. Return value: The ID of a long-running operation. To get the results of the operation, call the GetOperation method of CloudChannelOperationsService. The Operation metadata contains an instance of OperationMetadata. To get the results of report generation, call CloudChannelReportsService.FetchReportResults with the RunReportJobResponse.report_job.
+    /// Begins generation of data for a given report. The report identifier is a UID (for example, `613bf59q`). Possible error codes: * PERMISSION_DENIED: The user doesn't have access to this report. * INVALID_ARGUMENT: Required request parameters are missing or invalid. * NOT_FOUND: The report identifier was not found. * INTERNAL: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. * UNKNOWN: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. Return value: The ID of a long-running operation. To get the results of the operation, call the GetOperation method of CloudChannelOperationsService. The Operation metadata contains an instance of OperationMetadata. To get the results of report generation, call CloudChannelReportsService.FetchReportResults with the RunReportJobResponse.report_job. Deprecated: Please use [Export Channel Services data to BigQuery](https://cloud.google.com/channel/docs/rebilling/export-data-to-bigquery) instead.
     /// 
     /// # Arguments
     ///
@@ -3671,6 +3947,44 @@ impl<'a, S> AccountMethods<'a, S> {
             hub: self.hub,
             _request: request,
             _name: name.to_string(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// Lists the Billable SKUs in a given SKU group. Possible error codes: PERMISSION_DENIED: If the account making the request and the account being queried for are different, or the account doesn't exist. INVALID_ARGUMENT: Missing or invalid required parameters in the request. INTERNAL: Any non-user error related to technical issue in the backend. In this case, contact cloud channel support. Return Value: If successful, the BillableSku resources. The data for each resource is displayed in the ascending order of: * BillableSku.service_display_name * BillableSku.sku_display_name If unsuccessful, returns an error.
+    /// 
+    /// # Arguments
+    ///
+    /// * `parent` - Required. Resource name of the SKU group. Format: accounts/{account}/skuGroups/{sku_group}.
+    pub fn sku_groups_billable_skus_list(&self, parent: &str) -> AccountSkuGroupBillableSkuListCall<'a, S> {
+        AccountSkuGroupBillableSkuListCall {
+            hub: self.hub,
+            _parent: parent.to_string(),
+            _page_token: Default::default(),
+            _page_size: Default::default(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// Lists the Rebilling supported SKU groups the account is authorized to sell. Reference: https://cloud.google.com/skus/sku-groups Possible Error Codes: * PERMISSION_DENIED: If the account making the request and the account being queried are different, or the account doesn't exist. * INTERNAL: Any non-user error related to technical issues in the backend. In this case, contact Cloud Channel support. Return Value: If successful, the SkuGroup resources. The data for each resource is displayed in the alphabetical order of SKU group display name. The data for each resource is displayed in the ascending order of SkuGroup.display_name If unsuccessful, returns an error.
+    /// 
+    /// # Arguments
+    ///
+    /// * `parent` - Required. The resource name of the account from which to list SKU groups. Parent uses the format: accounts/{account}.
+    pub fn sku_groups_list(&self, parent: &str) -> AccountSkuGroupListCall<'a, S> {
+        AccountSkuGroupListCall {
+            hub: self.hub,
+            _parent: parent.to_string(),
+            _page_token: Default::default(),
+            _page_size: Default::default(),
             _delegate: Default::default(),
             _additional_params: Default::default(),
             _scopes: Default::default(),
@@ -3717,7 +4031,7 @@ impl<'a, S> AccountMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// List TransferableOffers of a customer based on Cloud Identity ID or Customer Name in the request. Use this method when a reseller gets the entitlement information of an unowned customer. The reseller should provide the customer's Cloud Identity ID or Customer Name. Possible error codes: * PERMISSION_DENIED: * The customer doesn't belong to the reseller and has no auth token. * The customer provided incorrect reseller information when generating auth token. * The reseller account making the request is different from the reseller account in the query. * INVALID_ARGUMENT: Required request parameters are missing or invalid. Return value: List of TransferableOffer for the given customer and SKU.
+    /// List TransferableOffers of a customer based on Cloud Identity ID or Customer Name in the request. Use this method when a reseller gets the entitlement information of an unowned customer. The reseller should provide the customer's Cloud Identity ID or Customer Name. Possible error codes: * PERMISSION_DENIED: * The customer doesn't belong to the reseller and has no auth token. * The customer provided incorrect reseller information when generating auth token. * The reseller account making the request is different from the reseller account in the query. * The reseller is not authorized to transact on this Product. See https://support.google.com/channelservices/answer/9759265 * INVALID_ARGUMENT: Required request parameters are missing or invalid. Return value: List of TransferableOffer for the given customer and SKU.
     /// 
     /// # Arguments
     ///
@@ -3815,7 +4129,7 @@ impl<'a, S> AccountMethods<'a, S> {
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
 /// // like `cancel(...)`, `delete(...)`, `get(...)` and `list(...)`
 /// // to build up your call.
@@ -3887,7 +4201,7 @@ impl<'a, S> OperationMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns `UNIMPLEMENTED`. NOTE: the `name` binding allows API services to override the binding to use different resource name schemes, such as `users/*/operations`. To override the binding, API services can add a binding such as `"/v1/{name=users/*}/operations"` to their service configuration. For backwards compatibility, the default name includes the operations collection id, however overriding users must ensure the name binding is the parent resource, without the operations collection id.
+    /// Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns `UNIMPLEMENTED`.
     /// 
     /// # Arguments
     ///
@@ -3929,7 +4243,7 @@ impl<'a, S> OperationMethods<'a, S> {
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
 /// // like `list(...)` and `skus_list(...)`
 /// // to build up your call.
@@ -3992,7 +4306,7 @@ impl<'a, S> ProductMethods<'a, S> {
 // CallBuilders   ###
 // #################
 
-/// Creates a ChannelPartnerRepricingConfig. Call this method to set modifications for a specific ChannelPartner's bill. You can only create configs if the RepricingConfig.effective_invoice_month is a future month. If needed, you can create a config for the current month, with some restrictions. When creating a config for a future month, make sure there are no existing configs for that RepricingConfig.effective_invoice_month. The following restrictions are for creating configs in the current month. * This functionality is reserved for recovering from an erroneous config, and should not be used for regular business cases. * The new config will not modify exports used with other configs. Changes to the config may be immediate, but may take up to 24 hours. * There is a limit of ten configs for any ChannelPartner or RepricingConfig.effective_invoice_month. * The contained ChannelPartnerRepricingConfig.repricing_config vaule must be different from the value used in the current config for a ChannelPartner. Possible Error Codes: * PERMISSION_DENIED: If the account making the request and the account being queried are different. * INVALID_ARGUMENT: Missing or invalid required parameters in the request. Also displays if the updated config is for the current month or past months. * NOT_FOUND: The ChannelPartnerRepricingConfig specified does not exist or is not associated with the given account. * INTERNAL: Any non-user error related to technical issues in the backend. In this case, contact Cloud Channel support. Return Value: If successful, the updated ChannelPartnerRepricingConfig resource, otherwise returns an error.
+/// Creates a ChannelPartnerRepricingConfig. Call this method to set modifications for a specific ChannelPartner's bill. You can only create configs if the RepricingConfig.effective_invoice_month is a future month. If needed, you can create a config for the current month, with some restrictions. When creating a config for a future month, make sure there are no existing configs for that RepricingConfig.effective_invoice_month. The following restrictions are for creating configs in the current month. * This functionality is reserved for recovering from an erroneous config, and should not be used for regular business cases. * The new config will not modify exports used with other configs. Changes to the config may be immediate, but may take up to 24 hours. * There is a limit of ten configs for any ChannelPartner or RepricingConfig.EntitlementGranularity.entitlement, for any RepricingConfig.effective_invoice_month. * The contained ChannelPartnerRepricingConfig.repricing_config value must be different from the value used in the current config for a ChannelPartner. Possible Error Codes: * PERMISSION_DENIED: If the account making the request and the account being queried are different. * INVALID_ARGUMENT: Missing or invalid required parameters in the request. Also displays if the updated config is for the current month or past months. * NOT_FOUND: The ChannelPartnerRepricingConfig specified does not exist or is not associated with the given account. * INTERNAL: Any non-user error related to technical issues in the backend. In this case, contact Cloud Channel support. Return Value: If successful, the updated ChannelPartnerRepricingConfig resource, otherwise returns an error.
 ///
 /// A builder for the *channelPartnerLinks.channelPartnerRepricingConfigs.create* method supported by a *account* resource.
 /// It is not used directly, but through a [`AccountMethods`] instance.
@@ -4015,7 +4329,7 @@ impl<'a, S> ProductMethods<'a, S> {
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -4212,7 +4526,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountChannelPartnerLinkChannelPartnerRepricingConfigCreateCall<'a, S> {
@@ -4305,7 +4620,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -4473,7 +4788,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountChannelPartnerLinkChannelPartnerRepricingConfigDeleteCall<'a, S> {
@@ -4566,7 +4882,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -4734,7 +5050,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountChannelPartnerLinkChannelPartnerRepricingConfigGetCall<'a, S> {
@@ -4805,7 +5122,7 @@ where
 }
 
 
-/// Lists information about how a Reseller modifies their bill before sending it to a ChannelPartner. Possible Error Codes: * PERMISSION_DENIED: If the account making the request and the account being queried are different. * NOT_FOUND: The ChannelPartnerRepricingConfig specified does not exist or is not associated with the given account. * INTERNAL: Any non-user error related to technical issues in the backend. In this case, contact Cloud Channel support. Return Value: If successful, the ChannelPartnerRepricingConfig resources. The data for each resource is displayed in the ascending order of: * channel partner ID * RepricingConfig.effective_invoice_month * ChannelPartnerRepricingConfig.update_time If unsuccessful, returns an error.
+/// Lists information about how a Reseller modifies their bill before sending it to a ChannelPartner. Possible Error Codes: * PERMISSION_DENIED: If the account making the request and the account being queried are different. * NOT_FOUND: The ChannelPartnerRepricingConfig specified does not exist or is not associated with the given account. * INTERNAL: Any non-user error related to technical issues in the backend. In this case, contact Cloud Channel support. Return Value: If successful, the ChannelPartnerRepricingConfig resources. The data for each resource is displayed in the ascending order of: * Channel Partner ID * RepricingConfig.effective_invoice_month * ChannelPartnerRepricingConfig.update_time If unsuccessful, returns an error.
 ///
 /// A builder for the *channelPartnerLinks.channelPartnerRepricingConfigs.list* method supported by a *account* resource.
 /// It is not used directly, but through a [`AccountMethods`] instance.
@@ -4827,7 +5144,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -5031,7 +5348,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountChannelPartnerLinkChannelPartnerRepricingConfigListCall<'a, S> {
@@ -5125,7 +5443,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -5322,7 +5640,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountChannelPartnerLinkChannelPartnerRepricingConfigPatchCall<'a, S> {
@@ -5393,7 +5712,7 @@ where
 }
 
 
-/// Creates a new Customer resource under the reseller or distributor account. Possible error codes: * PERMISSION_DENIED: The reseller account making the request is different from the reseller account in the API request. * INVALID_ARGUMENT: * Required request parameters are missing or invalid. * Domain field value doesn't match the primary email domain. Return value: The newly created Customer resource.
+/// Creates a new Customer resource under the reseller or distributor account. Possible error codes: * PERMISSION_DENIED: * The reseller account making the request is different from the reseller account in the API request. * You are not authorized to create a customer. See https://support.google.com/channelservices/answer/9759265 * INVALID_ARGUMENT: * Required request parameters are missing or invalid. * Domain field value doesn't match the primary email domain. Return value: The newly created Customer resource.
 ///
 /// A builder for the *channelPartnerLinks.customers.create* method supported by a *account* resource.
 /// It is not used directly, but through a [`AccountMethods`] instance.
@@ -5416,7 +5735,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -5613,7 +5932,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountChannelPartnerLinkCustomerCreateCall<'a, S> {
@@ -5706,7 +6026,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -5874,7 +6194,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountChannelPartnerLinkCustomerDeleteCall<'a, S> {
@@ -5967,7 +6288,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -6135,7 +6456,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountChannelPartnerLinkCustomerGetCall<'a, S> {
@@ -6206,7 +6528,7 @@ where
 }
 
 
-/// Imports a Customer from the Cloud Identity associated with the provided Cloud Identity ID or domain before a TransferEntitlements call. If a linked Customer already exists and overwrite_if_exists is true, it will update that Customer's data. Possible error codes: * PERMISSION_DENIED: The reseller account making the request is different from the reseller account in the API request. * NOT_FOUND: Cloud Identity doesn't exist or was deleted. * INVALID_ARGUMENT: Required parameters are missing, or the auth_token is expired or invalid. * ALREADY_EXISTS: A customer already exists and has conflicting critical fields. Requires an overwrite. Return value: The Customer.
+/// Imports a Customer from the Cloud Identity associated with the provided Cloud Identity ID or domain before a TransferEntitlements call. If a linked Customer already exists and overwrite_if_exists is true, it will update that Customer's data. Possible error codes: * PERMISSION_DENIED: * The reseller account making the request is different from the reseller account in the API request. * You are not authorized to import the customer. See https://support.google.com/channelservices/answer/9759265 * NOT_FOUND: Cloud Identity doesn't exist or was deleted. * INVALID_ARGUMENT: Required parameters are missing, or the auth_token is expired or invalid. * ALREADY_EXISTS: A customer already exists and has conflicting critical fields. Requires an overwrite. Return value: The Customer.
 ///
 /// A builder for the *channelPartnerLinks.customers.import* method supported by a *account* resource.
 /// It is not used directly, but through a [`AccountMethods`] instance.
@@ -6229,7 +6551,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -6426,7 +6748,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountChannelPartnerLinkCustomerImportCall<'a, S> {
@@ -6519,7 +6842,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -6723,7 +7046,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountChannelPartnerLinkCustomerListCall<'a, S> {
@@ -6817,7 +7141,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -7026,7 +7350,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountChannelPartnerLinkCustomerPatchCall<'a, S> {
@@ -7120,7 +7445,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -7317,7 +7642,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountChannelPartnerLinkCreateCall<'a, S> {
@@ -7410,7 +7736,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -7590,7 +7916,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountChannelPartnerLinkGetCall<'a, S> {
@@ -7683,7 +8010,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -7887,7 +8214,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountChannelPartnerLinkListCall<'a, S> {
@@ -7981,7 +8309,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -8178,7 +8506,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountChannelPartnerLinkPatchCall<'a, S> {
@@ -8249,7 +8578,7 @@ where
 }
 
 
-/// Creates a CustomerRepricingConfig. Call this method to set modifications for a specific customer's bill. You can only create configs if the RepricingConfig.effective_invoice_month is a future month. If needed, you can create a config for the current month, with some restrictions. When creating a config for a future month, make sure there are no existing configs for that RepricingConfig.effective_invoice_month. The following restrictions are for creating configs in the current month. * This functionality is reserved for recovering from an erroneous config, and should not be used for regular business cases. * The new config will not modify exports used with other configs. Changes to the config may be immediate, but may take up to 24 hours. * There is a limit of ten configs for any RepricingConfig.EntitlementGranularity.entitlement or RepricingConfig.effective_invoice_month. * The contained CustomerRepricingConfig.repricing_config vaule must be different from the value used in the current config for a RepricingConfig.EntitlementGranularity.entitlement. Possible Error Codes: * PERMISSION_DENIED: If the account making the request and the account being queried are different. * INVALID_ARGUMENT: Missing or invalid required parameters in the request. Also displays if the updated config is for the current month or past months. * NOT_FOUND: The CustomerRepricingConfig specified does not exist or is not associated with the given account. * INTERNAL: Any non-user error related to technical issues in the backend. In this case, contact Cloud Channel support. Return Value: If successful, the updated CustomerRepricingConfig resource, otherwise returns an error.
+/// Creates a CustomerRepricingConfig. Call this method to set modifications for a specific customer's bill. You can only create configs if the RepricingConfig.effective_invoice_month is a future month. If needed, you can create a config for the current month, with some restrictions. When creating a config for a future month, make sure there are no existing configs for that RepricingConfig.effective_invoice_month. The following restrictions are for creating configs in the current month. * This functionality is reserved for recovering from an erroneous config, and should not be used for regular business cases. * The new config will not modify exports used with other configs. Changes to the config may be immediate, but may take up to 24 hours. * There is a limit of ten configs for any RepricingConfig.EntitlementGranularity.entitlement, for any RepricingConfig.effective_invoice_month. * The contained CustomerRepricingConfig.repricing_config value must be different from the value used in the current config for a RepricingConfig.EntitlementGranularity.entitlement. Possible Error Codes: * PERMISSION_DENIED: If the account making the request and the account being queried are different. * INVALID_ARGUMENT: Missing or invalid required parameters in the request. Also displays if the updated config is for the current month or past months. * NOT_FOUND: The CustomerRepricingConfig specified does not exist or is not associated with the given account. * INTERNAL: Any non-user error related to technical issues in the backend. In this case, contact Cloud Channel support. Return Value: If successful, the updated CustomerRepricingConfig resource, otherwise returns an error.
 ///
 /// A builder for the *customers.customerRepricingConfigs.create* method supported by a *account* resource.
 /// It is not used directly, but through a [`AccountMethods`] instance.
@@ -8272,7 +8601,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -8469,7 +8798,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerCustomerRepricingConfigCreateCall<'a, S> {
@@ -8562,7 +8892,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -8730,7 +9060,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerCustomerRepricingConfigDeleteCall<'a, S> {
@@ -8823,7 +9154,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -8991,7 +9322,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerCustomerRepricingConfigGetCall<'a, S> {
@@ -9062,7 +9394,7 @@ where
 }
 
 
-/// Lists information about how a Reseller modifies their bill before sending it to a Customer. Possible Error Codes: * PERMISSION_DENIED: If the account making the request and the account being queried are different. * NOT_FOUND: The CustomerRepricingConfig specified does not exist or is not associated with the given account. * INTERNAL: Any non-user error related to technical issues in the backend. In this case, contact Cloud Channel support. Return Value: If successful, the CustomerRepricingConfig resources. The data for each resource is displayed in the ascending order of: * customer ID * RepricingConfig.EntitlementGranularity.entitlement * RepricingConfig.effective_invoice_month * CustomerRepricingConfig.update_time If unsuccessful, returns an error.
+/// Lists information about how a Reseller modifies their bill before sending it to a Customer. Possible Error Codes: * PERMISSION_DENIED: If the account making the request and the account being queried are different. * NOT_FOUND: The CustomerRepricingConfig specified does not exist or is not associated with the given account. * INTERNAL: Any non-user error related to technical issues in the backend. In this case, contact Cloud Channel support. Return Value: If successful, the CustomerRepricingConfig resources. The data for each resource is displayed in the ascending order of: * Customer ID * RepricingConfig.EntitlementGranularity.entitlement * RepricingConfig.effective_invoice_month * CustomerRepricingConfig.update_time If unsuccessful, returns an error.
 ///
 /// A builder for the *customers.customerRepricingConfigs.list* method supported by a *account* resource.
 /// It is not used directly, but through a [`AccountMethods`] instance.
@@ -9084,7 +9416,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -9288,7 +9620,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerCustomerRepricingConfigListCall<'a, S> {
@@ -9382,7 +9715,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -9579,7 +9912,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerCustomerRepricingConfigPatchCall<'a, S> {
@@ -9673,7 +10007,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -9870,7 +10204,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerEntitlementActivateCall<'a, S> {
@@ -9964,7 +10299,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -10161,7 +10496,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerEntitlementCancelCall<'a, S> {
@@ -10255,7 +10591,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -10452,7 +10788,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerEntitlementChangeOfferCall<'a, S> {
@@ -10546,7 +10883,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -10743,7 +11080,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerEntitlementChangeParameterCall<'a, S> {
@@ -10837,7 +11175,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -11034,7 +11372,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerEntitlementChangeRenewalSettingCall<'a, S> {
@@ -11105,7 +11444,7 @@ where
 }
 
 
-/// Creates an entitlement for a customer. Possible error codes: * PERMISSION_DENIED: The customer doesn't belong to the reseller. * INVALID_ARGUMENT: * Required request parameters are missing or invalid. * There is already a customer entitlement for a SKU from the same product family. * INVALID_VALUE: Make sure the OfferId is valid. If it is, contact Google Channel support for further troubleshooting. * NOT_FOUND: The customer or offer resource was not found. * ALREADY_EXISTS: * The SKU was already purchased for the customer. * The customer's primary email already exists. Retry after changing the customer's primary contact email. * CONDITION_NOT_MET or FAILED_PRECONDITION: * The domain required for purchasing a SKU has not been verified. * A pre-requisite SKU required to purchase an Add-On SKU is missing. For example, Google Workspace Business Starter is required to purchase Vault or Drive. * (Developer accounts only) Reseller and resold domain must meet the following naming requirements: * Domain names must start with goog-test. * Domain names must include the reseller domain. * INTERNAL: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. * UNKNOWN: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. Return value: The ID of a long-running operation. To get the results of the operation, call the GetOperation method of CloudChannelOperationsService. The Operation metadata will contain an instance of OperationMetadata.
+/// Creates an entitlement for a customer. Possible error codes: * PERMISSION_DENIED: * The customer doesn't belong to the reseller. * The reseller is not authorized to transact on this Product. See https://support.google.com/channelservices/answer/9759265 * INVALID_ARGUMENT: * Required request parameters are missing or invalid. * There is already a customer entitlement for a SKU from the same product family. * INVALID_VALUE: Make sure the OfferId is valid. If it is, contact Google Channel support for further troubleshooting. * NOT_FOUND: The customer or offer resource was not found. * ALREADY_EXISTS: * The SKU was already purchased for the customer. * The customer's primary email already exists. Retry after changing the customer's primary contact email. * CONDITION_NOT_MET or FAILED_PRECONDITION: * The domain required for purchasing a SKU has not been verified. * A pre-requisite SKU required to purchase an Add-On SKU is missing. For example, Google Workspace Business Starter is required to purchase Vault or Drive. * (Developer accounts only) Reseller and resold domain must meet the following naming requirements: * Domain names must start with goog-test. * Domain names must include the reseller domain. * INTERNAL: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. * UNKNOWN: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. Return value: The ID of a long-running operation. To get the results of the operation, call the GetOperation method of CloudChannelOperationsService. The Operation metadata will contain an instance of OperationMetadata.
 ///
 /// A builder for the *customers.entitlements.create* method supported by a *account* resource.
 /// It is not used directly, but through a [`AccountMethods`] instance.
@@ -11128,7 +11467,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -11325,7 +11664,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerEntitlementCreateCall<'a, S> {
@@ -11418,7 +11758,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -11586,7 +11926,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerEntitlementGetCall<'a, S> {
@@ -11679,7 +12020,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -11871,7 +12212,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerEntitlementListCall<'a, S> {
@@ -11942,6 +12284,304 @@ where
 }
 
 
+/// List entitlement history. Possible error codes: * PERMISSION_DENIED: The reseller account making the request and the provided reseller account are different. * INVALID_ARGUMENT: Missing or invalid required fields in the request. * NOT_FOUND: The parent resource doesn't exist. Usually the result of an invalid name parameter. * INTERNAL: Any non-user error related to a technical issue in the backend. In this case, contact CloudChannel support. * UNKNOWN: Any non-user error related to a technical issue in the backend. In this case, contact Cloud Channel support. Return value: List of EntitlementChanges.
+///
+/// A builder for the *customers.entitlements.listEntitlementChanges* method supported by a *account* resource.
+/// It is not used directly, but through a [`AccountMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_cloudchannel1 as cloudchannel1;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use cloudchannel1::{Cloudchannel, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.accounts().customers_entitlements_list_entitlement_changes("parent")
+///              .page_token("et")
+///              .page_size(-76)
+///              .filter("erat")
+///              .doit().await;
+/// # }
+/// ```
+pub struct AccountCustomerEntitlementListEntitlementChangeCall<'a, S>
+    where S: 'a {
+
+    hub: &'a Cloudchannel<S>,
+    _parent: String,
+    _page_token: Option<String>,
+    _page_size: Option<i32>,
+    _filter: Option<String>,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for AccountCustomerEntitlementListEntitlementChangeCall<'a, S> {}
+
+impl<'a, S> AccountCustomerEntitlementListEntitlementChangeCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, GoogleCloudChannelV1ListEntitlementChangesResponse)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "cloudchannel.accounts.customers.entitlements.listEntitlementChanges",
+                               http_method: hyper::Method::GET });
+
+        for &field in ["alt", "parent", "pageToken", "pageSize", "filter"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(6 + self._additional_params.len());
+        params.push("parent", self._parent);
+        if let Some(value) = self._page_token.as_ref() {
+            params.push("pageToken", value);
+        }
+        if let Some(value) = self._page_size.as_ref() {
+            params.push("pageSize", value.to_string());
+        }
+        if let Some(value) = self._filter.as_ref() {
+            params.push("filter", value);
+        }
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+parent}:listEntitlementChanges";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::AppOrder.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["parent"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::GET)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .body(hyper::body::Body::empty());
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    /// Required. The resource name of the entitlement for which to list entitlement changes. The `-` wildcard may be used to match entitlements across a customer. Formats: * accounts/{account_id}/customers/{customer_id}/entitlements/{entitlement_id} * accounts/{account_id}/customers/{customer_id}/entitlements/-
+    ///
+    /// Sets the *parent* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn parent(mut self, new_value: &str) -> AccountCustomerEntitlementListEntitlementChangeCall<'a, S> {
+        self._parent = new_value.to_string();
+        self
+    }
+    /// Optional. A page token, received from a previous CloudChannelService.ListEntitlementChanges call. Provide this to retrieve the subsequent page. When paginating, all other parameters provided to CloudChannelService.ListEntitlementChanges must match the call that provided the page token.
+    ///
+    /// Sets the *page token* query property to the given value.
+    pub fn page_token(mut self, new_value: &str) -> AccountCustomerEntitlementListEntitlementChangeCall<'a, S> {
+        self._page_token = Some(new_value.to_string());
+        self
+    }
+    /// Optional. The maximum number of entitlement changes to return. The service may return fewer than this value. If unspecified, returns at most 10 entitlement changes. The maximum value is 50; the server will coerce values above 50.
+    ///
+    /// Sets the *page size* query property to the given value.
+    pub fn page_size(mut self, new_value: i32) -> AccountCustomerEntitlementListEntitlementChangeCall<'a, S> {
+        self._page_size = Some(new_value);
+        self
+    }
+    /// Optional. Filters applied to the list results.
+    ///
+    /// Sets the *filter* query property to the given value.
+    pub fn filter(mut self, new_value: &str) -> AccountCustomerEntitlementListEntitlementChangeCall<'a, S> {
+        self._filter = Some(new_value.to_string());
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerEntitlementListEntitlementChangeCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> AccountCustomerEntitlementListEntitlementChangeCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::AppOrder`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> AccountCustomerEntitlementListEntitlementChangeCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> AccountCustomerEntitlementListEntitlementChangeCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> AccountCustomerEntitlementListEntitlementChangeCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
 /// Returns the requested Offer resource. Possible error codes: * PERMISSION_DENIED: The entitlement doesn't belong to the reseller. * INVALID_ARGUMENT: Required request parameters are missing or invalid. * NOT_FOUND: Entitlement or offer was not found. Return value: The Offer resource.
 ///
 /// A builder for the *customers.entitlements.lookupOffer* method supported by a *account* resource.
@@ -11964,7 +12604,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -12132,7 +12772,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerEntitlementLookupOfferCall<'a, S> {
@@ -12226,7 +12867,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -12423,7 +13064,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerEntitlementStartPaidServiceCall<'a, S> {
@@ -12517,7 +13159,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -12714,7 +13356,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerEntitlementSuspendCall<'a, S> {
@@ -12785,7 +13428,7 @@ where
 }
 
 
-/// Creates a new Customer resource under the reseller or distributor account. Possible error codes: * PERMISSION_DENIED: The reseller account making the request is different from the reseller account in the API request. * INVALID_ARGUMENT: * Required request parameters are missing or invalid. * Domain field value doesn't match the primary email domain. Return value: The newly created Customer resource.
+/// Creates a new Customer resource under the reseller or distributor account. Possible error codes: * PERMISSION_DENIED: * The reseller account making the request is different from the reseller account in the API request. * You are not authorized to create a customer. See https://support.google.com/channelservices/answer/9759265 * INVALID_ARGUMENT: * Required request parameters are missing or invalid. * Domain field value doesn't match the primary email domain. Return value: The newly created Customer resource.
 ///
 /// A builder for the *customers.create* method supported by a *account* resource.
 /// It is not used directly, but through a [`AccountMethods`] instance.
@@ -12808,7 +13451,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -13005,7 +13648,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerCreateCall<'a, S> {
@@ -13098,7 +13742,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -13266,7 +13910,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerDeleteCall<'a, S> {
@@ -13359,7 +14004,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -13527,7 +14172,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerGetCall<'a, S> {
@@ -13598,7 +14244,7 @@ where
 }
 
 
-/// Imports a Customer from the Cloud Identity associated with the provided Cloud Identity ID or domain before a TransferEntitlements call. If a linked Customer already exists and overwrite_if_exists is true, it will update that Customer's data. Possible error codes: * PERMISSION_DENIED: The reseller account making the request is different from the reseller account in the API request. * NOT_FOUND: Cloud Identity doesn't exist or was deleted. * INVALID_ARGUMENT: Required parameters are missing, or the auth_token is expired or invalid. * ALREADY_EXISTS: A customer already exists and has conflicting critical fields. Requires an overwrite. Return value: The Customer.
+/// Imports a Customer from the Cloud Identity associated with the provided Cloud Identity ID or domain before a TransferEntitlements call. If a linked Customer already exists and overwrite_if_exists is true, it will update that Customer's data. Possible error codes: * PERMISSION_DENIED: * The reseller account making the request is different from the reseller account in the API request. * You are not authorized to import the customer. See https://support.google.com/channelservices/answer/9759265 * NOT_FOUND: Cloud Identity doesn't exist or was deleted. * INVALID_ARGUMENT: Required parameters are missing, or the auth_token is expired or invalid. * ALREADY_EXISTS: A customer already exists and has conflicting critical fields. Requires an overwrite. Return value: The Customer.
 ///
 /// A builder for the *customers.import* method supported by a *account* resource.
 /// It is not used directly, but through a [`AccountMethods`] instance.
@@ -13621,7 +14267,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -13818,7 +14464,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerImportCall<'a, S> {
@@ -13911,14 +14558,14 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.accounts().customers_list("parent")
-///              .page_token("voluptua.")
-///              .page_size(-2)
-///              .filter("consetetur")
+///              .page_token("dolor")
+///              .page_size(-18)
+///              .filter("et")
 ///              .doit().await;
 /// # }
 /// ```
@@ -14115,7 +14762,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerListCall<'a, S> {
@@ -14186,7 +14834,7 @@ where
 }
 
 
-/// Lists the following: * Offers that you can purchase for a customer. * Offers that you can change for an entitlement. Possible error codes: * PERMISSION_DENIED: The customer doesn't belong to the reseller * INVALID_ARGUMENT: Required request parameters are missing or invalid.
+/// Lists the following: * Offers that you can purchase for a customer. * Offers that you can change for an entitlement. Possible error codes: * PERMISSION_DENIED: * The customer doesn't belong to the reseller * The reseller is not authorized to transact on this Product. See https://support.google.com/channelservices/answer/9759265 * INVALID_ARGUMENT: Required request parameters are missing or invalid.
 ///
 /// A builder for the *customers.listPurchasableOffers* method supported by a *account* resource.
 /// It is not used directly, but through a [`AccountMethods`] instance.
@@ -14208,17 +14856,19 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.accounts().customers_list_purchasable_offers("customer")
-///              .page_token("dolor")
-///              .page_size(-18)
-///              .language_code("et")
-///              .create_entitlement_purchase_sku("sadipscing")
-///              .change_offer_purchase_new_sku("Stet")
-///              .change_offer_purchase_entitlement("dolor")
+///              .page_token("Stet")
+///              .page_size(-99)
+///              .language_code("duo")
+///              .create_entitlement_purchase_sku("vero")
+///              .create_entitlement_purchase_billing_account("vero")
+///              .change_offer_purchase_new_sku("invidunt")
+///              .change_offer_purchase_entitlement("Stet")
+///              .change_offer_purchase_billing_account("vero")
 ///              .doit().await;
 /// # }
 /// ```
@@ -14231,8 +14881,10 @@ pub struct AccountCustomerListPurchasableOfferCall<'a, S>
     _page_size: Option<i32>,
     _language_code: Option<String>,
     _create_entitlement_purchase_sku: Option<String>,
+    _create_entitlement_purchase_billing_account: Option<String>,
     _change_offer_purchase_new_sku: Option<String>,
     _change_offer_purchase_entitlement: Option<String>,
+    _change_offer_purchase_billing_account: Option<String>,
     _delegate: Option<&'a mut dyn client::Delegate>,
     _additional_params: HashMap<String, String>,
     _scopes: BTreeSet<String>
@@ -14261,14 +14913,14 @@ where
         dlg.begin(client::MethodInfo { id: "cloudchannel.accounts.customers.listPurchasableOffers",
                                http_method: hyper::Method::GET });
 
-        for &field in ["alt", "customer", "pageToken", "pageSize", "languageCode", "createEntitlementPurchase.sku", "changeOfferPurchase.newSku", "changeOfferPurchase.entitlement"].iter() {
+        for &field in ["alt", "customer", "pageToken", "pageSize", "languageCode", "createEntitlementPurchase.sku", "createEntitlementPurchase.billingAccount", "changeOfferPurchase.newSku", "changeOfferPurchase.entitlement", "changeOfferPurchase.billingAccount"].iter() {
             if self._additional_params.contains_key(field) {
                 dlg.finished(false);
                 return Err(client::Error::FieldClash(field));
             }
         }
 
-        let mut params = Params::with_capacity(9 + self._additional_params.len());
+        let mut params = Params::with_capacity(11 + self._additional_params.len());
         params.push("customer", self._customer);
         if let Some(value) = self._page_token.as_ref() {
             params.push("pageToken", value);
@@ -14282,11 +14934,17 @@ where
         if let Some(value) = self._create_entitlement_purchase_sku.as_ref() {
             params.push("createEntitlementPurchase.sku", value);
         }
+        if let Some(value) = self._create_entitlement_purchase_billing_account.as_ref() {
+            params.push("createEntitlementPurchase.billingAccount", value);
+        }
         if let Some(value) = self._change_offer_purchase_new_sku.as_ref() {
             params.push("changeOfferPurchase.newSku", value);
         }
         if let Some(value) = self._change_offer_purchase_entitlement.as_ref() {
             params.push("changeOfferPurchase.entitlement", value);
+        }
+        if let Some(value) = self._change_offer_purchase_billing_account.as_ref() {
+            params.push("changeOfferPurchase.billingAccount", value);
         }
 
         params.extend(self._additional_params.iter());
@@ -14430,6 +15088,13 @@ where
         self._create_entitlement_purchase_sku = Some(new_value.to_string());
         self
     }
+    /// Optional. Billing account that the result should be restricted to. Format: accounts/{account_id}/billingAccounts/{billing_account_id}.
+    ///
+    /// Sets the *create entitlement purchase.billing account* query property to the given value.
+    pub fn create_entitlement_purchase_billing_account(mut self, new_value: &str) -> AccountCustomerListPurchasableOfferCall<'a, S> {
+        self._create_entitlement_purchase_billing_account = Some(new_value.to_string());
+        self
+    }
     /// Optional. Resource name of the new target SKU. Provide this SKU when upgrading or downgrading an entitlement. Format: products/{product_id}/skus/{sku_id}
     ///
     /// Sets the *change offer purchase.new sku* query property to the given value.
@@ -14444,11 +15109,19 @@ where
         self._change_offer_purchase_entitlement = Some(new_value.to_string());
         self
     }
+    /// Optional. Resource name of the new target Billing Account. Provide this Billing Account when setting up billing for a trial subscription. Format: accounts/{account_id}/billingAccounts/{billing_account_id}. This field is only relevant for multi-currency accounts. It should be left empty for single currency accounts.
+    ///
+    /// Sets the *change offer purchase.billing account* query property to the given value.
+    pub fn change_offer_purchase_billing_account(mut self, new_value: &str) -> AccountCustomerListPurchasableOfferCall<'a, S> {
+        self._change_offer_purchase_billing_account = Some(new_value.to_string());
+        self
+    }
     /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerListPurchasableOfferCall<'a, S> {
@@ -14541,17 +15214,17 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.accounts().customers_list_purchasable_skus("customer")
-///              .page_token("vero")
-///              .page_size(-76)
-///              .language_code("invidunt")
-///              .create_entitlement_purchase_product("Stet")
-///              .change_offer_purchase_entitlement("vero")
-///              .change_offer_purchase_change_type("elitr")
+///              .page_token("Lorem")
+///              .page_size(-29)
+///              .language_code("no")
+///              .create_entitlement_purchase_product("ipsum")
+///              .change_offer_purchase_entitlement("accusam")
+///              .change_offer_purchase_change_type("takimata")
 ///              .doit().await;
 /// # }
 /// ```
@@ -14781,7 +15454,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerListPurchasableSkuCall<'a, S> {
@@ -14875,7 +15549,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -15084,7 +15758,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerPatchCall<'a, S> {
@@ -15155,7 +15830,7 @@ where
 }
 
 
-/// Creates a Cloud Identity for the given customer using the customer's information, or the information provided here. Possible error codes: * PERMISSION_DENIED: The customer doesn't belong to the reseller. * INVALID_ARGUMENT: Required request parameters are missing or invalid. * NOT_FOUND: The customer was not found. * ALREADY_EXISTS: The customer's primary email already exists. Retry after changing the customer's primary contact email. * INTERNAL: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. * UNKNOWN: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. Return value: The ID of a long-running operation. To get the results of the operation, call the GetOperation method of CloudChannelOperationsService. The Operation metadata contains an instance of OperationMetadata.
+/// Creates a Cloud Identity for the given customer using the customer's information, or the information provided here. Possible error codes: * PERMISSION_DENIED: * The customer doesn't belong to the reseller. * You are not authorized to provision cloud identity id. See https://support.google.com/channelservices/answer/9759265 * INVALID_ARGUMENT: Required request parameters are missing or invalid. * NOT_FOUND: The customer was not found. * ALREADY_EXISTS: The customer's primary email already exists. Retry after changing the customer's primary contact email. * INTERNAL: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. * UNKNOWN: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. Return value: The ID of a long-running operation. To get the results of the operation, call the GetOperation method of CloudChannelOperationsService. The Operation metadata contains an instance of OperationMetadata.
 ///
 /// A builder for the *customers.provisionCloudIdentity* method supported by a *account* resource.
 /// It is not used directly, but through a [`AccountMethods`] instance.
@@ -15178,7 +15853,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -15375,7 +16050,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerProvisionCloudIdentityCall<'a, S> {
@@ -15446,7 +16122,284 @@ where
 }
 
 
-/// Transfers customer entitlements to new reseller. Possible error codes: * PERMISSION_DENIED: The customer doesn't belong to the reseller. * INVALID_ARGUMENT: Required request parameters are missing or invalid. * NOT_FOUND: The customer or offer resource was not found. * ALREADY_EXISTS: The SKU was already transferred for the customer. * CONDITION_NOT_MET or FAILED_PRECONDITION: * The SKU requires domain verification to transfer, but the domain is not verified. * An Add-On SKU (example, Vault or Drive) is missing the pre-requisite SKU (example, G Suite Basic). * (Developer accounts only) Reseller and resold domain must meet the following naming requirements: * Domain names must start with goog-test. * Domain names must include the reseller domain. * Specify all transferring entitlements. * INTERNAL: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. * UNKNOWN: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. Return value: The ID of a long-running operation. To get the results of the operation, call the GetOperation method of CloudChannelOperationsService. The Operation metadata will contain an instance of OperationMetadata.
+/// Lists the billing accounts that are eligible to purchase particular SKUs for a given customer. Possible error codes: * PERMISSION_DENIED: The customer doesn't belong to the reseller. * INVALID_ARGUMENT: Required request parameters are missing or invalid. Return value: Based on the provided list of SKUs, returns a list of SKU groups that must be purchased using the same billing account and the billing accounts eligible to purchase each SKU group.
+///
+/// A builder for the *customers.queryEligibleBillingAccounts* method supported by a *account* resource.
+/// It is not used directly, but through a [`AccountMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_cloudchannel1 as cloudchannel1;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use cloudchannel1::{Cloudchannel, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.accounts().customers_query_eligible_billing_accounts("customer")
+///              .add_skus("erat")
+///              .doit().await;
+/// # }
+/// ```
+pub struct AccountCustomerQueryEligibleBillingAccountCall<'a, S>
+    where S: 'a {
+
+    hub: &'a Cloudchannel<S>,
+    _customer: String,
+    _skus: Vec<String>,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for AccountCustomerQueryEligibleBillingAccountCall<'a, S> {}
+
+impl<'a, S> AccountCustomerQueryEligibleBillingAccountCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, GoogleCloudChannelV1QueryEligibleBillingAccountsResponse)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "cloudchannel.accounts.customers.queryEligibleBillingAccounts",
+                               http_method: hyper::Method::GET });
+
+        for &field in ["alt", "customer", "skus"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(4 + self._additional_params.len());
+        params.push("customer", self._customer);
+        if self._skus.len() > 0 {
+            for f in self._skus.iter() {
+                params.push("skus", f);
+            }
+        }
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+customer}:queryEligibleBillingAccounts";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::AppOrder.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+customer}", "customer")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["customer"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::GET)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .body(hyper::body::Body::empty());
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    /// Required. The resource name of the customer to list eligible billing accounts for. Format: accounts/{account_id}/customers/{customer_id}.
+    ///
+    /// Sets the *customer* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn customer(mut self, new_value: &str) -> AccountCustomerQueryEligibleBillingAccountCall<'a, S> {
+        self._customer = new_value.to_string();
+        self
+    }
+    /// Required. List of SKUs to list eligible billing accounts for. At least one SKU is required. Format: products/{product_id}/skus/{sku_id}.
+    ///
+    /// Append the given value to the *skus* query property.
+    /// Each appended value will retain its original ordering and be '/'-separated in the URL's parameters.
+    pub fn add_skus(mut self, new_value: &str) -> AccountCustomerQueryEligibleBillingAccountCall<'a, S> {
+        self._skus.push(new_value.to_string());
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerQueryEligibleBillingAccountCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> AccountCustomerQueryEligibleBillingAccountCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::AppOrder`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> AccountCustomerQueryEligibleBillingAccountCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> AccountCustomerQueryEligibleBillingAccountCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> AccountCustomerQueryEligibleBillingAccountCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
+/// Transfers customer entitlements to new reseller. Possible error codes: * PERMISSION_DENIED: * The customer doesn't belong to the reseller. * The reseller is not authorized to transact on this Product. See https://support.google.com/channelservices/answer/9759265 * INVALID_ARGUMENT: Required request parameters are missing or invalid. * NOT_FOUND: The customer or offer resource was not found. * ALREADY_EXISTS: The SKU was already transferred for the customer. * CONDITION_NOT_MET or FAILED_PRECONDITION: * The SKU requires domain verification to transfer, but the domain is not verified. * An Add-On SKU (example, Vault or Drive) is missing the pre-requisite SKU (example, G Suite Basic). * (Developer accounts only) Reseller and resold domain must meet the following naming requirements: * Domain names must start with goog-test. * Domain names must include the reseller domain. * Specify all transferring entitlements. * INTERNAL: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. * UNKNOWN: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. Return value: The ID of a long-running operation. To get the results of the operation, call the GetOperation method of CloudChannelOperationsService. The Operation metadata will contain an instance of OperationMetadata.
 ///
 /// A builder for the *customers.transferEntitlements* method supported by a *account* resource.
 /// It is not used directly, but through a [`AccountMethods`] instance.
@@ -15469,7 +16422,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -15666,7 +16619,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerTransferEntitlementCall<'a, S> {
@@ -15760,7 +16714,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -15957,7 +16911,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCustomerTransferEntitlementsToGoogleCall<'a, S> {
@@ -16050,15 +17005,16 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.accounts().offers_list("parent")
-///              .page_token("takimata")
-///              .page_size(-46)
+///              .show_future_offers(true)
+///              .page_token("et")
+///              .page_size(-23)
 ///              .language_code("voluptua.")
-///              .filter("et")
+///              .filter("dolore")
 ///              .doit().await;
 /// # }
 /// ```
@@ -16067,6 +17023,7 @@ pub struct AccountOfferListCall<'a, S>
 
     hub: &'a Cloudchannel<S>,
     _parent: String,
+    _show_future_offers: Option<bool>,
     _page_token: Option<String>,
     _page_size: Option<i32>,
     _language_code: Option<String>,
@@ -16099,15 +17056,18 @@ where
         dlg.begin(client::MethodInfo { id: "cloudchannel.accounts.offers.list",
                                http_method: hyper::Method::GET });
 
-        for &field in ["alt", "parent", "pageToken", "pageSize", "languageCode", "filter"].iter() {
+        for &field in ["alt", "parent", "showFutureOffers", "pageToken", "pageSize", "languageCode", "filter"].iter() {
             if self._additional_params.contains_key(field) {
                 dlg.finished(false);
                 return Err(client::Error::FieldClash(field));
             }
         }
 
-        let mut params = Params::with_capacity(7 + self._additional_params.len());
+        let mut params = Params::with_capacity(8 + self._additional_params.len());
         params.push("parent", self._parent);
+        if let Some(value) = self._show_future_offers.as_ref() {
+            params.push("showFutureOffers", value.to_string());
+        }
         if let Some(value) = self._page_token.as_ref() {
             params.push("pageToken", value);
         }
@@ -16234,6 +17194,13 @@ where
         self._parent = new_value.to_string();
         self
     }
+    /// Optional. A boolean flag that determines if a response returns future offers 30 days from now. If the show_future_offers is true, the response will only contain offers that are scheduled to be available 30 days from now.
+    ///
+    /// Sets the *show future offers* query property to the given value.
+    pub fn show_future_offers(mut self, new_value: bool) -> AccountOfferListCall<'a, S> {
+        self._show_future_offers = Some(new_value);
+        self
+    }
     /// Optional. A token for a page of results other than the first page.
     ///
     /// Sets the *page token* query property to the given value.
@@ -16266,7 +17233,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountOfferListCall<'a, S> {
@@ -16337,7 +17305,7 @@ where
 }
 
 
-/// Retrieves data generated by CloudChannelReportsService.RunReportJob.
+/// Retrieves data generated by CloudChannelReportsService.RunReportJob. Deprecated: Please use [Export Channel Services data to BigQuery](https://cloud.google.com/channel/docs/rebilling/export-data-to-bigquery) instead.
 ///
 /// A builder for the *reportJobs.fetchReportResults* method supported by a *account* resource.
 /// It is not used directly, but through a [`AccountMethods`] instance.
@@ -16360,7 +17328,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -16557,7 +17525,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountReportJobFetchReportResultCall<'a, S> {
@@ -16628,7 +17597,7 @@ where
 }
 
 
-/// Lists the reports that RunReportJob can run. These reports include an ID, a description, and the list of columns that will be in the result.
+/// Lists the reports that RunReportJob can run. These reports include an ID, a description, and the list of columns that will be in the result. Deprecated: Please use [Export Channel Services data to BigQuery](https://cloud.google.com/channel/docs/rebilling/export-data-to-bigquery) instead.
 ///
 /// A builder for the *reports.list* method supported by a *account* resource.
 /// It is not used directly, but through a [`AccountMethods`] instance.
@@ -16650,14 +17619,14 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.accounts().reports_list("parent")
-///              .page_token("amet.")
-///              .page_size(-30)
-///              .language_code("takimata")
+///              .page_token("voluptua.")
+///              .page_size(-2)
+///              .language_code("ea")
 ///              .doit().await;
 /// # }
 /// ```
@@ -16854,7 +17823,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountReportListCall<'a, S> {
@@ -16925,7 +17895,7 @@ where
 }
 
 
-/// Begins generation of data for a given report. The report identifier is a UID (for example, `613bf59q`). Possible error codes: * PERMISSION_DENIED: The user doesn't have access to this report. * INVALID_ARGUMENT: Required request parameters are missing or invalid. * NOT_FOUND: The report identifier was not found. * INTERNAL: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. * UNKNOWN: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. Return value: The ID of a long-running operation. To get the results of the operation, call the GetOperation method of CloudChannelOperationsService. The Operation metadata contains an instance of OperationMetadata. To get the results of report generation, call CloudChannelReportsService.FetchReportResults with the RunReportJobResponse.report_job.
+/// Begins generation of data for a given report. The report identifier is a UID (for example, `613bf59q`). Possible error codes: * PERMISSION_DENIED: The user doesn't have access to this report. * INVALID_ARGUMENT: Required request parameters are missing or invalid. * NOT_FOUND: The report identifier was not found. * INTERNAL: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. * UNKNOWN: Any non-user error related to a technical issue in the backend. Contact Cloud Channel support. Return value: The ID of a long-running operation. To get the results of the operation, call the GetOperation method of CloudChannelOperationsService. The Operation metadata contains an instance of OperationMetadata. To get the results of report generation, call CloudChannelReportsService.FetchReportResults with the RunReportJobResponse.report_job. Deprecated: Please use [Export Channel Services data to BigQuery](https://cloud.google.com/channel/docs/rebilling/export-data-to-bigquery) instead.
 ///
 /// A builder for the *reports.run* method supported by a *account* resource.
 /// It is not used directly, but through a [`AccountMethods`] instance.
@@ -16948,7 +17918,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -17145,7 +18115,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountReportRunCall<'a, S> {
@@ -17216,6 +18187,578 @@ where
 }
 
 
+/// Lists the Billable SKUs in a given SKU group. Possible error codes: PERMISSION_DENIED: If the account making the request and the account being queried for are different, or the account doesn't exist. INVALID_ARGUMENT: Missing or invalid required parameters in the request. INTERNAL: Any non-user error related to technical issue in the backend. In this case, contact cloud channel support. Return Value: If successful, the BillableSku resources. The data for each resource is displayed in the ascending order of: * BillableSku.service_display_name * BillableSku.sku_display_name If unsuccessful, returns an error.
+///
+/// A builder for the *skuGroups.billableSkus.list* method supported by a *account* resource.
+/// It is not used directly, but through a [`AccountMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_cloudchannel1 as cloudchannel1;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use cloudchannel1::{Cloudchannel, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.accounts().sku_groups_billable_skus_list("parent")
+///              .page_token("invidunt")
+///              .page_size(-11)
+///              .doit().await;
+/// # }
+/// ```
+pub struct AccountSkuGroupBillableSkuListCall<'a, S>
+    where S: 'a {
+
+    hub: &'a Cloudchannel<S>,
+    _parent: String,
+    _page_token: Option<String>,
+    _page_size: Option<i32>,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for AccountSkuGroupBillableSkuListCall<'a, S> {}
+
+impl<'a, S> AccountSkuGroupBillableSkuListCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, GoogleCloudChannelV1ListSkuGroupBillableSkusResponse)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "cloudchannel.accounts.skuGroups.billableSkus.list",
+                               http_method: hyper::Method::GET });
+
+        for &field in ["alt", "parent", "pageToken", "pageSize"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(5 + self._additional_params.len());
+        params.push("parent", self._parent);
+        if let Some(value) = self._page_token.as_ref() {
+            params.push("pageToken", value);
+        }
+        if let Some(value) = self._page_size.as_ref() {
+            params.push("pageSize", value.to_string());
+        }
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+parent}/billableSkus";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::AppOrder.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["parent"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::GET)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .body(hyper::body::Body::empty());
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    /// Required. Resource name of the SKU group. Format: accounts/{account}/skuGroups/{sku_group}.
+    ///
+    /// Sets the *parent* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn parent(mut self, new_value: &str) -> AccountSkuGroupBillableSkuListCall<'a, S> {
+        self._parent = new_value.to_string();
+        self
+    }
+    /// Optional. A token identifying a page of results beyond the first page. Obtained through ListSkuGroupBillableSkus.next_page_token of the previous CloudChannelService.ListSkuGroupBillableSkus call.
+    ///
+    /// Sets the *page token* query property to the given value.
+    pub fn page_token(mut self, new_value: &str) -> AccountSkuGroupBillableSkuListCall<'a, S> {
+        self._page_token = Some(new_value.to_string());
+        self
+    }
+    /// Optional. The maximum number of SKUs to return. The service may return fewer than this value. If unspecified, returns a maximum of 100000 SKUs. The maximum value is 100000; values above 100000 will be coerced to 100000.
+    ///
+    /// Sets the *page size* query property to the given value.
+    pub fn page_size(mut self, new_value: i32) -> AccountSkuGroupBillableSkuListCall<'a, S> {
+        self._page_size = Some(new_value);
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountSkuGroupBillableSkuListCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> AccountSkuGroupBillableSkuListCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::AppOrder`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> AccountSkuGroupBillableSkuListCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> AccountSkuGroupBillableSkuListCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> AccountSkuGroupBillableSkuListCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
+/// Lists the Rebilling supported SKU groups the account is authorized to sell. Reference: https://cloud.google.com/skus/sku-groups Possible Error Codes: * PERMISSION_DENIED: If the account making the request and the account being queried are different, or the account doesn't exist. * INTERNAL: Any non-user error related to technical issues in the backend. In this case, contact Cloud Channel support. Return Value: If successful, the SkuGroup resources. The data for each resource is displayed in the alphabetical order of SKU group display name. The data for each resource is displayed in the ascending order of SkuGroup.display_name If unsuccessful, returns an error.
+///
+/// A builder for the *skuGroups.list* method supported by a *account* resource.
+/// It is not used directly, but through a [`AccountMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_cloudchannel1 as cloudchannel1;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use cloudchannel1::{Cloudchannel, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.accounts().sku_groups_list("parent")
+///              .page_token("At")
+///              .page_size(-43)
+///              .doit().await;
+/// # }
+/// ```
+pub struct AccountSkuGroupListCall<'a, S>
+    where S: 'a {
+
+    hub: &'a Cloudchannel<S>,
+    _parent: String,
+    _page_token: Option<String>,
+    _page_size: Option<i32>,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for AccountSkuGroupListCall<'a, S> {}
+
+impl<'a, S> AccountSkuGroupListCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, GoogleCloudChannelV1ListSkuGroupsResponse)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "cloudchannel.accounts.skuGroups.list",
+                               http_method: hyper::Method::GET });
+
+        for &field in ["alt", "parent", "pageToken", "pageSize"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(5 + self._additional_params.len());
+        params.push("parent", self._parent);
+        if let Some(value) = self._page_token.as_ref() {
+            params.push("pageToken", value);
+        }
+        if let Some(value) = self._page_size.as_ref() {
+            params.push("pageSize", value.to_string());
+        }
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+parent}/skuGroups";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::AppOrder.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["parent"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::GET)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .body(hyper::body::Body::empty());
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    /// Required. The resource name of the account from which to list SKU groups. Parent uses the format: accounts/{account}.
+    ///
+    /// Sets the *parent* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn parent(mut self, new_value: &str) -> AccountSkuGroupListCall<'a, S> {
+        self._parent = new_value.to_string();
+        self
+    }
+    /// Optional. A token identifying a page of results beyond the first page. Obtained through ListSkuGroups.next_page_token of the previous CloudChannelService.ListSkuGroups call.
+    ///
+    /// Sets the *page token* query property to the given value.
+    pub fn page_token(mut self, new_value: &str) -> AccountSkuGroupListCall<'a, S> {
+        self._page_token = Some(new_value.to_string());
+        self
+    }
+    /// Optional. The maximum number of SKU groups to return. The service may return fewer than this value. If unspecified, returns a maximum of 1000 SKU groups. The maximum value is 1000; values above 1000 will be coerced to 1000.
+    ///
+    /// Sets the *page size* query property to the given value.
+    pub fn page_size(mut self, new_value: i32) -> AccountSkuGroupListCall<'a, S> {
+        self._page_size = Some(new_value);
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountSkuGroupListCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> AccountSkuGroupListCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::AppOrder`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> AccountSkuGroupListCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> AccountSkuGroupListCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> AccountSkuGroupListCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
 /// Confirms the existence of Cloud Identity accounts based on the domain and if the Cloud Identity accounts are owned by the reseller. Possible error codes: * PERMISSION_DENIED: The reseller account making the request is different from the reseller account in the API request. * INVALID_ARGUMENT: Required request parameters are missing or invalid. * INVALID_VALUE: Invalid domain value in the request. Return value: A list of CloudIdentityCustomerAccount resources for the domain (may be empty) Note: in the v1alpha1 version of the API, a NOT_FOUND error returns if no CloudIdentityCustomerAccount resources match the domain.
 ///
 /// A builder for the *checkCloudIdentityAccountsExist* method supported by a *account* resource.
@@ -17239,7 +18782,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -17436,7 +18979,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountCheckCloudIdentityAccountsExistCall<'a, S> {
@@ -17529,13 +19073,13 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.accounts().list_subscribers("account")
-///              .page_token("accusam")
-///              .page_size(-78)
+///              .page_token("tempor")
+///              .page_size(-32)
 ///              .doit().await;
 /// # }
 /// ```
@@ -17721,7 +19265,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountListSubscriberCall<'a, S> {
@@ -17792,7 +19337,7 @@ where
 }
 
 
-/// List TransferableOffers of a customer based on Cloud Identity ID or Customer Name in the request. Use this method when a reseller gets the entitlement information of an unowned customer. The reseller should provide the customer's Cloud Identity ID or Customer Name. Possible error codes: * PERMISSION_DENIED: * The customer doesn't belong to the reseller and has no auth token. * The customer provided incorrect reseller information when generating auth token. * The reseller account making the request is different from the reseller account in the query. * INVALID_ARGUMENT: Required request parameters are missing or invalid. Return value: List of TransferableOffer for the given customer and SKU.
+/// List TransferableOffers of a customer based on Cloud Identity ID or Customer Name in the request. Use this method when a reseller gets the entitlement information of an unowned customer. The reseller should provide the customer's Cloud Identity ID or Customer Name. Possible error codes: * PERMISSION_DENIED: * The customer doesn't belong to the reseller and has no auth token. * The customer provided incorrect reseller information when generating auth token. * The reseller account making the request is different from the reseller account in the query. * The reseller is not authorized to transact on this Product. See https://support.google.com/channelservices/answer/9759265 * INVALID_ARGUMENT: Required request parameters are missing or invalid. Return value: List of TransferableOffer for the given customer and SKU.
 ///
 /// A builder for the *listTransferableOffers* method supported by a *account* resource.
 /// It is not used directly, but through a [`AccountMethods`] instance.
@@ -17815,7 +19360,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -18012,7 +19557,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountListTransferableOfferCall<'a, S> {
@@ -18106,7 +19652,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -18303,7 +19849,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountListTransferableSkuCall<'a, S> {
@@ -18397,7 +19944,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -18594,7 +20141,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountRegisterCall<'a, S> {
@@ -18688,7 +20236,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -18885,7 +20433,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AccountUnregisterCall<'a, S> {
@@ -18979,7 +20528,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -19176,7 +20725,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> OperationCancelCall<'a, S> {
@@ -19269,7 +20819,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -19437,7 +20987,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> OperationDeleteCall<'a, S> {
@@ -19530,7 +21081,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -19698,7 +21249,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> OperationGetCall<'a, S> {
@@ -19769,7 +21321,7 @@ where
 }
 
 
-/// Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns `UNIMPLEMENTED`. NOTE: the `name` binding allows API services to override the binding to use different resource name schemes, such as `users/*/operations`. To override the binding, API services can add a binding such as `"/v1/{name=users/*}/operations"` to their service configuration. For backwards compatibility, the default name includes the operations collection id, however overriding users must ensure the name binding is the parent resource, without the operations collection id.
+/// Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns `UNIMPLEMENTED`.
 ///
 /// A builder for the *list* method supported by a *operation* resource.
 /// It is not used directly, but through a [`OperationMethods`] instance.
@@ -19791,14 +21343,14 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.operations().list("name")
-///              .page_token("invidunt")
-///              .page_size(-11)
-///              .filter("est")
+///              .page_token("dolores")
+///              .page_size(-68)
+///              .filter("sed")
 ///              .doit().await;
 /// # }
 /// ```
@@ -19995,7 +21547,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> OperationListCall<'a, S> {
@@ -20088,15 +21641,15 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.products().skus_list("parent")
-///              .page_token("sed")
-///              .page_size(-98)
-///              .language_code("et")
-///              .account("tempor")
+///              .page_token("et")
+///              .page_size(-94)
+///              .language_code("sed")
+///              .account("no")
 ///              .doit().await;
 /// # }
 /// ```
@@ -20304,7 +21857,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProductSkuListCall<'a, S> {
@@ -20397,15 +21951,15 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Cloudchannel::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.products().list()
-///              .page_token("aliquyam")
-///              .page_size(-5)
-///              .language_code("et")
-///              .account("sanctus")
+///              .page_token("nonumy")
+///              .page_size(-77)
+///              .language_code("sadipscing")
+///              .account("aliquyam")
 ///              .doit().await;
 /// # }
 /// ```
@@ -20594,7 +22148,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProductListCall<'a, S> {

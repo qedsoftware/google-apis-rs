@@ -55,7 +55,7 @@ use crate::{client, client::GetToken, client::serde_with};
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = CloudSecurityToken::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = CloudSecurityToken::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -103,7 +103,7 @@ impl<'a, S> CloudSecurityToken<S> {
         CloudSecurityToken {
             client,
             auth: Box::new(auth),
-            _user_agent: "google-api-rust-client/5.0.2".to_string(),
+            _user_agent: "google-api-rust-client/5.0.4".to_string(),
             _base_url: "https://sts.googleapis.com/".to_string(),
             _root_url: "https://sts.googleapis.com/".to_string(),
         }
@@ -114,7 +114,7 @@ impl<'a, S> CloudSecurityToken<S> {
     }
 
     /// Set the user-agent header field to use in all requests to the server.
-    /// It defaults to `google-api-rust-client/5.0.2`.
+    /// It defaults to `google-api-rust-client/5.0.4`.
     ///
     /// Returns the previously set user-agent.
     pub fn user_agent(&mut self, agent_name: String) -> String {
@@ -150,7 +150,6 @@ impl<'a, S> CloudSecurityToken<S> {
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [oauthtoken](MethodOauthtokenCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleIdentityStsV1ExchangeOauthTokenRequest {
@@ -193,7 +192,6 @@ impl client::RequestValue for GoogleIdentityStsV1ExchangeOauthTokenRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [oauthtoken](MethodOauthtokenCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleIdentityStsV1ExchangeOauthTokenResponse {
@@ -203,13 +201,16 @@ pub struct GoogleIdentityStsV1ExchangeOauthTokenResponse {
     /// The amount of time, in seconds, between the time when the access token was issued and the time when the access token will expires.
     
     pub expires_in: Option<i32>,
+    /// Google issued ID token in response to the OAuth token exchange request for ID token flow.
+    
+    pub id_token: Option<String>,
     /// A refresh token, issued by Google, in response to the OAuth token exchange request for refresh token flow
     
     pub refresh_token: Option<String>,
     /// A list of scopes associated with the returned token.
     
     pub scope: Option<String>,
-    /// The type of token. Field reserved for RFC compliance. See https://www.rfc-editor.org/rfc/rfc6749#section-5.1 Note: No token_type is returned for current implementation
+    /// The type of token. Field reserved for RFC compliance. See https://www.rfc-editor.org/rfc/rfc6749#section-5.1
     
     pub token_type: Option<String>,
 }
@@ -225,7 +226,6 @@ impl client::ResponseResult for GoogleIdentityStsV1ExchangeOauthTokenResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [token](MethodTokenCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleIdentityStsV1ExchangeTokenRequest {
@@ -267,7 +267,6 @@ impl client::RequestValue for GoogleIdentityStsV1ExchangeTokenRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [token](MethodTokenCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleIdentityStsV1ExchangeTokenResponse {
@@ -296,7 +295,6 @@ impl client::ResponseResult for GoogleIdentityStsV1ExchangeTokenResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [introspect](MethodIntrospectCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleIdentityStsV1IntrospectTokenRequest {
@@ -320,7 +318,6 @@ impl client::RequestValue for GoogleIdentityStsV1IntrospectTokenRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [introspect](MethodIntrospectCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleIdentityStsV1IntrospectTokenResponse {
@@ -381,7 +378,7 @@ impl client::ResponseResult for GoogleIdentityStsV1IntrospectTokenResponse {}
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = CloudSecurityToken::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = CloudSecurityToken::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
 /// // like `introspect(...)`, `oauthtoken(...)` and `token(...)`
 /// // to build up your call.
@@ -478,7 +475,7 @@ impl<'a, S> MethodMethods<'a, S> {
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudSecurityToken::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudSecurityToken::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -645,7 +642,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> MethodIntrospectCall<'a, S> {
@@ -705,7 +703,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudSecurityToken::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudSecurityToken::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -872,7 +870,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> MethodOauthtokenCall<'a, S> {
@@ -932,7 +931,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudSecurityToken::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudSecurityToken::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -1099,7 +1098,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> MethodTokenCall<'a, S> {

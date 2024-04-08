@@ -23,8 +23,11 @@ use crate::{client, client::GetToken, client::serde_with};
 /// Identifies the an OAuth2 authorization scope.
 /// A scope is needed when requesting an
 /// [authorization token](https://developers.google.com/youtube/v3/guides/authentication).
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Ord, PartialOrd, Hash, Debug, Clone, Copy)]
 pub enum Scope {
+    /// Read, write and manage healthcare data
+    CloudHealthcare,
+
     /// See, edit, configure, and delete your Google Cloud data and see the email address for your Google Account.
     CloudPlatform,
 }
@@ -32,6 +35,7 @@ pub enum Scope {
 impl AsRef<str> for Scope {
     fn as_ref(&self) -> &str {
         match *self {
+            Scope::CloudHealthcare => "https://www.googleapis.com/auth/cloud-healthcare",
             Scope::CloudPlatform => "https://www.googleapis.com/auth/cloud-platform",
         }
     }
@@ -76,7 +80,7 @@ impl Default for Scope {
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -125,7 +129,7 @@ impl<'a, S> CloudHealthcare<S> {
         CloudHealthcare {
             client,
             auth: Box::new(auth),
-            _user_agent: "google-api-rust-client/5.0.2".to_string(),
+            _user_agent: "google-api-rust-client/5.0.4".to_string(),
             _base_url: "https://healthcare.googleapis.com/".to_string(),
             _root_url: "https://healthcare.googleapis.com/".to_string(),
         }
@@ -136,7 +140,7 @@ impl<'a, S> CloudHealthcare<S> {
     }
 
     /// Set the user-agent header field to use in all requests to the server.
-    /// It defaults to `google-api-rust-client/5.0.2`.
+    /// It defaults to `google-api-rust-client/5.0.4`.
     ///
     /// Returns the previously set user-agent.
     pub fn user_agent(&mut self, agent_name: String) -> String {
@@ -172,7 +176,6 @@ impl<'a, S> CloudHealthcare<S> {
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets consent stores consents activate projects](ProjectLocationDatasetConsentStoreConsentActivateCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ActivateConsentRequest {
@@ -201,10 +204,13 @@ impl client::RequestValue for ActivateConsentRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations services nlp analyze entities projects](ProjectLocationServiceNlpAnalyzeEntityCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct AnalyzeEntitiesRequest {
+    /// Optional. Alternative output format to be generated based on the results of analysis.
+    #[serde(rename="alternativeOutputFormat")]
+    
+    pub alternative_output_format: Option<String>,
     /// document_content is a document to be annotated.
     #[serde(rename="documentContent")]
     
@@ -226,17 +232,20 @@ impl client::RequestValue for AnalyzeEntitiesRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations services nlp analyze entities projects](ProjectLocationServiceNlpAnalyzeEntityCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct AnalyzeEntitiesResponse {
     /// The union of all the candidate entities that the entity_mentions in this response could link to. These are UMLS concepts or normalized mention content.
     
     pub entities: Option<Vec<Entity>>,
-    /// entity_mentions contains all the annotated medical entities that were mentioned in the provided document.
+    /// The `entity_mentions` field contains all the annotated medical entities that were mentioned in the provided document.
     #[serde(rename="entityMentions")]
     
     pub entity_mentions: Option<Vec<EntityMention>>,
+    /// The FHIR bundle ([`R4`](http://hl7.org/fhir/R4/bundle.html)) that includes all the entities, the entity mentions, and the relationships in JSON format.
+    #[serde(rename="fhirBundle")]
+    
+    pub fhir_bundle: Option<String>,
     /// relationships contains all the binary relationships that were identified between entity mentions within the provided document.
     
     pub relationships: Option<Vec<EntityMentionRelationship>>,
@@ -253,7 +262,6 @@ impl client::ResponseResult for AnalyzeEntitiesResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets consent stores user data mappings archive projects](ProjectLocationDatasetConsentStoreUserDataMappingArchiveCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ArchiveUserDataMappingRequest { _never_set: Option<bool> }
@@ -269,7 +277,6 @@ impl client::RequestValue for ArchiveUserDataMappingRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets consent stores user data mappings archive projects](ProjectLocationDatasetConsentStoreUserDataMappingArchiveCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ArchiveUserDataMappingResponse { _never_set: Option<bool> }
@@ -306,7 +313,6 @@ impl client::Part for Attribute {}
 /// * [locations datasets consent stores attribute definitions create projects](ProjectLocationDatasetConsentStoreAttributeDefinitionCreateCall) (request|response)
 /// * [locations datasets consent stores attribute definitions get projects](ProjectLocationDatasetConsentStoreAttributeDefinitionGetCall) (response)
 /// * [locations datasets consent stores attribute definitions patch projects](ProjectLocationDatasetConsentStoreAttributeDefinitionPatchCall) (request|response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct AttributeDefinition {
@@ -328,7 +334,7 @@ pub struct AttributeDefinition {
     /// Optional. A description of the attribute.
     
     pub description: Option<String>,
-    /// Resource name of the Attribute definition, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/consentStores/{consent_store_id}/attributeDefinitions/{attribute_definition_id}`. Cannot be changed after creation.
+    /// Identifier. Resource name of the Attribute definition, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/consentStores/{consent_store_id}/attributeDefinitions/{attribute_definition_id}`. Cannot be changed after creation.
     
     pub name: Option<String>,
 }
@@ -386,10 +392,10 @@ pub struct Binding {
     /// The condition that is associated with this binding. If the condition evaluates to `true`, then this binding applies to the current request. If the condition evaluates to `false`, then this binding does not apply to the current request. However, a different role binding might grant the same role to one or more of the principals in this binding. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies).
     
     pub condition: Option<Expr>,
-    /// Specifies the principals requesting access for a Google Cloud resource. `members` can have the following values: * `allUsers`: A special identifier that represents anyone who is on the internet; with or without a Google account. * `allAuthenticatedUsers`: A special identifier that represents anyone who is authenticated with a Google account or a service account. Does not include identities that come from external identity providers (IdPs) through identity federation. * `user:{emailid}`: An email address that represents a specific Google account. For example, `alice@example.com` . * `serviceAccount:{emailid}`: An email address that represents a Google service account. For example, `my-other-app@appspot.gserviceaccount.com`. * `serviceAccount:{projectid}.svc.id.goog[{namespace}/{kubernetes-sa}]`: An identifier for a [Kubernetes service account](https://cloud.google.com/kubernetes-engine/docs/how-to/kubernetes-service-accounts). For example, `my-project.svc.id.goog[my-namespace/my-kubernetes-sa]`. * `group:{emailid}`: An email address that represents a Google group. For example, `admins@example.com`. * `deleted:user:{emailid}?uid={uniqueid}`: An email address (plus unique identifier) representing a user that has been recently deleted. For example, `alice@example.com?uid=123456789012345678901`. If the user is recovered, this value reverts to `user:{emailid}` and the recovered user retains the role in the binding. * `deleted:serviceAccount:{emailid}?uid={uniqueid}`: An email address (plus unique identifier) representing a service account that has been recently deleted. For example, `my-other-app@appspot.gserviceaccount.com?uid=123456789012345678901`. If the service account is undeleted, this value reverts to `serviceAccount:{emailid}` and the undeleted service account retains the role in the binding. * `deleted:group:{emailid}?uid={uniqueid}`: An email address (plus unique identifier) representing a Google group that has been recently deleted. For example, `admins@example.com?uid=123456789012345678901`. If the group is recovered, this value reverts to `group:{emailid}` and the recovered group retains the role in the binding. * `domain:{domain}`: The G Suite domain (primary) that represents all the users of that domain. For example, `google.com` or `example.com`. 
+    /// Specifies the principals requesting access for a Google Cloud resource. `members` can have the following values: * `allUsers`: A special identifier that represents anyone who is on the internet; with or without a Google account. * `allAuthenticatedUsers`: A special identifier that represents anyone who is authenticated with a Google account or a service account. Does not include identities that come from external identity providers (IdPs) through identity federation. * `user:{emailid}`: An email address that represents a specific Google account. For example, `alice@example.com` . * `serviceAccount:{emailid}`: An email address that represents a Google service account. For example, `my-other-app@appspot.gserviceaccount.com`. * `serviceAccount:{projectid}.svc.id.goog[{namespace}/{kubernetes-sa}]`: An identifier for a [Kubernetes service account](https://cloud.google.com/kubernetes-engine/docs/how-to/kubernetes-service-accounts). For example, `my-project.svc.id.goog[my-namespace/my-kubernetes-sa]`. * `group:{emailid}`: An email address that represents a Google group. For example, `admins@example.com`. * `domain:{domain}`: The G Suite domain (primary) that represents all the users of that domain. For example, `google.com` or `example.com`. * `principal://iam.googleapis.com/locations/global/workforcePools/{pool_id}/subject/{subject_attribute_value}`: A single identity in a workforce identity pool. * `principalSet://iam.googleapis.com/locations/global/workforcePools/{pool_id}/group/{group_id}`: All workforce identities in a group. * `principalSet://iam.googleapis.com/locations/global/workforcePools/{pool_id}/attribute.{attribute_name}/{attribute_value}`: All workforce identities with a specific attribute value. * `principalSet://iam.googleapis.com/locations/global/workforcePools/{pool_id}/*`: All identities in a workforce identity pool. * `principal://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/subject/{subject_attribute_value}`: A single identity in a workload identity pool. * `principalSet://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/group/{group_id}`: A workload identity pool group. * `principalSet://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/attribute.{attribute_name}/{attribute_value}`: All identities in a workload identity pool with a certain attribute. * `principalSet://iam.googleapis.com/projects/{project_number}/locations/global/workloadIdentityPools/{pool_id}/*`: All identities in a workload identity pool. * `deleted:user:{emailid}?uid={uniqueid}`: An email address (plus unique identifier) representing a user that has been recently deleted. For example, `alice@example.com?uid=123456789012345678901`. If the user is recovered, this value reverts to `user:{emailid}` and the recovered user retains the role in the binding. * `deleted:serviceAccount:{emailid}?uid={uniqueid}`: An email address (plus unique identifier) representing a service account that has been recently deleted. For example, `my-other-app@appspot.gserviceaccount.com?uid=123456789012345678901`. If the service account is undeleted, this value reverts to `serviceAccount:{emailid}` and the undeleted service account retains the role in the binding. * `deleted:group:{emailid}?uid={uniqueid}`: An email address (plus unique identifier) representing a Google group that has been recently deleted. For example, `admins@example.com?uid=123456789012345678901`. If the group is recovered, this value reverts to `group:{emailid}` and the recovered group retains the role in the binding. * `deleted:principal://iam.googleapis.com/locations/global/workforcePools/{pool_id}/subject/{subject_attribute_value}`: Deleted single identity in a workforce identity pool. For example, `deleted:principal://iam.googleapis.com/locations/global/workforcePools/my-pool-id/subject/my-subject-attribute-value`.
     
     pub members: Option<Vec<String>>,
-    /// Role that is assigned to the list of `members`, or principals. For example, `roles/viewer`, `roles/editor`, or `roles/owner`.
+    /// Role that is assigned to the list of `members`, or principals. For example, `roles/viewer`, `roles/editor`, or `roles/owner`. For an overview of the IAM roles and permissions, see the [IAM documentation](https://cloud.google.com/iam/docs/roles-overview). For a list of the available pre-defined roles, see [here](https://cloud.google.com/iam/docs/understanding-roles).
     
     pub role: Option<String>,
 }
@@ -405,7 +411,6 @@ impl client::Part for Binding {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets operations cancel projects](ProjectLocationDatasetOperationCancelCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct CancelOperationRequest { _never_set: Option<bool> }
@@ -437,7 +442,6 @@ impl client::Part for CharacterMaskConfig {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets consent stores check data access projects](ProjectLocationDatasetConsentStoreCheckDataAccesCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct CheckDataAccessRequest {
@@ -470,7 +474,6 @@ impl client::RequestValue for CheckDataAccessRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets consent stores check data access projects](ProjectLocationDatasetConsentStoreCheckDataAccesCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct CheckDataAccessResponse {
@@ -486,7 +489,7 @@ pub struct CheckDataAccessResponse {
 impl client::ResponseResult for CheckDataAccessResponse {}
 
 
-/// Represents a user's consent.
+/// Represents a user’s consent.
 /// 
 /// # Activities
 /// 
@@ -499,7 +502,6 @@ impl client::ResponseResult for CheckDataAccessResponse {}
 /// * [locations datasets consent stores consents patch projects](ProjectLocationDatasetConsentStoreConsentPatchCall) (request|response)
 /// * [locations datasets consent stores consents reject projects](ProjectLocationDatasetConsentStoreConsentRejectCall) (response)
 /// * [locations datasets consent stores consents revoke projects](ProjectLocationDatasetConsentStoreConsentRevokeCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Consent {
@@ -514,7 +516,7 @@ pub struct Consent {
     /// Optional. User-supplied key-value pairs used to organize Consent resources. Metadata keys must: - be between 1 and 63 characters long - have a UTF-8 encoding of maximum 128 bytes - begin with a letter - consist of up to 63 characters including lowercase letters, numeric characters, underscores, and dashes Metadata values must be: - be between 1 and 63 characters long - have a UTF-8 encoding of maximum 128 bytes - consist of up to 63 characters including lowercase letters, numeric characters, underscores, and dashes No more than 64 metadata entries can be associated with a given consent.
     
     pub metadata: Option<HashMap<String, String>>,
-    /// Resource name of the Consent, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/consentStores/{consent_store_id}/consents/{consent_id}`. Cannot be changed after creation.
+    /// Identifier. Resource name of the Consent, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/consentStores/{consent_store_id}/consents/{consent_id}`. Cannot be changed after creation.
     
     pub name: Option<String>,
     /// Optional. Represents a user's consent in terms of the resources that can be accessed and under what conditions.
@@ -545,7 +547,7 @@ impl client::RequestValue for Consent {}
 impl client::ResponseResult for Consent {}
 
 
-/// Documentation of a user's consent.
+/// Documentation of a user’s consent.
 /// 
 /// # Activities
 /// 
@@ -554,7 +556,6 @@ impl client::ResponseResult for Consent {}
 /// 
 /// * [locations datasets consent stores consent artifacts create projects](ProjectLocationDatasetConsentStoreConsentArtifactCreateCall) (request|response)
 /// * [locations datasets consent stores consent artifacts get projects](ProjectLocationDatasetConsentStoreConsentArtifactGetCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ConsentArtifact {
@@ -573,7 +574,7 @@ pub struct ConsentArtifact {
     /// Optional. Metadata associated with the Consent artifact. For example, the consent locale or user agent version.
     
     pub metadata: Option<HashMap<String, String>>,
-    /// Resource name of the Consent artifact, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/consentStores/{consent_store_id}/consentArtifacts/{consent_artifact_id}`. Cannot be changed after creation.
+    /// Identifier. Resource name of the Consent artifact, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/consentStores/{consent_store_id}/consentArtifacts/{consent_artifact_id}`. Cannot be changed after creation.
     
     pub name: Option<String>,
     /// Required. User's UUID provided by the client.
@@ -635,7 +636,6 @@ impl client::Part for ConsentList {}
 /// * [locations datasets consent stores create projects](ProjectLocationDatasetConsentStoreCreateCall) (request|response)
 /// * [locations datasets consent stores get projects](ProjectLocationDatasetConsentStoreGetCall) (response)
 /// * [locations datasets consent stores patch projects](ProjectLocationDatasetConsentStorePatchCall) (request|response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ConsentStore {
@@ -651,7 +651,7 @@ pub struct ConsentStore {
     /// Optional. User-supplied key-value pairs used to organize consent stores. Label keys must be between 1 and 63 characters long, have a UTF-8 encoding of maximum 128 bytes, and must conform to the following PCRE regular expression: \p{Ll}\p{Lo}{0,62}. Label values must be between 1 and 63 characters long, have a UTF-8 encoding of maximum 128 bytes, and must conform to the following PCRE regular expression: [\p{Ll}\p{Lo}\p{N}_-]{0,63}. No more than 64 labels can be associated with a given store. For more information: https://cloud.google.com/healthcare/docs/how-tos/labeling-resources
     
     pub labels: Option<HashMap<String, String>>,
-    /// Resource name of the consent store, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/consentStores/{consent_store_id}`. Cannot be changed after creation.
+    /// Identifier. Resource name of the consent store, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/consentStores/{consent_store_id}`. Cannot be changed after creation.
     
     pub name: Option<String>,
 }
@@ -668,11 +668,10 @@ impl client::ResponseResult for ConsentStore {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets hl7 v2 stores messages create projects](ProjectLocationDatasetHl7V2StoreMessageCreateCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct CreateMessageRequest {
-    /// HL7v2 message.
+    /// Required. HL7v2 message.
     
     pub message: Option<Message>,
 }
@@ -690,7 +689,7 @@ pub struct CryptoHashConfig {
     /// An AES 128/192/256 bit key. Causes the hash to be computed based on this key. A default key is generated for each Deidentify operation and is used when neither `crypto_key` nor `kms_wrapped` is specified. Must not be set if `kms_wrapped` is set.
     #[serde(rename="cryptoKey")]
     
-    #[serde_as(as = "Option<::client::serde::urlsafe_base64::Wrapper>")]
+    #[serde_as(as = "Option<::client::serde::standard_base64::Wrapper>")]
     pub crypto_key: Option<Vec<u8>>,
     /// KMS wrapped key. Must not be set if `crypto_key` is set.
     #[serde(rename="kmsWrapped")]
@@ -711,11 +710,10 @@ impl client::Part for CryptoHashConfig {}
 /// * [locations datasets create projects](ProjectLocationDatasetCreateCall) (request)
 /// * [locations datasets get projects](ProjectLocationDatasetGetCall) (response)
 /// * [locations datasets patch projects](ProjectLocationDatasetPatchCall) (request|response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Dataset {
-    /// Resource name of the dataset, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}`.
+    /// Identifier. Resource name of the dataset, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}`.
     
     pub name: Option<String>,
     /// The default timezone used by this dataset. Must be a either a valid IANA time zone name such as "America/New_York" or empty, which defaults to UTC. This is used for parsing times in resources, such as HL7 messages, where no explicit timezone is specified.
@@ -738,7 +736,7 @@ pub struct DateShiftConfig {
     /// An AES 128/192/256 bit key. The date shift is computed based on this key and the patient ID. If the patient ID is empty for a DICOM resource, the date shift is computed based on this key and the study instance UID. If `crypto_key` is not set, then `kms_wrapped` is used to calculate the date shift. If neither is set, a default key is generated for each de-identify operation. Must not be set if `kms_wrapped` is set.
     #[serde(rename="cryptoKey")]
     
-    #[serde_as(as = "Option<::client::serde::urlsafe_base64::Wrapper>")]
+    #[serde_as(as = "Option<::client::serde::standard_base64::Wrapper>")]
     pub crypto_key: Option<Vec<u8>>,
     /// KMS wrapped key. If `kms_wrapped` is not set, then `crypto_key` is used to calculate the date shift. If neither is set, a default key is generated for each de-identify operation. Must not be set if `crypto_key` is set.
     #[serde(rename="kmsWrapped")]
@@ -786,6 +784,10 @@ pub struct DeidentifyConfig {
     /// Configures de-identification of text wherever it is found in the source_dataset.
     
     pub text: Option<TextConfig>,
+    /// Ensures in-flight data remains in the region of origin during de-identification. Using this option results in a significant reduction of throughput, and is not compatible with `LOCATION` or `ORGANIZATION_NAME` infoTypes. `LOCATION` must be excluded within TextConfig, and must also be excluded within ImageConfig if image redaction is required.
+    #[serde(rename="useRegionalDataProcessing")]
+    
+    pub use_regional_data_processing: Option<bool>,
 }
 
 impl client::Part for DeidentifyConfig {}
@@ -799,14 +801,13 @@ impl client::Part for DeidentifyConfig {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets deidentify projects](ProjectLocationDatasetDeidentifyCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct DeidentifyDatasetRequest {
     /// Deidentify configuration. Only one of `config` and `gcs_config_uri` can be specified.
     
     pub config: Option<DeidentifyConfig>,
-    /// The name of the dataset resource to create and write the redacted data to. * The destination dataset must not exist. * The destination dataset must be in the same location as the source dataset. De-identifying data across multiple locations is not supported.
+    /// Required. The name of the dataset resource to create and write the redacted data to. * The destination dataset must not exist. * The destination dataset must be in the same location as the source dataset. De-identifying data across multiple locations is not supported.
     #[serde(rename="destinationDataset")]
     
     pub destination_dataset: Option<String>,
@@ -827,14 +828,13 @@ impl client::RequestValue for DeidentifyDatasetRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets dicom stores deidentify projects](ProjectLocationDatasetDicomStoreDeidentifyCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct DeidentifyDicomStoreRequest {
     /// Deidentify configuration. Only one of `config` and `gcs_config_uri` can be specified.
     
     pub config: Option<DeidentifyConfig>,
-    /// The name of the DICOM store to create and write the redacted data to. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`. * The destination dataset must exist. * The source dataset and destination dataset must both reside in the same location. De-identifying data across multiple locations is not supported. * The destination DICOM store must not exist. * The caller must have the necessary permissions to create the destination DICOM store.
+    /// Required. The name of the DICOM store to create and write the redacted data to. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`. * The destination dataset must exist. * The source dataset and destination dataset must both reside in the same location. De-identifying data across multiple locations is not supported. * The destination DICOM store must not exist. * The caller must have the necessary permissions to create the destination DICOM store.
     #[serde(rename="destinationStore")]
     
     pub destination_store: Option<String>,
@@ -859,14 +859,13 @@ impl client::RequestValue for DeidentifyDicomStoreRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets fhir stores deidentify projects](ProjectLocationDatasetFhirStoreDeidentifyCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct DeidentifyFhirStoreRequest {
     /// Deidentify configuration. Only one of `config` and `gcs_config_uri` can be specified.
     
     pub config: Option<DeidentifyConfig>,
-    /// The name of the FHIR store to create and write the redacted data to. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/fhirStores/{fhir_store_id}`. * The destination dataset must exist. * The source dataset and destination dataset must both reside in the same location. De-identifying data across multiple locations is not supported. * The destination FHIR store must exist. * The caller must have the healthcare.fhirResources.update permission to write to the destination FHIR store.
+    /// Required. The name of the FHIR store to create and write the redacted data to. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/fhirStores/{fhir_store_id}`. * The destination dataset must exist. * The source dataset and destination dataset must both reside in the same location. De-identifying data across multiple locations is not supported. * The destination FHIR store must exist. * The caller must have the healthcare.fhirResources.update permission to write to the destination FHIR store.
     #[serde(rename="destinationStore")]
     
     pub destination_store: Option<String>,
@@ -941,24 +940,71 @@ impl client::Part for DicomFilterConfig {}
 /// * [locations datasets dicom stores create projects](ProjectLocationDatasetDicomStoreCreateCall) (request|response)
 /// * [locations datasets dicom stores get projects](ProjectLocationDatasetDicomStoreGetCall) (response)
 /// * [locations datasets dicom stores patch projects](ProjectLocationDatasetDicomStorePatchCall) (request|response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct DicomStore {
     /// User-supplied key-value pairs used to organize DICOM stores. Label keys must be between 1 and 63 characters long, have a UTF-8 encoding of maximum 128 bytes, and must conform to the following PCRE regular expression: \p{Ll}\p{Lo}{0,62} Label values are optional, must be between 1 and 63 characters long, have a UTF-8 encoding of maximum 128 bytes, and must conform to the following PCRE regular expression: [\p{Ll}\p{Lo}\p{N}_-]{0,63} No more than 64 labels can be associated with a given store.
     
     pub labels: Option<HashMap<String, String>>,
-    /// Resource name of the DICOM store, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// Identifier. Resource name of the DICOM store, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     
     pub name: Option<String>,
     /// Notification destination for new DICOM instances. Supplied by the client.
     #[serde(rename="notificationConfig")]
     
     pub notification_config: Option<NotificationConfig>,
+    /// Optional. A list of streaming configs used to configure the destination of streaming exports for every DICOM instance insertion in this DICOM store. After a new config is added to `stream_configs`, DICOM instance insertions are streamed to the new destination. When a config is removed from `stream_configs`, the server stops streaming to that destination. Each config must contain a unique destination.
+    #[serde(rename="streamConfigs")]
+    
+    pub stream_configs: Option<Vec<GoogleCloudHealthcareV1DicomStreamConfig>>,
 }
 
 impl client::RequestValue for DicomStore {}
 impl client::ResponseResult for DicomStore {}
+
+
+/// DicomStoreMetrics contains metrics describing a DICOM store.
+/// 
+/// # Activities
+/// 
+/// This type is used in activities, which are methods you may call on this type or where this type is involved in. 
+/// The list links the activity name, along with information about where it is used (one of *request* and *response*).
+/// 
+/// * [locations datasets dicom stores get dicom store metrics projects](ProjectLocationDatasetDicomStoreGetDICOMStoreMetricCall) (response)
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct DicomStoreMetrics {
+    /// Total blob storage bytes for all instances in the store.
+    #[serde(rename="blobStorageSizeBytes")]
+    
+    #[serde_as(as = "Option<::client::serde_with::DisplayFromStr>")]
+    pub blob_storage_size_bytes: Option<i64>,
+    /// Number of instances in the store.
+    #[serde(rename="instanceCount")]
+    
+    #[serde_as(as = "Option<::client::serde_with::DisplayFromStr>")]
+    pub instance_count: Option<i64>,
+    /// Resource name of the DICOM store, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    
+    pub name: Option<String>,
+    /// Number of series in the store.
+    #[serde(rename="seriesCount")]
+    
+    #[serde_as(as = "Option<::client::serde_with::DisplayFromStr>")]
+    pub series_count: Option<i64>,
+    /// Total structured storage bytes for all instances in the store.
+    #[serde(rename="structuredStorageSizeBytes")]
+    
+    #[serde_as(as = "Option<::client::serde_with::DisplayFromStr>")]
+    pub structured_storage_size_bytes: Option<i64>,
+    /// Number of studies in the store.
+    #[serde(rename="studyCount")]
+    
+    #[serde_as(as = "Option<::client::serde_with::DisplayFromStr>")]
+    pub study_count: Option<i64>,
+}
+
+impl client::ResponseResult for DicomStoreMetrics {}
 
 
 /// A generic empty message that you can re-use to avoid defining duplicated empty messages in your APIs. A typical example is to use it as the request or the response type of an API method. For instance: service Foo { rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty); }
@@ -977,12 +1023,12 @@ impl client::ResponseResult for DicomStore {}
 /// * [locations datasets dicom stores studies series instances delete projects](ProjectLocationDatasetDicomStoreStudySeriesInstanceDeleteCall) (response)
 /// * [locations datasets dicom stores delete projects](ProjectLocationDatasetDicomStoreDeleteCall) (response)
 /// * [locations datasets fhir stores fhir  resource-purge projects](ProjectLocationDatasetFhirStoreFhirResourcePurgeCall) (response)
+/// * [locations datasets fhir stores fhir conditional delete projects](ProjectLocationDatasetFhirStoreFhirConditionalDeleteCall) (response)
 /// * [locations datasets fhir stores delete projects](ProjectLocationDatasetFhirStoreDeleteCall) (response)
 /// * [locations datasets hl7 v2 stores messages delete projects](ProjectLocationDatasetHl7V2StoreMessageDeleteCall) (response)
 /// * [locations datasets hl7 v2 stores delete projects](ProjectLocationDatasetHl7V2StoreDeleteCall) (response)
 /// * [locations datasets operations cancel projects](ProjectLocationDatasetOperationCancelCall) (response)
 /// * [locations datasets delete projects](ProjectLocationDatasetDeleteCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Empty { _never_set: Option<bool> }
@@ -1078,7 +1124,7 @@ pub struct EntityMentionRelationship {
 impl client::Part for EntityMentionRelationship {}
 
 
-/// Evaluate a user's Consents for all matching User data mappings. Note: User data mappings are indexed asynchronously, causing slight delays between the time mappings are created or updated and when they are included in EvaluateUserConsents results.
+/// Evaluate a user’s Consents for all matching User data mappings. Note: User data mappings are indexed asynchronously, causing slight delays between the time mappings are created or updated and when they are included in EvaluateUserConsents results.
 /// 
 /// # Activities
 /// 
@@ -1086,7 +1132,6 @@ impl client::Part for EntityMentionRelationship {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets consent stores evaluate user consents projects](ProjectLocationDatasetConsentStoreEvaluateUserConsentCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct EvaluateUserConsentsRequest {
@@ -1131,7 +1176,6 @@ impl client::RequestValue for EvaluateUserConsentsRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets consent stores evaluate user consents projects](ProjectLocationDatasetConsentStoreEvaluateUserConsentCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct EvaluateUserConsentsResponse {
@@ -1155,7 +1199,6 @@ impl client::ResponseResult for EvaluateUserConsentsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets dicom stores export projects](ProjectLocationDatasetDicomStoreExportCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ExportDicomDataRequest {
@@ -1180,7 +1223,6 @@ impl client::RequestValue for ExportDicomDataRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets hl7 v2 stores export projects](ProjectLocationDatasetHl7V2StoreExportCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ExportMessagesRequest {
@@ -1188,10 +1230,17 @@ pub struct ExportMessagesRequest {
     #[serde(rename="endTime")]
     
     pub end_time: Option<client::chrono::DateTime<client::chrono::offset::Utc>>,
+    /// Restricts messages exported to those matching a filter, only applicable to PubsubDestination. The following syntax is available: * A string field value can be written as text inside quotation marks, for example `"query text"`. The only valid relational operation for text fields is equality (`=`), where text is searched within the field, rather than having the field be equal to the text. For example, `"Comment = great"` returns messages with `great` in the comment field. * A number field value can be written as an integer, a decimal, or an exponential. The valid relational operators for number fields are the equality operator (`=`), along with the less than/greater than operators (`<`, `<=`, `>`, `>=`). Note that there is no inequality (`!=`) operator. You can prepend the `NOT` operator to an expression to negate it. * A date field value must be written in the `yyyy-mm-dd` format. Fields with date and time use the RFC3339 time format. Leading zeros are required for one-digit months and days. The valid relational operators for date fields are the equality operator (`=`) , along with the less than/greater than operators (`<`, `<=`, `>`, `>=`). Note that there is no inequality (`!=`) operator. You can prepend the `NOT` operator to an expression to negate it. * Multiple field query expressions can be combined in one query by adding `AND` or `OR` operators between the expressions. If a boolean operator appears within a quoted string, it is not treated as special, and is just another part of the character string to be matched. You can prepend the `NOT` operator to an expression to negate it. The following fields and functions are available for filtering: * `message_type`, from the MSH-9.1 field. For example, `NOT message_type = "ADT"`. * `send_date` or `sendDate`, the `yyyy-mm-dd` date the message was sent in the dataset's time_zone, from the MSH-7 segment. For example, `send_date < "2017-01-02"`. * `send_time`, the timestamp when the message was sent, using the RFC3339 time format for comparisons, from the MSH-7 segment. For example, `send_time < "2017-01-02T00:00:00-05:00"`. * `create_time`, the timestamp when the message was created in the HL7v2 store. Use the RFC3339 time format for comparisons. For example, `create_time < "2017-01-02T00:00:00-05:00"`. * `send_facility`, the care center that the message came from, from the MSH-4 segment. For example, `send_facility = "ABC"`. Note: The filter will be applied to every message in the HL7v2 store whose `send_time` lies in the range defined by the `start_time` and the `end_time`. Even if the filter only matches a small set of messages, the export operation can still take a long time to finish when a lot of messages are between the specified `start_time` and `end_time` range.
+    
+    pub filter: Option<String>,
     /// Export to a Cloud Storage destination.
     #[serde(rename="gcsDestination")]
     
     pub gcs_destination: Option<GcsDestination>,
+    /// Export messages to a Pub/Sub topic.
+    #[serde(rename="pubsubDestination")]
+    
+    pub pubsub_destination: Option<PubsubDestination>,
     /// The start of the range in `send_time` (MSH.7, https://www.hl7.org/documentcenter/public_temp_2E58C1F9-1C23-BA17-0C6126475344DA9D/wg/conf/HL7MSH.htm) to process. If not specified, the UNIX epoch (1970-01-01T00:00:00Z) is used. This value has to come before the `end_time` defined below. Only messages whose `send_time` lies in the range `start_time` (inclusive) to `end_time` (exclusive) are exported.
     #[serde(rename="startTime")]
     
@@ -1209,7 +1258,6 @@ impl client::RequestValue for ExportMessagesRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets fhir stores export projects](ProjectLocationDatasetFhirStoreExportCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ExportResourcesRequest {
@@ -1309,6 +1357,30 @@ pub struct FhirFilter {
 impl client::Part for FhirFilter {}
 
 
+/// Contains the configuration for FHIR notifications.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct FhirNotificationConfig {
+    /// The [Pub/Sub](https://cloud.google.com/pubsub/docs/) topic that notifications of changes are published on. Supplied by the client. The notification is a `PubsubMessage` with the following fields: * `PubsubMessage.Data` contains the resource name. * `PubsubMessage.MessageId` is the ID of this notification. It is guaranteed to be unique within the topic. * `PubsubMessage.PublishTime` is the time when the message was published. Note that notifications are only sent if the topic is non-empty. [Topic names](https://cloud.google.com/pubsub/docs/overview#names) must be scoped to a project. The Cloud Healthcare API service account, service-@gcp-sa-healthcare.iam.gserviceaccount.com, must have publisher permissions on the given Pub/Sub topic. Not having adequate permissions causes the calls that send notifications to fail (https://cloud.google.com/healthcare-api/docs/permissions-healthcare-api-gcp-products#dicom_fhir_and_hl7v2_store_cloud_pubsub_permissions). If a notification can't be published to Pub/Sub, errors are logged to Cloud Logging. For more information, see [Viewing error logs in Cloud Logging](https://cloud.google.com/healthcare-api/docs/how-tos/logging).
+    #[serde(rename="pubsubTopic")]
+    
+    pub pubsub_topic: Option<String>,
+    /// Whether to send full FHIR resource to this Pub/Sub topic.
+    #[serde(rename="sendFullResource")]
+    
+    pub send_full_resource: Option<bool>,
+    /// Whether to send full FHIR resource to this Pub/Sub topic for deleting FHIR resource. Note that setting this to true does not guarantee that all previous resources will be sent in the format of full FHIR resource. When a resource change is too large or during heavy traffic, only the resource name will be sent. Clients should always check the "payloadType" label from a Pub/Sub message to determine whether it needs to fetch the full previous resource as a separate operation.
+    #[serde(rename="sendPreviousResourceOnDelete")]
+    
+    pub send_previous_resource_on_delete: Option<bool>,
+}
+
+impl client::Part for FhirNotificationConfig {}
+
+
 /// Represents a FHIR store.
 /// 
 /// # Activities
@@ -1319,7 +1391,6 @@ impl client::Part for FhirFilter {}
 /// * [locations datasets fhir stores create projects](ProjectLocationDatasetFhirStoreCreateCall) (request|response)
 /// * [locations datasets fhir stores get projects](ProjectLocationDatasetFhirStoreGetCall) (response)
 /// * [locations datasets fhir stores patch projects](ProjectLocationDatasetFhirStorePatchCall) (request|response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct FhirStore {
@@ -1346,13 +1417,17 @@ pub struct FhirStore {
     /// User-supplied key-value pairs used to organize FHIR stores. Label keys must be between 1 and 63 characters long, have a UTF-8 encoding of maximum 128 bytes, and must conform to the following PCRE regular expression: \p{Ll}\p{Lo}{0,62} Label values are optional, must be between 1 and 63 characters long, have a UTF-8 encoding of maximum 128 bytes, and must conform to the following PCRE regular expression: [\p{Ll}\p{Lo}\p{N}_-]{0,63} No more than 64 labels can be associated with a given store.
     
     pub labels: Option<HashMap<String, String>>,
-    /// Output only. Resource name of the FHIR store, of the form `projects/{project_id}/datasets/{dataset_id}/fhirStores/{fhir_store_id}`.
+    /// Output only. Identifier. Resource name of the FHIR store, of the form `projects/{project_id}/datasets/{dataset_id}/fhirStores/{fhir_store_id}`.
     
     pub name: Option<String>,
-    /// If non-empty, publish all resource modifications of this FHIR store to this destination. The Pub/Sub message attributes contain a map with a string describing the action that has triggered the notification. For example, "action":"CreateResource".
+    /// Deprecated. Use `notification_configs` instead. If non-empty, publish all resource modifications of this FHIR store to this destination. The Pub/Sub message attributes contain a map with a string describing the action that has triggered the notification. For example, "action":"CreateResource".
     #[serde(rename="notificationConfig")]
     
     pub notification_config: Option<NotificationConfig>,
+    /// Specifies where and whether to send notifications upon changes to a FHIR store.
+    #[serde(rename="notificationConfigs")]
+    
+    pub notification_configs: Option<Vec<FhirNotificationConfig>>,
     /// A list of streaming configs that configure the destinations of streaming export for every resource mutation in this FHIR store. Each store is allowed to have up to 10 streaming configs. After a new config is added, the next resource mutation is streamed to the new location in addition to the existing ones. When a location is removed from the list, the server stops streaming to that location. Before adding a new config, you must add the required [`bigquery.dataEditor`](https://cloud.google.com/bigquery/docs/access-control#bigquery.dataEditor) role to your project's **Cloud Healthcare Service Agent** [service account](https://cloud.google.com/iam/docs/service-accounts). Some lag (typically on the order of dozens of seconds) is expected before the results show up in the streaming destination.
     #[serde(rename="streamConfigs")]
     
@@ -1361,13 +1436,60 @@ pub struct FhirStore {
     #[serde(rename="validationConfig")]
     
     pub validation_config: Option<ValidationConfig>,
-    /// Immutable. The FHIR specification version that this FHIR store supports natively. This field is immutable after store creation. Requests are rejected if they contain FHIR resources of a different version. Version is required for every FHIR store.
+    /// Required. Immutable. The FHIR specification version that this FHIR store supports natively. This field is immutable after store creation. Requests are rejected if they contain FHIR resources of a different version. Version is required for every FHIR store.
     
     pub version: Option<String>,
 }
 
 impl client::RequestValue for FhirStore {}
 impl client::ResponseResult for FhirStore {}
+
+
+/// Count of resources and total storage size by type for a given FHIR store.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct FhirStoreMetric {
+    /// The total count of FHIR resources in the store of this resource type.
+    
+    #[serde_as(as = "Option<::client::serde_with::DisplayFromStr>")]
+    pub count: Option<i64>,
+    /// The FHIR resource type this metric applies to.
+    #[serde(rename="resourceType")]
+    
+    pub resource_type: Option<String>,
+    /// The total amount of structured storage used by FHIR resources of this resource type in the store.
+    #[serde(rename="structuredStorageSizeBytes")]
+    
+    #[serde_as(as = "Option<::client::serde_with::DisplayFromStr>")]
+    pub structured_storage_size_bytes: Option<i64>,
+}
+
+impl client::Part for FhirStoreMetric {}
+
+
+/// List of metrics for a given FHIR store.
+/// 
+/// # Activities
+/// 
+/// This type is used in activities, which are methods you may call on this type or where this type is involved in. 
+/// The list links the activity name, along with information about where it is used (one of *request* and *response*).
+/// 
+/// * [locations datasets fhir stores get fhir store metrics projects](ProjectLocationDatasetFhirStoreGetFHIRStoreMetricCall) (response)
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct FhirStoreMetrics {
+    /// List of FhirStoreMetric by resource type.
+    
+    pub metrics: Option<Vec<FhirStoreMetric>>,
+    /// The resource name of the FHIR store to get metrics for, in the format `projects/{project_id}/datasets/{dataset_id}/fhirStores/{fhir_store_id}`.
+    
+    pub name: Option<String>,
+}
+
+impl client::ResponseResult for FhirStoreMetrics {}
 
 
 /// A (sub) field of a type.
@@ -1551,6 +1673,22 @@ pub struct GoogleCloudHealthcareV1DicomGcsSource {
 impl client::Part for GoogleCloudHealthcareV1DicomGcsSource {}
 
 
+/// StreamConfig specifies configuration for a streaming DICOM export.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleCloudHealthcareV1DicomStreamConfig {
+    /// Results are appended to this table. The server creates a new table in the given BigQuery dataset if the specified table does not exist. To enable the Cloud Healthcare API to write to your BigQuery table, you must give the Cloud Healthcare API service account the bigquery.dataEditor role. The service account is: `service-{PROJECT_NUMBER}@gcp-sa-healthcare.iam.gserviceaccount.com`. The PROJECT_NUMBER identifies the project that the DICOM store resides in. To get the project number, go to the Cloud Console Dashboard. It is recommended to not have a custom schema in the destination table which could conflict with the schema created by the Cloud Healthcare API. Instance deletions are not applied to the destination table. The destination's table schema will be automatically updated in case a new instance's data is incompatible with the current schema. The schema should not be updated manually as this can cause incompatibilies that cannot be resolved automatically. One resolution in this case is to delete the incompatible table and let the server recreate one, though the newly created table only contains data after the table recreation. BigQuery imposes a 1 MB limit on streaming insert row size, therefore any instance that generates more than 1 MB of BigQuery data will not be streamed. If an instance cannot be streamed to BigQuery, errors will be logged to Cloud Logging (see [Viewing error logs in Cloud Logging](https://cloud.google.com/healthcare/docs/how-tos/logging)).
+    #[serde(rename="bigqueryDestination")]
+    
+    pub bigquery_destination: Option<GoogleCloudHealthcareV1DicomBigQueryDestination>,
+}
+
+impl client::Part for GoogleCloudHealthcareV1DicomStreamConfig {}
+
+
 /// The configuration for exporting to BigQuery.
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
@@ -1694,14 +1832,13 @@ impl client::Part for Hl7V2NotificationConfig {}
 /// * [locations datasets hl7 v2 stores create projects](ProjectLocationDatasetHl7V2StoreCreateCall) (request|response)
 /// * [locations datasets hl7 v2 stores get projects](ProjectLocationDatasetHl7V2StoreGetCall) (response)
 /// * [locations datasets hl7 v2 stores patch projects](ProjectLocationDatasetHl7V2StorePatchCall) (request|response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Hl7V2Store {
     /// User-supplied key-value pairs used to organize HL7v2 stores. Label keys must be between 1 and 63 characters long, have a UTF-8 encoding of maximum 128 bytes, and must conform to the following PCRE regular expression: \p{Ll}\p{Lo}{0,62} Label values are optional, must be between 1 and 63 characters long, have a UTF-8 encoding of maximum 128 bytes, and must conform to the following PCRE regular expression: [\p{Ll}\p{Lo}\p{N}_-]{0,63} No more than 64 labels can be associated with a given store.
     
     pub labels: Option<HashMap<String, String>>,
-    /// Resource name of the HL7v2 store, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7V2Stores/{hl7v2_store_id}`.
+    /// Identifier. Resource name of the HL7v2 store, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7V2Stores/{hl7v2_store_id}`.
     
     pub name: Option<String>,
     /// A list of notification configs. Each configuration uses a filter to determine whether to publish a message (both Ingest & Create) on the corresponding notification destination. Only the message name is sent as part of the notification. Supplied by the client.
@@ -1722,7 +1859,54 @@ impl client::RequestValue for Hl7V2Store {}
 impl client::ResponseResult for Hl7V2Store {}
 
 
-/// Message that represents an arbitrary HTTP body. It should only be used for payload formats that can't be represented as JSON, such as raw binary or an HTML page. This message can be used both in streaming and non-streaming API methods in the request as well as the response. It can be used as a top-level request field, which is convenient if one wants to extract parameters from either the URL or HTTP template into the request fields and also want access to the raw HTTP body. Example: message GetResourceRequest { // A unique request id. string request_id = 1; // The raw HTTP body is bound to this field. google.api.HttpBody http_body = 2; } service ResourceService { rpc GetResource(GetResourceRequest) returns (google.api.HttpBody); rpc UpdateResource(google.api.HttpBody) returns (google.protobuf.Empty); } Example with streaming methods: service CaldavService { rpc GetCalendar(stream google.api.HttpBody) returns (stream google.api.HttpBody); rpc UpdateCalendar(stream google.api.HttpBody) returns (stream google.api.HttpBody); } Use of this type only changes how the request and response bodies are handled, all other features will continue to work unchanged.
+/// Count of messages and total storage size by type for a given HL7 store.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct Hl7V2StoreMetric {
+    /// The total count of HL7v2 messages in the store for the given message type.
+    
+    #[serde_as(as = "Option<::client::serde_with::DisplayFromStr>")]
+    pub count: Option<i64>,
+    /// The Hl7v2 message type this metric applies to, such as `ADT` or `ORU`.
+    #[serde(rename="messageType")]
+    
+    pub message_type: Option<String>,
+    /// The total amount of structured storage used by HL7v2 messages of this message type in the store.
+    #[serde(rename="structuredStorageSizeBytes")]
+    
+    #[serde_as(as = "Option<::client::serde_with::DisplayFromStr>")]
+    pub structured_storage_size_bytes: Option<i64>,
+}
+
+impl client::Part for Hl7V2StoreMetric {}
+
+
+/// List of metrics for a given HL7v2 store.
+/// 
+/// # Activities
+/// 
+/// This type is used in activities, which are methods you may call on this type or where this type is involved in. 
+/// The list links the activity name, along with information about where it is used (one of *request* and *response*).
+/// 
+/// * [locations datasets hl7 v2 stores get hl7v2 store metrics projects](ProjectLocationDatasetHl7V2StoreGetHL7v2StoreMetricCall) (response)
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct Hl7V2StoreMetrics {
+    /// List of HL7v2 store metrics by message type.
+    
+    pub metrics: Option<Vec<Hl7V2StoreMetric>>,
+    /// The resource name of the HL7v2 store to get metrics for, in the format `projects/{project_id}/datasets/{dataset_id}/hl7V2Stores/{hl7v2_store_id}`.
+    
+    pub name: Option<String>,
+}
+
+impl client::ResponseResult for Hl7V2StoreMetrics {}
+
+
+/// Message that represents an arbitrary HTTP body. It should only be used for payload formats that can’t be represented as JSON, such as raw binary or an HTML page. This message can be used both in streaming and non-streaming API methods in the request as well as the response. It can be used as a top-level request field, which is convenient if one wants to extract parameters from either the URL or HTTP template into the request fields and also want access to the raw HTTP body. Example: message GetResourceRequest { // A unique request id. string request_id = 1; // The raw HTTP body is bound to this field. google.api.HttpBody http_body = 2; } service ResourceService { rpc GetResource(GetResourceRequest) returns (google.api.HttpBody); rpc UpdateResource(google.api.HttpBody) returns (google.protobuf.Empty); } Example with streaming methods: service CaldavService { rpc GetCalendar(stream google.api.HttpBody) returns (stream google.api.HttpBody); rpc UpdateCalendar(stream google.api.HttpBody) returns (stream google.api.HttpBody); } Use of this type only changes how the request and response bodies are handled, all other features will continue to work unchanged.
 /// 
 /// # Activities
 /// 
@@ -1749,6 +1933,8 @@ impl client::ResponseResult for Hl7V2Store {}
 /// * [locations datasets fhir stores fhir  patient-everything projects](ProjectLocationDatasetFhirStoreFhirPatientEverythingCall) (response)
 /// * [locations datasets fhir stores fhir  resource-validate projects](ProjectLocationDatasetFhirStoreFhirResourceValidateCall) (request|response)
 /// * [locations datasets fhir stores fhir capabilities projects](ProjectLocationDatasetFhirStoreFhirCapabilityCall) (response)
+/// * [locations datasets fhir stores fhir conditional patch projects](ProjectLocationDatasetFhirStoreFhirConditionalPatchCall) (request|response)
+/// * [locations datasets fhir stores fhir conditional update projects](ProjectLocationDatasetFhirStoreFhirConditionalUpdateCall) (request|response)
 /// * [locations datasets fhir stores fhir create projects](ProjectLocationDatasetFhirStoreFhirCreateCall) (request|response)
 /// * [locations datasets fhir stores fhir delete projects](ProjectLocationDatasetFhirStoreFhirDeleteCall) (response)
 /// * [locations datasets fhir stores fhir execute bundle projects](ProjectLocationDatasetFhirStoreFhirExecuteBundleCall) (request|response)
@@ -1759,7 +1945,6 @@ impl client::ResponseResult for Hl7V2Store {}
 /// * [locations datasets fhir stores fhir search-type projects](ProjectLocationDatasetFhirStoreFhirSearchTypeCall) (response)
 /// * [locations datasets fhir stores fhir update projects](ProjectLocationDatasetFhirStoreFhirUpdateCall) (request|response)
 /// * [locations datasets fhir stores fhir vread projects](ProjectLocationDatasetFhirStoreFhirVreadCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct HttpBody {
@@ -1769,7 +1954,7 @@ pub struct HttpBody {
     pub content_type: Option<String>,
     /// The HTTP request/response body as raw binary.
     
-    #[serde_as(as = "Option<::client::serde::urlsafe_base64::Wrapper>")]
+    #[serde_as(as = "Option<::client::serde::standard_base64::Wrapper>")]
     pub data: Option<Vec<u8>>,
     /// Application specific response metadata. Must be set in the first response for streaming APIs.
     
@@ -1794,7 +1979,7 @@ pub struct Image {
     /// Consent artifact content represented as a stream of bytes. This field is populated when returned in GetConsentArtifact response, but not included in CreateConsentArtifact and ListConsentArtifact response.
     #[serde(rename="rawBytes")]
     
-    #[serde_as(as = "Option<::client::serde::urlsafe_base64::Wrapper>")]
+    #[serde_as(as = "Option<::client::serde::standard_base64::Wrapper>")]
     pub raw_bytes: Option<Vec<u8>>,
 }
 
@@ -1825,7 +2010,6 @@ impl client::Part for ImageConfig {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets dicom stores import projects](ProjectLocationDatasetDicomStoreImportCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ImportDicomDataRequest {
@@ -1846,7 +2030,6 @@ impl client::RequestValue for ImportDicomDataRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets hl7 v2 stores import projects](ProjectLocationDatasetHl7V2StoreImportCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ImportMessagesRequest {
@@ -1867,7 +2050,6 @@ impl client::RequestValue for ImportMessagesRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets fhir stores import projects](ProjectLocationDatasetFhirStoreImportCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ImportResourcesRequest {
@@ -1928,11 +2110,10 @@ impl client::Part for InfoTypeTransformation {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets hl7 v2 stores messages ingest projects](ProjectLocationDatasetHl7V2StoreMessageIngestCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct IngestMessageRequest {
-    /// HL7v2 message to ingest.
+    /// Required. HL7v2 message to ingest.
     
     pub message: Option<Message>,
 }
@@ -1948,14 +2129,13 @@ impl client::RequestValue for IngestMessageRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets hl7 v2 stores messages ingest projects](ProjectLocationDatasetHl7V2StoreMessageIngestCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct IngestMessageResponse {
     /// HL7v2 ACK message.
     #[serde(rename="hl7Ack")]
     
-    #[serde_as(as = "Option<::client::serde::urlsafe_base64::Wrapper>")]
+    #[serde_as(as = "Option<::client::serde::standard_base64::Wrapper>")]
     pub hl7_ack: Option<Vec<u8>>,
     /// Created message resource.
     
@@ -1979,7 +2159,7 @@ pub struct KmsWrappedCryptoKey {
     /// Required. The wrapped data crypto key.
     #[serde(rename="wrappedKey")]
     
-    #[serde_as(as = "Option<::client::serde::urlsafe_base64::Wrapper>")]
+    #[serde_as(as = "Option<::client::serde::standard_base64::Wrapper>")]
     pub wrapped_key: Option<Vec<u8>>,
 }
 
@@ -2010,7 +2190,6 @@ impl client::Part for LinkedEntity {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets consent stores attribute definitions list projects](ProjectLocationDatasetConsentStoreAttributeDefinitionListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ListAttributeDefinitionsResponse {
@@ -2035,7 +2214,6 @@ impl client::ResponseResult for ListAttributeDefinitionsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets consent stores consent artifacts list projects](ProjectLocationDatasetConsentStoreConsentArtifactListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ListConsentArtifactsResponse {
@@ -2060,7 +2238,6 @@ impl client::ResponseResult for ListConsentArtifactsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets consent stores consents list revisions projects](ProjectLocationDatasetConsentStoreConsentListRevisionCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ListConsentRevisionsResponse {
@@ -2084,7 +2261,6 @@ impl client::ResponseResult for ListConsentRevisionsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets consent stores list projects](ProjectLocationDatasetConsentStoreListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ListConsentStoresResponse {
@@ -2109,7 +2285,6 @@ impl client::ResponseResult for ListConsentStoresResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets consent stores consents list projects](ProjectLocationDatasetConsentStoreConsentListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ListConsentsResponse {
@@ -2133,7 +2308,6 @@ impl client::ResponseResult for ListConsentsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets list projects](ProjectLocationDatasetListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ListDatasetsResponse {
@@ -2157,7 +2331,6 @@ impl client::ResponseResult for ListDatasetsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets dicom stores list projects](ProjectLocationDatasetDicomStoreListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ListDicomStoresResponse {
@@ -2182,7 +2355,6 @@ impl client::ResponseResult for ListDicomStoresResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets fhir stores list projects](ProjectLocationDatasetFhirStoreListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ListFhirStoresResponse {
@@ -2207,7 +2379,6 @@ impl client::ResponseResult for ListFhirStoresResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets hl7 v2 stores list projects](ProjectLocationDatasetHl7V2StoreListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ListHl7V2StoresResponse {
@@ -2232,7 +2403,6 @@ impl client::ResponseResult for ListHl7V2StoresResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations list projects](ProjectLocationListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ListLocationsResponse {
@@ -2256,7 +2426,6 @@ impl client::ResponseResult for ListLocationsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets hl7 v2 stores messages list projects](ProjectLocationDatasetHl7V2StoreMessageListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ListMessagesResponse {
@@ -2281,7 +2450,6 @@ impl client::ResponseResult for ListMessagesResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets operations list projects](ProjectLocationDatasetOperationListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ListOperationsResponse {
@@ -2305,7 +2473,6 @@ impl client::ResponseResult for ListOperationsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets consent stores user data mappings list projects](ProjectLocationDatasetConsentStoreUserDataMappingListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ListUserDataMappingsResponse {
@@ -2322,7 +2489,7 @@ pub struct ListUserDataMappingsResponse {
 impl client::ResponseResult for ListUserDataMappingsResponse {}
 
 
-/// A resource that represents Google Cloud Platform location.
+/// A resource that represents a Google Cloud location.
 /// 
 /// # Activities
 /// 
@@ -2330,7 +2497,6 @@ impl client::ResponseResult for ListUserDataMappingsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations get projects](ProjectLocationGetCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Location {
@@ -2356,7 +2522,7 @@ pub struct Location {
 impl client::ResponseResult for Location {}
 
 
-/// A complete HL7v2 message. See [Introduction to HL7 Standards] (https://www.hl7.org/implement/standards/index.cfm?ref=common) for details on the standard.
+/// A complete HL7v2 message. See \[Introduction to HL7 Standards\] (https://www.hl7.org/implement/standards/index.cfm?ref=common) for details on the standard.
 /// 
 /// # Activities
 /// 
@@ -2366,7 +2532,6 @@ impl client::ResponseResult for Location {}
 /// * [locations datasets hl7 v2 stores messages create projects](ProjectLocationDatasetHl7V2StoreMessageCreateCall) (response)
 /// * [locations datasets hl7 v2 stores messages get projects](ProjectLocationDatasetHl7V2StoreMessageGetCall) (response)
 /// * [locations datasets hl7 v2 stores messages patch projects](ProjectLocationDatasetHl7V2StoreMessagePatchCall) (request|response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Message {
@@ -2374,9 +2539,9 @@ pub struct Message {
     #[serde(rename="createTime")]
     
     pub create_time: Option<client::chrono::DateTime<client::chrono::offset::Utc>>,
-    /// Raw message bytes.
+    /// Required. Raw message bytes.
     
-    #[serde_as(as = "Option<::client::serde::urlsafe_base64::Wrapper>")]
+    #[serde_as(as = "Option<::client::serde::standard_base64::Wrapper>")]
     pub data: Option<Vec<u8>>,
     /// User-supplied key-value pairs used to organize HL7v2 stores. Label keys must be between 1 and 63 characters long, have a UTF-8 encoding of maximum 128 bytes, and must conform to the following PCRE regular expression: \p{Ll}\p{Lo}{0,62} Label values are optional, must be between 1 and 63 characters long, have a UTF-8 encoding of maximum 128 bytes, and must conform to the following PCRE regular expression: [\p{Ll}\p{Lo}\p{N}_-]{0,63} No more than 64 labels can be associated with a given store.
     
@@ -2385,7 +2550,7 @@ pub struct Message {
     #[serde(rename="messageType")]
     
     pub message_type: Option<String>,
-    /// Resource name of the Message, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7V2Stores/{hl7_v2_store_id}/messages/{message_id}`. Assigned by the server.
+    /// Output only. Resource name of the Message, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7V2Stores/{hl7_v2_store_id}/messages/{message_id}`. Assigned by the server.
     
     pub name: Option<String>,
     /// Output only. The parsed version of the raw message data.
@@ -2425,6 +2590,10 @@ pub struct NotificationConfig {
     #[serde(rename="pubsubTopic")]
     
     pub pubsub_topic: Option<String>,
+    /// Indicates whether or not to send Pub/Sub notifications on bulk import. Only supported for DICOM imports.
+    #[serde(rename="sendForBulkImport")]
+    
+    pub send_for_bulk_import: Option<bool>,
 }
 
 impl client::Part for NotificationConfig {}
@@ -2446,12 +2615,12 @@ impl client::Part for NotificationConfig {}
 /// * [locations datasets fhir stores deidentify projects](ProjectLocationDatasetFhirStoreDeidentifyCall) (response)
 /// * [locations datasets fhir stores export projects](ProjectLocationDatasetFhirStoreExportCall) (response)
 /// * [locations datasets fhir stores import projects](ProjectLocationDatasetFhirStoreImportCall) (response)
+/// * [locations datasets fhir stores rollback projects](ProjectLocationDatasetFhirStoreRollbackCall) (response)
 /// * [locations datasets hl7 v2 stores export projects](ProjectLocationDatasetHl7V2StoreExportCall) (response)
 /// * [locations datasets hl7 v2 stores import projects](ProjectLocationDatasetHl7V2StoreImportCall) (response)
 /// * [locations datasets operations get projects](ProjectLocationDatasetOperationGetCall) (response)
 /// * [locations datasets create projects](ProjectLocationDatasetCreateCall) (response)
 /// * [locations datasets deidentify projects](ProjectLocationDatasetDeidentifyCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Operation {
@@ -2467,7 +2636,7 @@ pub struct Operation {
     /// The server-assigned name, which is only unique within the same service that originally returns it. If you use the default HTTP mapping, the `name` should be a resource name ending with `operations/{unique_id}`.
     
     pub name: Option<String>,
-    /// The normal response of the operation in case of success. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.
+    /// The normal, successful response of the operation. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.
     
     pub response: Option<HashMap<String, json::Value>>,
 }
@@ -2507,7 +2676,7 @@ pub struct ParserConfig {
     /// Byte(s) to use as the segment terminator. If this is unset, '\r' is used as segment terminator, matching the HL7 version 2 specification.
     #[serde(rename="segmentTerminator")]
     
-    #[serde_as(as = "Option<::client::serde::urlsafe_base64::Wrapper>")]
+    #[serde_as(as = "Option<::client::serde::standard_base64::Wrapper>")]
     pub segment_terminator: Option<Vec<u8>>,
     /// Immutable. Determines the version of both the default parser to be used when `schema` is not given, as well as the schematized parser used when `schema` is specified. This field is immutable after HL7v2 store creation.
     
@@ -2536,7 +2705,7 @@ pub struct PatientId {
 impl client::Part for PatientId {}
 
 
-/// An Identity and Access Management (IAM) policy, which specifies access controls for Google Cloud resources. A `Policy` is a collection of `bindings`. A `binding` binds one or more `members`, or principals, to a single `role`. Principals can be user accounts, service accounts, Google groups, and domains (such as G Suite). A `role` is a named list of permissions; each `role` can be an IAM predefined role or a user-created custom role. For some types of Google Cloud resources, a `binding` can also specify a `condition`, which is a logical expression that allows access to a resource only if the expression evaluates to `true`. A condition can add constraints based on attributes of the request, the resource, or both. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies). **JSON example:** { "bindings": [ { "role": "roles/resourcemanager.organizationAdmin", "members": [ "user:mike@example.com", "group:admins@example.com", "domain:google.com", "serviceAccount:my-project-id@appspot.gserviceaccount.com" ] }, { "role": "roles/resourcemanager.organizationViewer", "members": [ "user:eve@example.com" ], "condition": { "title": "expirable access", "description": "Does not grant access after Sep 2020", "expression": "request.time < timestamp('2020-10-01T00:00:00.000Z')", } } ], "etag": "BwWWja0YfJA=", "version": 3 } **YAML example:** bindings: - members: - user:mike@example.com - group:admins@example.com - domain:google.com - serviceAccount:my-project-id@appspot.gserviceaccount.com role: roles/resourcemanager.organizationAdmin - members: - user:eve@example.com role: roles/resourcemanager.organizationViewer condition: title: expirable access description: Does not grant access after Sep 2020 expression: request.time < timestamp('2020-10-01T00:00:00.000Z') etag: BwWWja0YfJA= version: 3 For a description of IAM and its features, see the [IAM documentation](https://cloud.google.com/iam/docs/).
+/// An Identity and Access Management (IAM) policy, which specifies access controls for Google Cloud resources. A `Policy` is a collection of `bindings`. A `binding` binds one or more `members`, or principals, to a single `role`. Principals can be user accounts, service accounts, Google groups, and domains (such as G Suite). A `role` is a named list of permissions; each `role` can be an IAM predefined role or a user-created custom role. For some types of Google Cloud resources, a `binding` can also specify a `condition`, which is a logical expression that allows access to a resource only if the expression evaluates to `true`. A condition can add constraints based on attributes of the request, the resource, or both. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies). **JSON example:** `{ "bindings": [ { "role": "roles/resourcemanager.organizationAdmin", "members": [ "user:mike@example.com", "group:admins@example.com", "domain:google.com", "serviceAccount:my-project-id@appspot.gserviceaccount.com" ] }, { "role": "roles/resourcemanager.organizationViewer", "members": [ "user:eve@example.com" ], "condition": { "title": "expirable access", "description": "Does not grant access after Sep 2020", "expression": "request.time < timestamp('2020-10-01T00:00:00.000Z')", } } ], "etag": "BwWWja0YfJA=", "version": 3 }` **YAML example:** `bindings: - members: - user:mike@example.com - group:admins@example.com - domain:google.com - serviceAccount:my-project-id@appspot.gserviceaccount.com role: roles/resourcemanager.organizationAdmin - members: - user:eve@example.com role: roles/resourcemanager.organizationViewer condition: title: expirable access description: Does not grant access after Sep 2020 expression: request.time < timestamp('2020-10-01T00:00:00.000Z') etag: BwWWja0YfJA= version: 3` For a description of IAM and its features, see the [IAM documentation](https://cloud.google.com/iam/docs/).
 /// 
 /// # Activities
 /// 
@@ -2545,6 +2714,8 @@ impl client::Part for PatientId {}
 /// 
 /// * [locations datasets consent stores get iam policy projects](ProjectLocationDatasetConsentStoreGetIamPolicyCall) (response)
 /// * [locations datasets consent stores set iam policy projects](ProjectLocationDatasetConsentStoreSetIamPolicyCall) (response)
+/// * [locations datasets data mapper workspaces get iam policy projects](ProjectLocationDatasetDataMapperWorkspaceGetIamPolicyCall) (response)
+/// * [locations datasets data mapper workspaces set iam policy projects](ProjectLocationDatasetDataMapperWorkspaceSetIamPolicyCall) (response)
 /// * [locations datasets dicom stores get iam policy projects](ProjectLocationDatasetDicomStoreGetIamPolicyCall) (response)
 /// * [locations datasets dicom stores set iam policy projects](ProjectLocationDatasetDicomStoreSetIamPolicyCall) (response)
 /// * [locations datasets fhir stores get iam policy projects](ProjectLocationDatasetFhirStoreGetIamPolicyCall) (response)
@@ -2553,7 +2724,6 @@ impl client::Part for PatientId {}
 /// * [locations datasets hl7 v2 stores set iam policy projects](ProjectLocationDatasetHl7V2StoreSetIamPolicyCall) (response)
 /// * [locations datasets get iam policy projects](ProjectLocationDatasetGetIamPolicyCall) (response)
 /// * [locations datasets set iam policy projects](ProjectLocationDatasetSetIamPolicyCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Policy {
@@ -2566,7 +2736,7 @@ pub struct Policy {
     pub bindings: Option<Vec<Binding>>,
     /// `etag` is used for optimistic concurrency control as a way to help prevent simultaneous updates of a policy from overwriting each other. It is strongly suggested that systems make use of the `etag` in the read-modify-write cycle to perform policy updates in order to avoid race conditions: An `etag` is returned in the response to `getIamPolicy`, and systems are expected to put that etag in the request to `setIamPolicy` to ensure that their change will be applied to the same version of the policy. **Important:** If you use IAM Conditions, you must include the `etag` field whenever you call `setIamPolicy`. If you omit this field, then IAM allows you to overwrite a version `3` policy with a version `1` policy, and all of the conditions in the version `3` policy are lost.
     
-    #[serde_as(as = "Option<::client::serde::urlsafe_base64::Wrapper>")]
+    #[serde_as(as = "Option<::client::serde::standard_base64::Wrapper>")]
     pub etag: Option<Vec<u8>>,
     /// Specifies the format of the policy. Valid values are `0`, `1`, and `3`. Requests that specify an invalid value are rejected. Any operation that affects conditional role bindings must specify version `3`. This requirement applies to the following operations: * Getting a policy that includes a conditional role binding * Adding a conditional role binding to a policy * Changing a conditional role binding in a policy * Removing any role binding, with or without a condition, from a policy that includes conditions **Important:** If you use IAM Conditions, you must include the `etag` field whenever you call `setIamPolicy`. If you omit this field, then IAM allows you to overwrite a version `3` policy with a version `1` policy, and all of the conditions in the version `3` policy are lost. If a policy does not include any conditions, operations on that policy may specify any valid version or leave the field unset. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies).
     
@@ -2576,7 +2746,23 @@ pub struct Policy {
 impl client::ResponseResult for Policy {}
 
 
-/// Queries all data_ids that are consented for a given use in the given consent store and writes them to a specified destination. The returned Operation includes a progress counter for the number of User data mappings processed. Errors are logged to Cloud Logging (see [Viewing error logs in Cloud Logging] (https://cloud.google.com/healthcare/docs/how-tos/logging) and [QueryAccessibleData] for a sample log entry).
+/// The Pub/Sub output destination. The Cloud Healthcare Service Agent requires the `roles/pubsub.publisher` Cloud IAM role on the Pub/Sub topic.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct PubsubDestination {
+    /// The [Pub/Sub](https://cloud.google.com/pubsub/docs/) topic that Pub/Sub messages are published on. Supplied by the client. The `PubsubMessage` contains the following fields: * `PubsubMessage.Data` contains the resource name. * `PubsubMessage.MessageId` is the ID of this notification. It is guaranteed to be unique within the topic. * `PubsubMessage.PublishTime` is the time when the message was published. [Topic names](https://cloud.google.com/pubsub/docs/overview#names) must be scoped to a project. The Cloud Healthcare API service account, service-PROJECT_NUMBER@gcp-sa-healthcare.iam.gserviceaccount.com, must have publisher permissions on the given Pub/Sub topic. Not having adequate permissions causes the calls that send notifications to fail.
+    #[serde(rename="pubsubTopic")]
+    
+    pub pubsub_topic: Option<String>,
+}
+
+impl client::Part for PubsubDestination {}
+
+
+/// Queries all data_ids that are consented for a given use in the given consent store and writes them to a specified destination. The returned Operation includes a progress counter for the number of User data mappings processed. Errors are logged to Cloud Logging (see \[Viewing error logs in Cloud Logging\] (https://cloud.google.com/healthcare/docs/how-tos/logging) and \[QueryAccessibleData\] for a sample log entry).
 /// 
 /// # Activities
 /// 
@@ -2584,7 +2770,6 @@ impl client::ResponseResult for Policy {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets consent stores query accessible data projects](ProjectLocationDatasetConsentStoreQueryAccessibleDataCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct QueryAccessibleDataRequest {
@@ -2624,7 +2809,6 @@ impl client::Part for RedactConfig {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets consent stores consents reject projects](ProjectLocationDatasetConsentStoreConsentRejectCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct RejectConsentRequest {
@@ -2694,7 +2878,6 @@ impl client::Part for Result {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets consent stores consents revoke projects](ProjectLocationDatasetConsentStoreConsentRevokeCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct RevokeConsentRequest {
@@ -2707,6 +2890,74 @@ pub struct RevokeConsentRequest {
 impl client::RequestValue for RevokeConsentRequest {}
 
 
+/// There is no detailed description.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct RollbackFhirResourceFilteringFields {
+    /// Optional. A filter expression that matches data in the `Resource.meta` element. Supports all filters in [AIP-160](https://google.aip.dev/160) except the "has" (`:`) operator. Supports the following custom functions: * `tag("") = ""` for tag filtering. * `extension_value_ts("") = ` for filtering extensions with a timestamp, where `` is a Unix timestamp. Supports the `>`, `<`, `<=`, `>=`, and `!=` comparison operators.
+    #[serde(rename="metadataFilter")]
+    
+    pub metadata_filter: Option<String>,
+    /// Optional. A list of operation IDs to roll back.
+    #[serde(rename="operationIds")]
+    
+    #[serde_as(as = "Option<Vec<::client::serde_with::DisplayFromStr>>")]
+    pub operation_ids: Option<Vec<u64>>,
+}
+
+impl client::Part for RollbackFhirResourceFilteringFields {}
+
+
+/// There is no detailed description.
+/// 
+/// # Activities
+/// 
+/// This type is used in activities, which are methods you may call on this type or where this type is involved in. 
+/// The list links the activity name, along with information about where it is used (one of *request* and *response*).
+/// 
+/// * [locations datasets fhir stores rollback projects](ProjectLocationDatasetFhirStoreRollbackCall) (request)
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct RollbackFhirResourcesRequest {
+    /// Optional. CREATE/UPDATE/DELETE/ALL for reverting all txns of a certain type.
+    #[serde(rename="changeType")]
+    
+    pub change_type: Option<String>,
+    /// Optional. Specifies whether to exclude earlier rollbacks.
+    #[serde(rename="excludeRollbacks")]
+    
+    pub exclude_rollbacks: Option<bool>,
+    /// Optional. Parameters for filtering resources
+    #[serde(rename="filteringFields")]
+    
+    pub filtering_fields: Option<RollbackFhirResourceFilteringFields>,
+    /// Optional. When enabled, changes will be reverted without explicit confirmation
+    
+    pub force: Option<bool>,
+    /// Optional. GCS object containing list of {resourceType}/{resourceId} lines, identifying resources to be reverted
+    #[serde(rename="inputGcsObject")]
+    
+    pub input_gcs_object: Option<String>,
+    /// Required. Bucket to deposit result
+    #[serde(rename="resultGcsBucket")]
+    
+    pub result_gcs_bucket: Option<String>,
+    /// Required. Time point to rollback to.
+    #[serde(rename="rollbackTime")]
+    
+    pub rollback_time: Option<client::chrono::DateTime<client::chrono::offset::Utc>>,
+    /// Optional. If specified, revert only resources of these types
+    #[serde(rename="type")]
+    
+    pub type_: Option<Vec<String>>,
+}
+
+impl client::RequestValue for RollbackFhirResourcesRequest {}
+
+
 /// Configuration for the FHIR BigQuery schema. Determines how the server generates the schema.
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
@@ -2714,6 +2965,10 @@ impl client::RequestValue for RevokeConsentRequest {}
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct SchemaConfig {
+    /// The configuration for exported BigQuery tables to be partitioned by FHIR resource's last updated time column.
+    #[serde(rename="lastUpdatedPartitionConfig")]
+    
+    pub last_updated_partition_config: Option<TimePartitioning>,
     /// The depth for all recursive structures in the output analytics schema. For example, `concept` in the CodeSystem resource is a recursive structure; when the depth is 2, the CodeSystem table will have a column called `concept.concept` but not `concept.concept.concept`. If not specified or set to 0, the server will use the default value 2. The maximum depth allowed is 5.
     #[serde(rename="recursiveStructureDepth")]
     
@@ -2838,11 +3093,10 @@ impl client::Part for SchematizedData {}
 /// 
 /// * [locations datasets fhir stores fhir search projects](ProjectLocationDatasetFhirStoreFhirSearchCall) (request)
 /// * [locations datasets fhir stores fhir search-type projects](ProjectLocationDatasetFhirStoreFhirSearchTypeCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct SearchResourcesRequest {
-    /// The FHIR resource type to search, such as Patient or Observation. For a complete list, see the FHIR Resource Index ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html), [STU3](http://hl7.org/implement/standards/fhir/STU3/resourcelist.html), [R4](http://hl7.org/implement/standards/fhir/R4/resourcelist.html)).
+    /// Required. The FHIR resource type to search, such as Patient or Observation. For a complete list, see the FHIR Resource Index ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html), [STU3](http://hl7.org/implement/standards/fhir/STU3/resourcelist.html), [R4](http://hl7.org/implement/standards/fhir/R4/resourcelist.html)).
     #[serde(rename="resourceType")]
     
     pub resource_type: Option<String>,
@@ -2874,6 +3128,40 @@ pub struct Segment {
 impl client::Part for Segment {}
 
 
+/// SeriesMetrics contains metrics describing a DICOM series.
+/// 
+/// # Activities
+/// 
+/// This type is used in activities, which are methods you may call on this type or where this type is involved in. 
+/// The list links the activity name, along with information about where it is used (one of *request* and *response*).
+/// 
+/// * [locations datasets dicom stores dicom web studies series get series metrics projects](ProjectLocationDatasetDicomStoreDicomWebStudySeriesGetSeriesMetricCall) (response)
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct SeriesMetrics {
+    /// Total blob storage bytes for all instances in the series.
+    #[serde(rename="blobStorageSizeBytes")]
+    
+    #[serde_as(as = "Option<::client::serde_with::DisplayFromStr>")]
+    pub blob_storage_size_bytes: Option<i64>,
+    /// Number of instances in the series.
+    #[serde(rename="instanceCount")]
+    
+    #[serde_as(as = "Option<::client::serde_with::DisplayFromStr>")]
+    pub instance_count: Option<i64>,
+    /// The series resource path. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}/dicomWeb/studies/{study_uid}/series/{series_uid}`.
+    
+    pub series: Option<String>,
+    /// Total structured storage bytes for all instances in the series.
+    #[serde(rename="structuredStorageSizeBytes")]
+    
+    #[serde_as(as = "Option<::client::serde_with::DisplayFromStr>")]
+    pub structured_storage_size_bytes: Option<i64>,
+}
+
+impl client::ResponseResult for SeriesMetrics {}
+
+
 /// Request message for `SetIamPolicy` method.
 /// 
 /// # Activities
@@ -2882,11 +3170,11 @@ impl client::Part for Segment {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets consent stores set iam policy projects](ProjectLocationDatasetConsentStoreSetIamPolicyCall) (request)
+/// * [locations datasets data mapper workspaces set iam policy projects](ProjectLocationDatasetDataMapperWorkspaceSetIamPolicyCall) (request)
 /// * [locations datasets dicom stores set iam policy projects](ProjectLocationDatasetDicomStoreSetIamPolicyCall) (request)
 /// * [locations datasets fhir stores set iam policy projects](ProjectLocationDatasetFhirStoreSetIamPolicyCall) (request)
 /// * [locations datasets hl7 v2 stores set iam policy projects](ProjectLocationDatasetHl7V2StoreSetIamPolicyCall) (request)
 /// * [locations datasets set iam policy projects](ProjectLocationDatasetSetIamPolicyCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct SetIamPolicyRequest {
@@ -2973,6 +3261,45 @@ pub struct StreamConfig {
 impl client::Part for StreamConfig {}
 
 
+/// StudyMetrics contains metrics describing a DICOM study.
+/// 
+/// # Activities
+/// 
+/// This type is used in activities, which are methods you may call on this type or where this type is involved in. 
+/// The list links the activity name, along with information about where it is used (one of *request* and *response*).
+/// 
+/// * [locations datasets dicom stores dicom web studies get study metrics projects](ProjectLocationDatasetDicomStoreDicomWebStudyGetStudyMetricCall) (response)
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct StudyMetrics {
+    /// Total blob storage bytes for all instances in the study.
+    #[serde(rename="blobStorageSizeBytes")]
+    
+    #[serde_as(as = "Option<::client::serde_with::DisplayFromStr>")]
+    pub blob_storage_size_bytes: Option<i64>,
+    /// Number of instances in the study.
+    #[serde(rename="instanceCount")]
+    
+    #[serde_as(as = "Option<::client::serde_with::DisplayFromStr>")]
+    pub instance_count: Option<i64>,
+    /// Number of series in the study.
+    #[serde(rename="seriesCount")]
+    
+    #[serde_as(as = "Option<::client::serde_with::DisplayFromStr>")]
+    pub series_count: Option<i64>,
+    /// Total structured storage bytes for all instances in the study.
+    #[serde(rename="structuredStorageSizeBytes")]
+    
+    #[serde_as(as = "Option<::client::serde_with::DisplayFromStr>")]
+    pub structured_storage_size_bytes: Option<i64>,
+    /// The study resource path. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}/dicomWeb/studies/{study_uid}`.
+    
+    pub study: Option<String>,
+}
+
+impl client::ResponseResult for StudyMetrics {}
+
+
 /// List of tags to be filtered.
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
@@ -2996,11 +3323,11 @@ impl client::Part for TagFilterList {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets consent stores test iam permissions projects](ProjectLocationDatasetConsentStoreTestIamPermissionCall) (request)
+/// * [locations datasets data mapper workspaces test iam permissions projects](ProjectLocationDatasetDataMapperWorkspaceTestIamPermissionCall) (request)
 /// * [locations datasets dicom stores test iam permissions projects](ProjectLocationDatasetDicomStoreTestIamPermissionCall) (request)
 /// * [locations datasets fhir stores test iam permissions projects](ProjectLocationDatasetFhirStoreTestIamPermissionCall) (request)
 /// * [locations datasets hl7 v2 stores test iam permissions projects](ProjectLocationDatasetHl7V2StoreTestIamPermissionCall) (request)
 /// * [locations datasets test iam permissions projects](ProjectLocationDatasetTestIamPermissionCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct TestIamPermissionsRequest {
@@ -3020,11 +3347,11 @@ impl client::RequestValue for TestIamPermissionsRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations datasets consent stores test iam permissions projects](ProjectLocationDatasetConsentStoreTestIamPermissionCall) (response)
+/// * [locations datasets data mapper workspaces test iam permissions projects](ProjectLocationDatasetDataMapperWorkspaceTestIamPermissionCall) (response)
 /// * [locations datasets dicom stores test iam permissions projects](ProjectLocationDatasetDicomStoreTestIamPermissionCall) (response)
 /// * [locations datasets fhir stores test iam permissions projects](ProjectLocationDatasetFhirStoreTestIamPermissionCall) (response)
 /// * [locations datasets hl7 v2 stores test iam permissions projects](ProjectLocationDatasetHl7V2StoreTestIamPermissionCall) (response)
 /// * [locations datasets test iam permissions projects](ProjectLocationDatasetTestIamPermissionCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct TestIamPermissionsResponse {
@@ -3043,7 +3370,15 @@ impl client::ResponseResult for TestIamPermissionsResponse {}
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct TextConfig {
-    /// The transformations to apply to the detected data.
+    /// Transformations to apply to the detected data, overridden by `exclude_info_types`.
+    #[serde(rename="additionalTransformations")]
+    
+    pub additional_transformations: Option<Vec<InfoTypeTransformation>>,
+    /// InfoTypes to skip transforming, overriding `additional_transformations`.
+    #[serde(rename="excludeInfoTypes")]
+    
+    pub exclude_info_types: Option<Vec<String>>,
+    /// The transformations to apply to the detected data. Deprecated. Use `additional_transformations` instead.
     
     pub transformations: Option<Vec<InfoTypeTransformation>>,
 }
@@ -3068,6 +3403,27 @@ pub struct TextSpan {
 }
 
 impl client::Part for TextSpan {}
+
+
+/// Configuration for FHIR BigQuery time-partitioned tables.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct TimePartitioning {
+    /// Number of milliseconds for which to keep the storage for a partition.
+    #[serde(rename="expirationMs")]
+    
+    #[serde_as(as = "Option<::client::serde_with::DisplayFromStr>")]
+    pub expiration_ms: Option<i64>,
+    /// Type of partitioning.
+    #[serde(rename="type")]
+    
+    pub type_: Option<String>,
+}
+
+impl client::Part for TimePartitioning {}
 
 
 /// A type definition for some HL7v2 type (incl. Segments and Datatypes).
@@ -3101,7 +3457,6 @@ impl client::Part for Type {}
 /// * [locations datasets consent stores user data mappings create projects](ProjectLocationDatasetConsentStoreUserDataMappingCreateCall) (request|response)
 /// * [locations datasets consent stores user data mappings get projects](ProjectLocationDatasetConsentStoreUserDataMappingGetCall) (response)
 /// * [locations datasets consent stores user data mappings patch projects](ProjectLocationDatasetConsentStoreUserDataMappingPatchCall) (request|response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct UserDataMapping {
@@ -3210,9 +3565,9 @@ impl client::Part for VersionSource {}
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
-/// // like `locations_datasets_consent_stores_attribute_definitions_create(...)`, `locations_datasets_consent_stores_attribute_definitions_delete(...)`, `locations_datasets_consent_stores_attribute_definitions_get(...)`, `locations_datasets_consent_stores_attribute_definitions_list(...)`, `locations_datasets_consent_stores_attribute_definitions_patch(...)`, `locations_datasets_consent_stores_check_data_access(...)`, `locations_datasets_consent_stores_consent_artifacts_create(...)`, `locations_datasets_consent_stores_consent_artifacts_delete(...)`, `locations_datasets_consent_stores_consent_artifacts_get(...)`, `locations_datasets_consent_stores_consent_artifacts_list(...)`, `locations_datasets_consent_stores_consents_activate(...)`, `locations_datasets_consent_stores_consents_create(...)`, `locations_datasets_consent_stores_consents_delete(...)`, `locations_datasets_consent_stores_consents_delete_revision(...)`, `locations_datasets_consent_stores_consents_get(...)`, `locations_datasets_consent_stores_consents_list(...)`, `locations_datasets_consent_stores_consents_list_revisions(...)`, `locations_datasets_consent_stores_consents_patch(...)`, `locations_datasets_consent_stores_consents_reject(...)`, `locations_datasets_consent_stores_consents_revoke(...)`, `locations_datasets_consent_stores_create(...)`, `locations_datasets_consent_stores_delete(...)`, `locations_datasets_consent_stores_evaluate_user_consents(...)`, `locations_datasets_consent_stores_get(...)`, `locations_datasets_consent_stores_get_iam_policy(...)`, `locations_datasets_consent_stores_list(...)`, `locations_datasets_consent_stores_patch(...)`, `locations_datasets_consent_stores_query_accessible_data(...)`, `locations_datasets_consent_stores_set_iam_policy(...)`, `locations_datasets_consent_stores_test_iam_permissions(...)`, `locations_datasets_consent_stores_user_data_mappings_archive(...)`, `locations_datasets_consent_stores_user_data_mappings_create(...)`, `locations_datasets_consent_stores_user_data_mappings_delete(...)`, `locations_datasets_consent_stores_user_data_mappings_get(...)`, `locations_datasets_consent_stores_user_data_mappings_list(...)`, `locations_datasets_consent_stores_user_data_mappings_patch(...)`, `locations_datasets_create(...)`, `locations_datasets_deidentify(...)`, `locations_datasets_delete(...)`, `locations_datasets_dicom_stores_create(...)`, `locations_datasets_dicom_stores_deidentify(...)`, `locations_datasets_dicom_stores_delete(...)`, `locations_datasets_dicom_stores_export(...)`, `locations_datasets_dicom_stores_get(...)`, `locations_datasets_dicom_stores_get_iam_policy(...)`, `locations_datasets_dicom_stores_import(...)`, `locations_datasets_dicom_stores_list(...)`, `locations_datasets_dicom_stores_patch(...)`, `locations_datasets_dicom_stores_search_for_instances(...)`, `locations_datasets_dicom_stores_search_for_series(...)`, `locations_datasets_dicom_stores_search_for_studies(...)`, `locations_datasets_dicom_stores_set_iam_policy(...)`, `locations_datasets_dicom_stores_store_instances(...)`, `locations_datasets_dicom_stores_studies_delete(...)`, `locations_datasets_dicom_stores_studies_retrieve_metadata(...)`, `locations_datasets_dicom_stores_studies_retrieve_study(...)`, `locations_datasets_dicom_stores_studies_search_for_instances(...)`, `locations_datasets_dicom_stores_studies_search_for_series(...)`, `locations_datasets_dicom_stores_studies_series_delete(...)`, `locations_datasets_dicom_stores_studies_series_instances_delete(...)`, `locations_datasets_dicom_stores_studies_series_instances_frames_retrieve_frames(...)`, `locations_datasets_dicom_stores_studies_series_instances_frames_retrieve_rendered(...)`, `locations_datasets_dicom_stores_studies_series_instances_retrieve_instance(...)`, `locations_datasets_dicom_stores_studies_series_instances_retrieve_metadata(...)`, `locations_datasets_dicom_stores_studies_series_instances_retrieve_rendered(...)`, `locations_datasets_dicom_stores_studies_series_retrieve_metadata(...)`, `locations_datasets_dicom_stores_studies_series_retrieve_series(...)`, `locations_datasets_dicom_stores_studies_series_search_for_instances(...)`, `locations_datasets_dicom_stores_studies_store_instances(...)`, `locations_datasets_dicom_stores_test_iam_permissions(...)`, `locations_datasets_fhir_stores_create(...)`, `locations_datasets_fhir_stores_deidentify(...)`, `locations_datasets_fhir_stores_delete(...)`, `locations_datasets_fhir_stores_export(...)`, `locations_datasets_fhir_stores_fhir__patient_everything(...)`, `locations_datasets_fhir_stores_fhir__resource_purge(...)`, `locations_datasets_fhir_stores_fhir__resource_validate(...)`, `locations_datasets_fhir_stores_fhir_capabilities(...)`, `locations_datasets_fhir_stores_fhir_create(...)`, `locations_datasets_fhir_stores_fhir_delete(...)`, `locations_datasets_fhir_stores_fhir_execute_bundle(...)`, `locations_datasets_fhir_stores_fhir_history(...)`, `locations_datasets_fhir_stores_fhir_patch(...)`, `locations_datasets_fhir_stores_fhir_read(...)`, `locations_datasets_fhir_stores_fhir_search(...)`, `locations_datasets_fhir_stores_fhir_search_type(...)`, `locations_datasets_fhir_stores_fhir_update(...)`, `locations_datasets_fhir_stores_fhir_vread(...)`, `locations_datasets_fhir_stores_get(...)`, `locations_datasets_fhir_stores_get_iam_policy(...)`, `locations_datasets_fhir_stores_import(...)`, `locations_datasets_fhir_stores_list(...)`, `locations_datasets_fhir_stores_patch(...)`, `locations_datasets_fhir_stores_set_iam_policy(...)`, `locations_datasets_fhir_stores_test_iam_permissions(...)`, `locations_datasets_get(...)`, `locations_datasets_get_iam_policy(...)`, `locations_datasets_hl7_v2_stores_create(...)`, `locations_datasets_hl7_v2_stores_delete(...)`, `locations_datasets_hl7_v2_stores_export(...)`, `locations_datasets_hl7_v2_stores_get(...)`, `locations_datasets_hl7_v2_stores_get_iam_policy(...)`, `locations_datasets_hl7_v2_stores_import(...)`, `locations_datasets_hl7_v2_stores_list(...)`, `locations_datasets_hl7_v2_stores_messages_create(...)`, `locations_datasets_hl7_v2_stores_messages_delete(...)`, `locations_datasets_hl7_v2_stores_messages_get(...)`, `locations_datasets_hl7_v2_stores_messages_ingest(...)`, `locations_datasets_hl7_v2_stores_messages_list(...)`, `locations_datasets_hl7_v2_stores_messages_patch(...)`, `locations_datasets_hl7_v2_stores_patch(...)`, `locations_datasets_hl7_v2_stores_set_iam_policy(...)`, `locations_datasets_hl7_v2_stores_test_iam_permissions(...)`, `locations_datasets_list(...)`, `locations_datasets_operations_cancel(...)`, `locations_datasets_operations_get(...)`, `locations_datasets_operations_list(...)`, `locations_datasets_patch(...)`, `locations_datasets_set_iam_policy(...)`, `locations_datasets_test_iam_permissions(...)`, `locations_get(...)`, `locations_list(...)` and `locations_services_nlp_analyze_entities(...)`
+/// // like `locations_datasets_consent_stores_attribute_definitions_create(...)`, `locations_datasets_consent_stores_attribute_definitions_delete(...)`, `locations_datasets_consent_stores_attribute_definitions_get(...)`, `locations_datasets_consent_stores_attribute_definitions_list(...)`, `locations_datasets_consent_stores_attribute_definitions_patch(...)`, `locations_datasets_consent_stores_check_data_access(...)`, `locations_datasets_consent_stores_consent_artifacts_create(...)`, `locations_datasets_consent_stores_consent_artifacts_delete(...)`, `locations_datasets_consent_stores_consent_artifacts_get(...)`, `locations_datasets_consent_stores_consent_artifacts_list(...)`, `locations_datasets_consent_stores_consents_activate(...)`, `locations_datasets_consent_stores_consents_create(...)`, `locations_datasets_consent_stores_consents_delete(...)`, `locations_datasets_consent_stores_consents_delete_revision(...)`, `locations_datasets_consent_stores_consents_get(...)`, `locations_datasets_consent_stores_consents_list(...)`, `locations_datasets_consent_stores_consents_list_revisions(...)`, `locations_datasets_consent_stores_consents_patch(...)`, `locations_datasets_consent_stores_consents_reject(...)`, `locations_datasets_consent_stores_consents_revoke(...)`, `locations_datasets_consent_stores_create(...)`, `locations_datasets_consent_stores_delete(...)`, `locations_datasets_consent_stores_evaluate_user_consents(...)`, `locations_datasets_consent_stores_get(...)`, `locations_datasets_consent_stores_get_iam_policy(...)`, `locations_datasets_consent_stores_list(...)`, `locations_datasets_consent_stores_patch(...)`, `locations_datasets_consent_stores_query_accessible_data(...)`, `locations_datasets_consent_stores_set_iam_policy(...)`, `locations_datasets_consent_stores_test_iam_permissions(...)`, `locations_datasets_consent_stores_user_data_mappings_archive(...)`, `locations_datasets_consent_stores_user_data_mappings_create(...)`, `locations_datasets_consent_stores_user_data_mappings_delete(...)`, `locations_datasets_consent_stores_user_data_mappings_get(...)`, `locations_datasets_consent_stores_user_data_mappings_list(...)`, `locations_datasets_consent_stores_user_data_mappings_patch(...)`, `locations_datasets_create(...)`, `locations_datasets_data_mapper_workspaces_get_iam_policy(...)`, `locations_datasets_data_mapper_workspaces_set_iam_policy(...)`, `locations_datasets_data_mapper_workspaces_test_iam_permissions(...)`, `locations_datasets_deidentify(...)`, `locations_datasets_delete(...)`, `locations_datasets_dicom_stores_create(...)`, `locations_datasets_dicom_stores_deidentify(...)`, `locations_datasets_dicom_stores_delete(...)`, `locations_datasets_dicom_stores_dicom_web_studies_get_study_metrics(...)`, `locations_datasets_dicom_stores_dicom_web_studies_series_get_series_metrics(...)`, `locations_datasets_dicom_stores_export(...)`, `locations_datasets_dicom_stores_get(...)`, `locations_datasets_dicom_stores_get_dicom_store_metrics(...)`, `locations_datasets_dicom_stores_get_iam_policy(...)`, `locations_datasets_dicom_stores_import(...)`, `locations_datasets_dicom_stores_list(...)`, `locations_datasets_dicom_stores_patch(...)`, `locations_datasets_dicom_stores_search_for_instances(...)`, `locations_datasets_dicom_stores_search_for_series(...)`, `locations_datasets_dicom_stores_search_for_studies(...)`, `locations_datasets_dicom_stores_set_iam_policy(...)`, `locations_datasets_dicom_stores_store_instances(...)`, `locations_datasets_dicom_stores_studies_delete(...)`, `locations_datasets_dicom_stores_studies_retrieve_metadata(...)`, `locations_datasets_dicom_stores_studies_retrieve_study(...)`, `locations_datasets_dicom_stores_studies_search_for_instances(...)`, `locations_datasets_dicom_stores_studies_search_for_series(...)`, `locations_datasets_dicom_stores_studies_series_delete(...)`, `locations_datasets_dicom_stores_studies_series_instances_delete(...)`, `locations_datasets_dicom_stores_studies_series_instances_frames_retrieve_frames(...)`, `locations_datasets_dicom_stores_studies_series_instances_frames_retrieve_rendered(...)`, `locations_datasets_dicom_stores_studies_series_instances_retrieve_instance(...)`, `locations_datasets_dicom_stores_studies_series_instances_retrieve_metadata(...)`, `locations_datasets_dicom_stores_studies_series_instances_retrieve_rendered(...)`, `locations_datasets_dicom_stores_studies_series_retrieve_metadata(...)`, `locations_datasets_dicom_stores_studies_series_retrieve_series(...)`, `locations_datasets_dicom_stores_studies_series_search_for_instances(...)`, `locations_datasets_dicom_stores_studies_store_instances(...)`, `locations_datasets_dicom_stores_test_iam_permissions(...)`, `locations_datasets_fhir_stores_create(...)`, `locations_datasets_fhir_stores_deidentify(...)`, `locations_datasets_fhir_stores_delete(...)`, `locations_datasets_fhir_stores_export(...)`, `locations_datasets_fhir_stores_fhir__patient_everything(...)`, `locations_datasets_fhir_stores_fhir__resource_purge(...)`, `locations_datasets_fhir_stores_fhir__resource_validate(...)`, `locations_datasets_fhir_stores_fhir_capabilities(...)`, `locations_datasets_fhir_stores_fhir_conditional_delete(...)`, `locations_datasets_fhir_stores_fhir_conditional_patch(...)`, `locations_datasets_fhir_stores_fhir_conditional_update(...)`, `locations_datasets_fhir_stores_fhir_create(...)`, `locations_datasets_fhir_stores_fhir_delete(...)`, `locations_datasets_fhir_stores_fhir_execute_bundle(...)`, `locations_datasets_fhir_stores_fhir_history(...)`, `locations_datasets_fhir_stores_fhir_patch(...)`, `locations_datasets_fhir_stores_fhir_read(...)`, `locations_datasets_fhir_stores_fhir_search(...)`, `locations_datasets_fhir_stores_fhir_search_type(...)`, `locations_datasets_fhir_stores_fhir_update(...)`, `locations_datasets_fhir_stores_fhir_vread(...)`, `locations_datasets_fhir_stores_get(...)`, `locations_datasets_fhir_stores_get_fhir_store_metrics(...)`, `locations_datasets_fhir_stores_get_iam_policy(...)`, `locations_datasets_fhir_stores_import(...)`, `locations_datasets_fhir_stores_list(...)`, `locations_datasets_fhir_stores_patch(...)`, `locations_datasets_fhir_stores_rollback(...)`, `locations_datasets_fhir_stores_set_iam_policy(...)`, `locations_datasets_fhir_stores_test_iam_permissions(...)`, `locations_datasets_get(...)`, `locations_datasets_get_iam_policy(...)`, `locations_datasets_hl7_v2_stores_create(...)`, `locations_datasets_hl7_v2_stores_delete(...)`, `locations_datasets_hl7_v2_stores_export(...)`, `locations_datasets_hl7_v2_stores_get(...)`, `locations_datasets_hl7_v2_stores_get_hl7v2_store_metrics(...)`, `locations_datasets_hl7_v2_stores_get_iam_policy(...)`, `locations_datasets_hl7_v2_stores_import(...)`, `locations_datasets_hl7_v2_stores_list(...)`, `locations_datasets_hl7_v2_stores_messages_create(...)`, `locations_datasets_hl7_v2_stores_messages_delete(...)`, `locations_datasets_hl7_v2_stores_messages_get(...)`, `locations_datasets_hl7_v2_stores_messages_ingest(...)`, `locations_datasets_hl7_v2_stores_messages_list(...)`, `locations_datasets_hl7_v2_stores_messages_patch(...)`, `locations_datasets_hl7_v2_stores_patch(...)`, `locations_datasets_hl7_v2_stores_set_iam_policy(...)`, `locations_datasets_hl7_v2_stores_test_iam_permissions(...)`, `locations_datasets_list(...)`, `locations_datasets_operations_cancel(...)`, `locations_datasets_operations_get(...)`, `locations_datasets_operations_list(...)`, `locations_datasets_patch(...)`, `locations_datasets_set_iam_policy(...)`, `locations_datasets_test_iam_permissions(...)`, `locations_get(...)`, `locations_list(...)` and `locations_services_nlp_analyze_entities(...)`
 /// // to build up your call.
 /// let rb = hub.projects();
 /// # }
@@ -3308,7 +3663,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `name` - Resource name of the Attribute definition, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/consentStores/{consent_store_id}/attributeDefinitions/{attribute_definition_id}`. Cannot be changed after creation.
+    /// * `name` - Identifier. Resource name of the Attribute definition, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/consentStores/{consent_store_id}/attributeDefinitions/{attribute_definition_id}`. Cannot be changed after creation.
     pub fn locations_datasets_consent_stores_attribute_definitions_patch(&self, request: AttributeDefinition, name: &str) -> ProjectLocationDatasetConsentStoreAttributeDefinitionPatchCall<'a, S> {
         ProjectLocationDatasetConsentStoreAttributeDefinitionPatchCall {
             hub: self.hub,
@@ -3530,7 +3885,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `name` - Resource name of the Consent, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/consentStores/{consent_store_id}/consents/{consent_id}`. Cannot be changed after creation.
+    /// * `name` - Identifier. Resource name of the Consent, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/consentStores/{consent_store_id}/consents/{consent_id}`. Cannot be changed after creation.
     pub fn locations_datasets_consent_stores_consents_patch(&self, request: Consent, name: &str) -> ProjectLocationDatasetConsentStoreConsentPatchCall<'a, S> {
         ProjectLocationDatasetConsentStoreConsentPatchCall {
             hub: self.hub,
@@ -3830,7 +4185,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `name` - Resource name of the consent store, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/consentStores/{consent_store_id}`. Cannot be changed after creation.
+    /// * `name` - Identifier. Resource name of the consent store, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/consentStores/{consent_store_id}`. Cannot be changed after creation.
     pub fn locations_datasets_consent_stores_patch(&self, request: ConsentStore, name: &str) -> ProjectLocationDatasetConsentStorePatchCall<'a, S> {
         ProjectLocationDatasetConsentStorePatchCall {
             hub: self.hub,
@@ -3902,12 +4257,102 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// RetrieveFrames returns instances associated with the given study, series, SOP Instance UID and frame numbers. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4}. For details on the implementation of RetrieveFrames, see [DICOM frames](https://cloud.google.com/healthcare/docs/dicom#dicom_frames) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveFrames, see [Retrieving DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieving_dicom_data).
+    /// Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
     /// 
     /// # Arguments
     ///
-    /// * `parent` - The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
-    /// * `dicomWebPath` - The path of the RetrieveFrames DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}/instances/{instance_uid}/frames/{frame_list}`.
+    /// * `resource` - REQUIRED: The resource for which the policy is being requested. See [Resource names](https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    pub fn locations_datasets_data_mapper_workspaces_get_iam_policy(&self, resource: &str) -> ProjectLocationDatasetDataMapperWorkspaceGetIamPolicyCall<'a, S> {
+        ProjectLocationDatasetDataMapperWorkspaceGetIamPolicyCall {
+            hub: self.hub,
+            _resource: resource.to_string(),
+            _options_requested_policy_version: Default::default(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// Sets the access control policy on the specified resource. Replaces any existing policy. Can return `NOT_FOUND`, `INVALID_ARGUMENT`, and `PERMISSION_DENIED` errors.
+    /// 
+    /// # Arguments
+    ///
+    /// * `request` - No description provided.
+    /// * `resource` - REQUIRED: The resource for which the policy is being specified. See [Resource names](https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    pub fn locations_datasets_data_mapper_workspaces_set_iam_policy(&self, request: SetIamPolicyRequest, resource: &str) -> ProjectLocationDatasetDataMapperWorkspaceSetIamPolicyCall<'a, S> {
+        ProjectLocationDatasetDataMapperWorkspaceSetIamPolicyCall {
+            hub: self.hub,
+            _request: request,
+            _resource: resource.to_string(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// Returns permissions that a caller has on the specified resource. If the resource does not exist, this will return an empty set of permissions, not a `NOT_FOUND` error. Note: This operation is designed to be used for building permission-aware UIs and command-line tools, not for authorization checking. This operation may "fail open" without warning.
+    /// 
+    /// # Arguments
+    ///
+    /// * `request` - No description provided.
+    /// * `resource` - REQUIRED: The resource for which the policy detail is being requested. See [Resource names](https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    pub fn locations_datasets_data_mapper_workspaces_test_iam_permissions(&self, request: TestIamPermissionsRequest, resource: &str) -> ProjectLocationDatasetDataMapperWorkspaceTestIamPermissionCall<'a, S> {
+        ProjectLocationDatasetDataMapperWorkspaceTestIamPermissionCall {
+            hub: self.hub,
+            _request: request,
+            _resource: resource.to_string(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// GetSeriesMetrics returns metrics for a series.
+    /// 
+    /// # Arguments
+    ///
+    /// * `series` - Required. The series resource path. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}/dicomWeb/studies/{study_uid}/series/{series_uid}`.
+    pub fn locations_datasets_dicom_stores_dicom_web_studies_series_get_series_metrics(&self, series: &str) -> ProjectLocationDatasetDicomStoreDicomWebStudySeriesGetSeriesMetricCall<'a, S> {
+        ProjectLocationDatasetDicomStoreDicomWebStudySeriesGetSeriesMetricCall {
+            hub: self.hub,
+            _series: series.to_string(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// GetStudyMetrics returns metrics for a study.
+    /// 
+    /// # Arguments
+    ///
+    /// * `study` - Required. The study resource path. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}/dicomWeb/studies/{study_uid}`.
+    pub fn locations_datasets_dicom_stores_dicom_web_studies_get_study_metrics(&self, study: &str) -> ProjectLocationDatasetDicomStoreDicomWebStudyGetStudyMetricCall<'a, S> {
+        ProjectLocationDatasetDicomStoreDicomWebStudyGetStudyMetricCall {
+            hub: self.hub,
+            _study: study.to_string(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// RetrieveFrames returns instances associated with the given study, series, SOP Instance UID and frame numbers. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4}. For details on the implementation of RetrieveFrames, see [DICOM frames](https://cloud.google.com/healthcare/docs/dicom#dicom_frames) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveFrames, see [Retrieve DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieve-dicom).
+    /// 
+    /// # Arguments
+    ///
+    /// * `parent` - Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// * `dicomWebPath` - Required. The path of the RetrieveFrames DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}/instances/{instance_uid}/frames/{frame_list}`.
     pub fn locations_datasets_dicom_stores_studies_series_instances_frames_retrieve_frames(&self, parent: &str, dicom_web_path: &str) -> ProjectLocationDatasetDicomStoreStudySeriesInstanceFrameRetrieveFrameCall<'a, S> {
         ProjectLocationDatasetDicomStoreStudySeriesInstanceFrameRetrieveFrameCall {
             hub: self.hub,
@@ -3921,12 +4366,12 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// RetrieveRenderedFrames returns instances associated with the given study, series, SOP Instance UID and frame numbers in an acceptable Rendered Media Type. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveRenderedFrames, see [Rendered resources](https://cloud.google.com/healthcare/docs/dicom#rendered_resources) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveRenderedFrames, see [Retrieving consumer image formats](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieving_consumer_image_formats).
+    /// RetrieveRenderedFrames returns instances associated with the given study, series, SOP Instance UID and frame numbers in an acceptable Rendered Media Type. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveRenderedFrames, see [Rendered resources](https://cloud.google.com/healthcare/docs/dicom#rendered_resources) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveRenderedFrames, see [Retrieve consumer image formats](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieve-consumer).
     /// 
     /// # Arguments
     ///
-    /// * `parent` - The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
-    /// * `dicomWebPath` - The path of the RetrieveRenderedFrames DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}/instances/{instance_uid}/frames/{frame_list}/rendered`.
+    /// * `parent` - Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// * `dicomWebPath` - Required. The path of the RetrieveRenderedFrames DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}/instances/{instance_uid}/frames/{frame_list}/rendered`.
     pub fn locations_datasets_dicom_stores_studies_series_instances_frames_retrieve_rendered(&self, parent: &str, dicom_web_path: &str) -> ProjectLocationDatasetDicomStoreStudySeriesInstanceFrameRetrieveRenderedCall<'a, S> {
         ProjectLocationDatasetDicomStoreStudySeriesInstanceFrameRetrieveRenderedCall {
             hub: self.hub,
@@ -3940,12 +4385,12 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// DeleteInstance deletes an instance associated with the given study, series, and SOP Instance UID. Delete requests are equivalent to the GET requests specified in the Retrieve transaction. Study and series search results can take a few seconds to be updated after an instance is deleted using DeleteInstance. For samples that show how to call DeleteInstance, see [Deleting a study, series, or instance](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#deleting_a_study_series_or_instance).
+    /// DeleteInstance deletes an instance associated with the given study, series, and SOP Instance UID. Delete requests are equivalent to the GET requests specified in the Retrieve transaction. Study and series search results can take a few seconds to be updated after an instance is deleted using DeleteInstance. For samples that show how to call DeleteInstance, see [Delete a study, series, or instance](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#delete-dicom).
     /// 
     /// # Arguments
     ///
-    /// * `parent` - The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
-    /// * `dicomWebPath` - The path of the DeleteInstance request. For example, `studies/{study_uid}/series/{series_uid}/instances/{instance_uid}`.
+    /// * `parent` - Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// * `dicomWebPath` - Required. The path of the DeleteInstance request. For example, `studies/{study_uid}/series/{series_uid}/instances/{instance_uid}`.
     pub fn locations_datasets_dicom_stores_studies_series_instances_delete(&self, parent: &str, dicom_web_path: &str) -> ProjectLocationDatasetDicomStoreStudySeriesInstanceDeleteCall<'a, S> {
         ProjectLocationDatasetDicomStoreStudySeriesInstanceDeleteCall {
             hub: self.hub,
@@ -3959,12 +4404,12 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// RetrieveInstance returns instance associated with the given study, series, and SOP Instance UID. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveInstance, see [DICOM study/series/instances](https://cloud.google.com/healthcare/docs/dicom#dicom_studyseriesinstances) and [DICOM instances](https://cloud.google.com/healthcare/docs/dicom#dicom_instances) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveInstance, see [Retrieving an instance](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieving_an_instance).
+    /// RetrieveInstance returns instance associated with the given study, series, and SOP Instance UID. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveInstance, see [DICOM study/series/instances](https://cloud.google.com/healthcare/docs/dicom#dicom_studyseriesinstances) and [DICOM instances](https://cloud.google.com/healthcare/docs/dicom#dicom_instances) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveInstance, see [Retrieve an instance](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieve-instance).
     /// 
     /// # Arguments
     ///
-    /// * `parent` - The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
-    /// * `dicomWebPath` - The path of the RetrieveInstance DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}/instances/{instance_uid}`.
+    /// * `parent` - Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// * `dicomWebPath` - Required. The path of the RetrieveInstance DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}/instances/{instance_uid}`.
     pub fn locations_datasets_dicom_stores_studies_series_instances_retrieve_instance(&self, parent: &str, dicom_web_path: &str) -> ProjectLocationDatasetDicomStoreStudySeriesInstanceRetrieveInstanceCall<'a, S> {
         ProjectLocationDatasetDicomStoreStudySeriesInstanceRetrieveInstanceCall {
             hub: self.hub,
@@ -3978,12 +4423,12 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// RetrieveInstanceMetadata returns instance associated with the given study, series, and SOP Instance UID presented as metadata with the bulk data removed. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveInstanceMetadata, see [Metadata resources](https://cloud.google.com/healthcare/docs/dicom#metadata_resources) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveInstanceMetadata, see [Retrieving metadata](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieving_metadata).
+    /// RetrieveInstanceMetadata returns instance associated with the given study, series, and SOP Instance UID presented as metadata with the bulk data removed. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveInstanceMetadata, see [Metadata resources](https://cloud.google.com/healthcare/docs/dicom#metadata_resources) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveInstanceMetadata, see [Retrieve metadata](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieve-metadata).
     /// 
     /// # Arguments
     ///
-    /// * `parent` - The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
-    /// * `dicomWebPath` - The path of the RetrieveInstanceMetadata DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}/instances/{instance_uid}/metadata`.
+    /// * `parent` - Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// * `dicomWebPath` - Required. The path of the RetrieveInstanceMetadata DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}/instances/{instance_uid}/metadata`.
     pub fn locations_datasets_dicom_stores_studies_series_instances_retrieve_metadata(&self, parent: &str, dicom_web_path: &str) -> ProjectLocationDatasetDicomStoreStudySeriesInstanceRetrieveMetadataCall<'a, S> {
         ProjectLocationDatasetDicomStoreStudySeriesInstanceRetrieveMetadataCall {
             hub: self.hub,
@@ -3997,12 +4442,12 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// RetrieveRenderedInstance returns instance associated with the given study, series, and SOP Instance UID in an acceptable Rendered Media Type. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveRenderedInstance, see [Rendered resources](https://cloud.google.com/healthcare/docs/dicom#rendered_resources) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveRenderedInstance, see [Retrieving consumer image formats](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieving_consumer_image_formats).
+    /// RetrieveRenderedInstance returns instance associated with the given study, series, and SOP Instance UID in an acceptable Rendered Media Type. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveRenderedInstance, see [Rendered resources](https://cloud.google.com/healthcare/docs/dicom#rendered_resources) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveRenderedInstance, see [Retrieve consumer image formats](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieve-consumer).
     /// 
     /// # Arguments
     ///
-    /// * `parent` - The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
-    /// * `dicomWebPath` - The path of the RetrieveRenderedInstance DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}/instances/{instance_uid}/rendered`.
+    /// * `parent` - Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// * `dicomWebPath` - Required. The path of the RetrieveRenderedInstance DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}/instances/{instance_uid}/rendered`.
     pub fn locations_datasets_dicom_stores_studies_series_instances_retrieve_rendered(&self, parent: &str, dicom_web_path: &str) -> ProjectLocationDatasetDicomStoreStudySeriesInstanceRetrieveRenderedCall<'a, S> {
         ProjectLocationDatasetDicomStoreStudySeriesInstanceRetrieveRenderedCall {
             hub: self.hub,
@@ -4016,12 +4461,12 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// DeleteSeries deletes all instances within the given study and series. Delete requests are equivalent to the GET requests specified in the Retrieve transaction. The method returns an Operation which will be marked successful when the deletion is complete. Warning: Instances cannot be inserted into a series that is being deleted by an operation until the operation completes. For samples that show how to call DeleteSeries, see [Deleting a study, series, or instance](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#deleting_a_study_series_or_instance).
+    /// DeleteSeries deletes all instances within the given study and series. Delete requests are equivalent to the GET requests specified in the Retrieve transaction. The method returns an Operation which will be marked successful when the deletion is complete. Warning: Instances cannot be inserted into a series that is being deleted by an operation until the operation completes. For samples that show how to call DeleteSeries, see [Delete a study, series, or instance](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#delete-dicom).
     /// 
     /// # Arguments
     ///
-    /// * `parent` - The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
-    /// * `dicomWebPath` - The path of the DeleteSeries request. For example, `studies/{study_uid}/series/{series_uid}`.
+    /// * `parent` - Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// * `dicomWebPath` - Required. The path of the DeleteSeries request. For example, `studies/{study_uid}/series/{series_uid}`.
     pub fn locations_datasets_dicom_stores_studies_series_delete(&self, parent: &str, dicom_web_path: &str) -> ProjectLocationDatasetDicomStoreStudySeriesDeleteCall<'a, S> {
         ProjectLocationDatasetDicomStoreStudySeriesDeleteCall {
             hub: self.hub,
@@ -4035,12 +4480,12 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// RetrieveSeriesMetadata returns instance associated with the given study and series, presented as metadata with the bulk data removed. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveSeriesMetadata, see [Metadata resources](https://cloud.google.com/healthcare/docs/dicom#metadata_resources) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveSeriesMetadata, see [Retrieving metadata](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieving_metadata).
+    /// RetrieveSeriesMetadata returns instance associated with the given study and series, presented as metadata with the bulk data removed. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveSeriesMetadata, see [Metadata resources](https://cloud.google.com/healthcare/docs/dicom#metadata_resources) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveSeriesMetadata, see [Retrieve metadata](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieve-metadata).
     /// 
     /// # Arguments
     ///
-    /// * `parent` - The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
-    /// * `dicomWebPath` - The path of the RetrieveSeriesMetadata DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}/metadata`.
+    /// * `parent` - Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// * `dicomWebPath` - Required. The path of the RetrieveSeriesMetadata DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}/metadata`.
     pub fn locations_datasets_dicom_stores_studies_series_retrieve_metadata(&self, parent: &str, dicom_web_path: &str) -> ProjectLocationDatasetDicomStoreStudySeriesRetrieveMetadataCall<'a, S> {
         ProjectLocationDatasetDicomStoreStudySeriesRetrieveMetadataCall {
             hub: self.hub,
@@ -4054,12 +4499,12 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// RetrieveSeries returns all instances within the given study and series. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveSeries, see [DICOM study/series/instances](https://cloud.google.com/healthcare/docs/dicom#dicom_studyseriesinstances) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveSeries, see [Retrieving DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieving_dicom_data).
+    /// RetrieveSeries returns all instances within the given study and series. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveSeries, see [DICOM study/series/instances](https://cloud.google.com/healthcare/docs/dicom#dicom_studyseriesinstances) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveSeries, see [Retrieve DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieve-dicom).
     /// 
     /// # Arguments
     ///
-    /// * `parent` - The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
-    /// * `dicomWebPath` - The path of the RetrieveSeries DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}`.
+    /// * `parent` - Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// * `dicomWebPath` - Required. The path of the RetrieveSeries DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}`.
     pub fn locations_datasets_dicom_stores_studies_series_retrieve_series(&self, parent: &str, dicom_web_path: &str) -> ProjectLocationDatasetDicomStoreStudySeriesRetrieveSeryCall<'a, S> {
         ProjectLocationDatasetDicomStoreStudySeriesRetrieveSeryCall {
             hub: self.hub,
@@ -4073,12 +4518,12 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// SearchForInstances returns a list of matching instances. See [Search Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.6). For details on the implementation of SearchForInstances, see [Search transaction](https://cloud.google.com/healthcare/docs/dicom#search_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call SearchForInstances, see [Searching for studies, series, instances, and frames](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#searching_for_studies_series_instances_and_frames).
+    /// SearchForInstances returns a list of matching instances. See [Search Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.6). For details on the implementation of SearchForInstances, see [Search transaction](https://cloud.google.com/healthcare/docs/dicom#search_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call SearchForInstances, see [Search for DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#search-dicom).
     /// 
     /// # Arguments
     ///
-    /// * `parent` - The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
-    /// * `dicomWebPath` - The path of the SearchForInstancesRequest DICOMweb request. For example, `instances`, `series/{series_uid}/instances`, or `studies/{study_uid}/instances`.
+    /// * `parent` - Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// * `dicomWebPath` - Required. The path of the SearchForInstancesRequest DICOMweb request. For example, `instances`, `series/{series_uid}/instances`, or `studies/{study_uid}/instances`.
     pub fn locations_datasets_dicom_stores_studies_series_search_for_instances(&self, parent: &str, dicom_web_path: &str) -> ProjectLocationDatasetDicomStoreStudySeriesSearchForInstanceCall<'a, S> {
         ProjectLocationDatasetDicomStoreStudySeriesSearchForInstanceCall {
             hub: self.hub,
@@ -4092,12 +4537,12 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// DeleteStudy deletes all instances within the given study. Delete requests are equivalent to the GET requests specified in the Retrieve transaction. The method returns an Operation which will be marked successful when the deletion is complete. Warning: Instances cannot be inserted into a study that is being deleted by an operation until the operation completes. For samples that show how to call DeleteStudy, see [Deleting a study, series, or instance](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#deleting_a_study_series_or_instance).
+    /// DeleteStudy deletes all instances within the given study. Delete requests are equivalent to the GET requests specified in the Retrieve transaction. The method returns an Operation which will be marked successful when the deletion is complete. Warning: Instances cannot be inserted into a study that is being deleted by an operation until the operation completes. For samples that show how to call DeleteStudy, see [Delete a study, series, or instance](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#delete-dicom).
     /// 
     /// # Arguments
     ///
     /// * `parent` - No description provided.
-    /// * `dicomWebPath` - The path of the DeleteStudy request. For example, `studies/{study_uid}`.
+    /// * `dicomWebPath` - Required. The path of the DeleteStudy request. For example, `studies/{study_uid}`.
     pub fn locations_datasets_dicom_stores_studies_delete(&self, parent: &str, dicom_web_path: &str) -> ProjectLocationDatasetDicomStoreStudyDeleteCall<'a, S> {
         ProjectLocationDatasetDicomStoreStudyDeleteCall {
             hub: self.hub,
@@ -4111,12 +4556,12 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// RetrieveStudyMetadata returns instance associated with the given study presented as metadata with the bulk data removed. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveStudyMetadata, see [Metadata resources](https://cloud.google.com/healthcare/docs/dicom#metadata_resources) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveStudyMetadata, see [Retrieving metadata](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieving_metadata).
+    /// RetrieveStudyMetadata returns instance associated with the given study presented as metadata with the bulk data removed. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveStudyMetadata, see [Metadata resources](https://cloud.google.com/healthcare/docs/dicom#metadata_resources) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveStudyMetadata, see [Retrieve metadata](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieve-metadata).
     /// 
     /// # Arguments
     ///
-    /// * `parent` - The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
-    /// * `dicomWebPath` - The path of the RetrieveStudyMetadata DICOMweb request. For example, `studies/{study_uid}/metadata`.
+    /// * `parent` - Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// * `dicomWebPath` - Required. The path of the RetrieveStudyMetadata DICOMweb request. For example, `studies/{study_uid}/metadata`.
     pub fn locations_datasets_dicom_stores_studies_retrieve_metadata(&self, parent: &str, dicom_web_path: &str) -> ProjectLocationDatasetDicomStoreStudyRetrieveMetadataCall<'a, S> {
         ProjectLocationDatasetDicomStoreStudyRetrieveMetadataCall {
             hub: self.hub,
@@ -4130,12 +4575,12 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// RetrieveStudy returns all instances within the given study. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveStudy, see [DICOM study/series/instances](https://cloud.google.com/healthcare/docs/dicom#dicom_studyseriesinstances) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveStudy, see [Retrieving DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieving_dicom_data).
+    /// RetrieveStudy returns all instances within the given study. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveStudy, see [DICOM study/series/instances](https://cloud.google.com/healthcare/docs/dicom#dicom_studyseriesinstances) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveStudy, see [Retrieve DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieve-dicom).
     /// 
     /// # Arguments
     ///
-    /// * `parent` - The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
-    /// * `dicomWebPath` - The path of the RetrieveStudy DICOMweb request. For example, `studies/{study_uid}`.
+    /// * `parent` - Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// * `dicomWebPath` - Required. The path of the RetrieveStudy DICOMweb request. For example, `studies/{study_uid}`.
     pub fn locations_datasets_dicom_stores_studies_retrieve_study(&self, parent: &str, dicom_web_path: &str) -> ProjectLocationDatasetDicomStoreStudyRetrieveStudyCall<'a, S> {
         ProjectLocationDatasetDicomStoreStudyRetrieveStudyCall {
             hub: self.hub,
@@ -4149,12 +4594,12 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// SearchForInstances returns a list of matching instances. See [Search Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.6). For details on the implementation of SearchForInstances, see [Search transaction](https://cloud.google.com/healthcare/docs/dicom#search_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call SearchForInstances, see [Searching for studies, series, instances, and frames](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#searching_for_studies_series_instances_and_frames).
+    /// SearchForInstances returns a list of matching instances. See [Search Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.6). For details on the implementation of SearchForInstances, see [Search transaction](https://cloud.google.com/healthcare/docs/dicom#search_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call SearchForInstances, see [Search for DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#search-dicom).
     /// 
     /// # Arguments
     ///
-    /// * `parent` - The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
-    /// * `dicomWebPath` - The path of the SearchForInstancesRequest DICOMweb request. For example, `instances`, `series/{series_uid}/instances`, or `studies/{study_uid}/instances`.
+    /// * `parent` - Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// * `dicomWebPath` - Required. The path of the SearchForInstancesRequest DICOMweb request. For example, `instances`, `series/{series_uid}/instances`, or `studies/{study_uid}/instances`.
     pub fn locations_datasets_dicom_stores_studies_search_for_instances(&self, parent: &str, dicom_web_path: &str) -> ProjectLocationDatasetDicomStoreStudySearchForInstanceCall<'a, S> {
         ProjectLocationDatasetDicomStoreStudySearchForInstanceCall {
             hub: self.hub,
@@ -4168,12 +4613,12 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// SearchForSeries returns a list of matching series. See [Search Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.6). For details on the implementation of SearchForSeries, see [Search transaction](https://cloud.google.com/healthcare/docs/dicom#search_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call SearchForSeries, see [Searching for studies, series, instances, and frames](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#searching_for_studies_series_instances_and_frames).
+    /// SearchForSeries returns a list of matching series. See [Search Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.6). For details on the implementation of SearchForSeries, see [Search transaction](https://cloud.google.com/healthcare/docs/dicom#search_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call SearchForSeries, see [Search for DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#search-dicom).
     /// 
     /// # Arguments
     ///
-    /// * `parent` - The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
-    /// * `dicomWebPath` - The path of the SearchForSeries DICOMweb request. For example, `series` or `studies/{study_uid}/series`.
+    /// * `parent` - Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// * `dicomWebPath` - Required. The path of the SearchForSeries DICOMweb request. For example, `series` or `studies/{study_uid}/series`.
     pub fn locations_datasets_dicom_stores_studies_search_for_series(&self, parent: &str, dicom_web_path: &str) -> ProjectLocationDatasetDicomStoreStudySearchForSeryCall<'a, S> {
         ProjectLocationDatasetDicomStoreStudySearchForSeryCall {
             hub: self.hub,
@@ -4187,13 +4632,13 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// StoreInstances stores DICOM instances associated with study instance unique identifiers (SUID). See [Store Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.5). For details on the implementation of StoreInstances, see [Store transaction](https://cloud.google.com/healthcare/docs/dicom#store_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call StoreInstances, see [Storing DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#storing_dicom_data).
+    /// StoreInstances stores DICOM instances associated with study instance unique identifiers (SUID). See [Store Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.5). For details on the implementation of StoreInstances, see [Store transaction](https://cloud.google.com/healthcare/docs/dicom#store_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call StoreInstances, see [Store DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#store-dicom).
     /// 
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `parent` - The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
-    /// * `dicomWebPath` - The path of the StoreInstances DICOMweb request. For example, `studies/[{study_uid}]`. Note that the `study_uid` is optional.
+    /// * `parent` - Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// * `dicomWebPath` - Required. The path of the StoreInstances DICOMweb request. For example, `studies/[{study_uid}]`. Note that the `study_uid` is optional.
     pub fn locations_datasets_dicom_stores_studies_store_instances(&self, request: HttpBody, parent: &str, dicom_web_path: &str) -> ProjectLocationDatasetDicomStoreStudyStoreInstanceCall<'a, S> {
         ProjectLocationDatasetDicomStoreStudyStoreInstanceCall {
             hub: self.hub,
@@ -4213,7 +4658,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `parent` - The name of the dataset this DICOM store belongs to.
+    /// * `parent` - Required. The name of the dataset this DICOM store belongs to.
     pub fn locations_datasets_dicom_stores_create(&self, request: DicomStore, parent: &str) -> ProjectLocationDatasetDicomStoreCreateCall<'a, S> {
         ProjectLocationDatasetDicomStoreCreateCall {
             hub: self.hub,
@@ -4233,7 +4678,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `sourceStore` - Source DICOM store resource name. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// * `sourceStore` - Required. Source DICOM store resource name. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     pub fn locations_datasets_dicom_stores_deidentify(&self, request: DeidentifyDicomStoreRequest, source_store: &str) -> ProjectLocationDatasetDicomStoreDeidentifyCall<'a, S> {
         ProjectLocationDatasetDicomStoreDeidentifyCall {
             hub: self.hub,
@@ -4251,7 +4696,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// 
     /// # Arguments
     ///
-    /// * `name` - The resource name of the DICOM store to delete.
+    /// * `name` - Required. The resource name of the DICOM store to delete.
     pub fn locations_datasets_dicom_stores_delete(&self, name: &str) -> ProjectLocationDatasetDicomStoreDeleteCall<'a, S> {
         ProjectLocationDatasetDicomStoreDeleteCall {
             hub: self.hub,
@@ -4269,7 +4714,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `name` - The DICOM store resource name from which to export the data. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// * `name` - Required. The DICOM store resource name from which to export the data. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     pub fn locations_datasets_dicom_stores_export(&self, request: ExportDicomDataRequest, name: &str) -> ProjectLocationDatasetDicomStoreExportCall<'a, S> {
         ProjectLocationDatasetDicomStoreExportCall {
             hub: self.hub,
@@ -4287,9 +4732,26 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// 
     /// # Arguments
     ///
-    /// * `name` - The resource name of the DICOM store to get.
+    /// * `name` - Required. The resource name of the DICOM store to get.
     pub fn locations_datasets_dicom_stores_get(&self, name: &str) -> ProjectLocationDatasetDicomStoreGetCall<'a, S> {
         ProjectLocationDatasetDicomStoreGetCall {
+            hub: self.hub,
+            _name: name.to_string(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// Gets metrics associated with the DICOM store.
+    /// 
+    /// # Arguments
+    ///
+    /// * `name` - Required. The resource name of the DICOM store to get metrics for.
+    pub fn locations_datasets_dicom_stores_get_dicom_store_metrics(&self, name: &str) -> ProjectLocationDatasetDicomStoreGetDICOMStoreMetricCall<'a, S> {
+        ProjectLocationDatasetDicomStoreGetDICOMStoreMetricCall {
             hub: self.hub,
             _name: name.to_string(),
             _delegate: Default::default(),
@@ -4323,7 +4785,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `name` - The name of the DICOM store resource into which the data is imported. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// * `name` - Required. The name of the DICOM store resource into which the data is imported. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     pub fn locations_datasets_dicom_stores_import(&self, request: ImportDicomDataRequest, name: &str) -> ProjectLocationDatasetDicomStoreImportCall<'a, S> {
         ProjectLocationDatasetDicomStoreImportCall {
             hub: self.hub,
@@ -4341,7 +4803,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// 
     /// # Arguments
     ///
-    /// * `parent` - Name of the dataset.
+    /// * `parent` - Required. Name of the dataset.
     pub fn locations_datasets_dicom_stores_list(&self, parent: &str) -> ProjectLocationDatasetDicomStoreListCall<'a, S> {
         ProjectLocationDatasetDicomStoreListCall {
             hub: self.hub,
@@ -4362,7 +4824,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `name` - Resource name of the DICOM store, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// * `name` - Identifier. Resource name of the DICOM store, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     pub fn locations_datasets_dicom_stores_patch(&self, request: DicomStore, name: &str) -> ProjectLocationDatasetDicomStorePatchCall<'a, S> {
         ProjectLocationDatasetDicomStorePatchCall {
             hub: self.hub,
@@ -4377,12 +4839,12 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// SearchForInstances returns a list of matching instances. See [Search Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.6). For details on the implementation of SearchForInstances, see [Search transaction](https://cloud.google.com/healthcare/docs/dicom#search_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call SearchForInstances, see [Searching for studies, series, instances, and frames](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#searching_for_studies_series_instances_and_frames).
+    /// SearchForInstances returns a list of matching instances. See [Search Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.6). For details on the implementation of SearchForInstances, see [Search transaction](https://cloud.google.com/healthcare/docs/dicom#search_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call SearchForInstances, see [Search for DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#search-dicom).
     /// 
     /// # Arguments
     ///
-    /// * `parent` - The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
-    /// * `dicomWebPath` - The path of the SearchForInstancesRequest DICOMweb request. For example, `instances`, `series/{series_uid}/instances`, or `studies/{study_uid}/instances`.
+    /// * `parent` - Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// * `dicomWebPath` - Required. The path of the SearchForInstancesRequest DICOMweb request. For example, `instances`, `series/{series_uid}/instances`, or `studies/{study_uid}/instances`.
     pub fn locations_datasets_dicom_stores_search_for_instances(&self, parent: &str, dicom_web_path: &str) -> ProjectLocationDatasetDicomStoreSearchForInstanceCall<'a, S> {
         ProjectLocationDatasetDicomStoreSearchForInstanceCall {
             hub: self.hub,
@@ -4396,12 +4858,12 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// SearchForSeries returns a list of matching series. See [Search Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.6). For details on the implementation of SearchForSeries, see [Search transaction](https://cloud.google.com/healthcare/docs/dicom#search_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call SearchForSeries, see [Searching for studies, series, instances, and frames](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#searching_for_studies_series_instances_and_frames).
+    /// SearchForSeries returns a list of matching series. See [Search Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.6). For details on the implementation of SearchForSeries, see [Search transaction](https://cloud.google.com/healthcare/docs/dicom#search_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call SearchForSeries, see [Search for DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#search-dicom).
     /// 
     /// # Arguments
     ///
-    /// * `parent` - The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
-    /// * `dicomWebPath` - The path of the SearchForSeries DICOMweb request. For example, `series` or `studies/{study_uid}/series`.
+    /// * `parent` - Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// * `dicomWebPath` - Required. The path of the SearchForSeries DICOMweb request. For example, `series` or `studies/{study_uid}/series`.
     pub fn locations_datasets_dicom_stores_search_for_series(&self, parent: &str, dicom_web_path: &str) -> ProjectLocationDatasetDicomStoreSearchForSeryCall<'a, S> {
         ProjectLocationDatasetDicomStoreSearchForSeryCall {
             hub: self.hub,
@@ -4415,12 +4877,12 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// SearchForStudies returns a list of matching studies. See [Search Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.6). For details on the implementation of SearchForStudies, see [Search transaction](https://cloud.google.com/healthcare/docs/dicom#search_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call SearchForStudies, see [Searching for studies, series, instances, and frames](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#searching_for_studies_series_instances_and_frames).
+    /// SearchForStudies returns a list of matching studies. See [Search Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.6). For details on the implementation of SearchForStudies, see [Search transaction](https://cloud.google.com/healthcare/docs/dicom#search_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call SearchForStudies, see [Search for DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#search-dicom).
     /// 
     /// # Arguments
     ///
-    /// * `parent` - The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
-    /// * `dicomWebPath` - The path of the SearchForStudies DICOMweb request. For example, `studies`.
+    /// * `parent` - Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// * `dicomWebPath` - Required. The path of the SearchForStudies DICOMweb request. For example, `studies`.
     pub fn locations_datasets_dicom_stores_search_for_studies(&self, parent: &str, dicom_web_path: &str) -> ProjectLocationDatasetDicomStoreSearchForStudyCall<'a, S> {
         ProjectLocationDatasetDicomStoreSearchForStudyCall {
             hub: self.hub,
@@ -4453,13 +4915,13 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// StoreInstances stores DICOM instances associated with study instance unique identifiers (SUID). See [Store Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.5). For details on the implementation of StoreInstances, see [Store transaction](https://cloud.google.com/healthcare/docs/dicom#store_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call StoreInstances, see [Storing DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#storing_dicom_data).
+    /// StoreInstances stores DICOM instances associated with study instance unique identifiers (SUID). See [Store Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.5). For details on the implementation of StoreInstances, see [Store transaction](https://cloud.google.com/healthcare/docs/dicom#store_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call StoreInstances, see [Store DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#store-dicom).
     /// 
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `parent` - The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
-    /// * `dicomWebPath` - The path of the StoreInstances DICOMweb request. For example, `studies/[{study_uid}]`. Note that the `study_uid` is optional.
+    /// * `parent` - Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// * `dicomWebPath` - Required. The path of the StoreInstances DICOMweb request. For example, `studies/[{study_uid}]`. Note that the `study_uid` is optional.
     pub fn locations_datasets_dicom_stores_store_instances(&self, request: HttpBody, parent: &str, dicom_web_path: &str) -> ProjectLocationDatasetDicomStoreStoreInstanceCall<'a, S> {
         ProjectLocationDatasetDicomStoreStoreInstanceCall {
             hub: self.hub,
@@ -4497,7 +4959,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// 
     /// # Arguments
     ///
-    /// * `name` - Name of the `Patient` resource for which the information is required.
+    /// * `name` - Required. Name of the `Patient` resource for which the information is required.
     pub fn locations_datasets_fhir_stores_fhir__patient_everything(&self, name: &str) -> ProjectLocationDatasetFhirStoreFhirPatientEverythingCall<'a, S> {
         ProjectLocationDatasetFhirStoreFhirPatientEverythingCall {
             hub: self.hub,
@@ -4520,7 +4982,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// 
     /// # Arguments
     ///
-    /// * `name` - The name of the resource to purge.
+    /// * `name` - Required. The name of the resource to purge.
     pub fn locations_datasets_fhir_stores_fhir__resource_purge(&self, name: &str) -> ProjectLocationDatasetFhirStoreFhirResourcePurgeCall<'a, S> {
         ProjectLocationDatasetFhirStoreFhirResourcePurgeCall {
             hub: self.hub,
@@ -4538,8 +5000,8 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `parent` - The name of the FHIR store that holds the profiles being used for validation.
-    /// * `type` - The FHIR resource type of the resource being validated. For a complete list, see the FHIR Resource Index ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html), [STU3](http://hl7.org/implement/standards/fhir/STU3/resourcelist.html), or [R4](http://hl7.org/implement/standards/fhir/R4/resourcelist.html)). Must match the resource type in the provided content.
+    /// * `parent` - Required. The name of the FHIR store that holds the profiles being used for validation.
+    /// * `type` - Required. The FHIR resource type of the resource being validated. For a complete list, see the FHIR Resource Index ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html), [STU3](http://hl7.org/implement/standards/fhir/STU3/resourcelist.html), or [R4](http://hl7.org/implement/standards/fhir/R4/resourcelist.html)). Must match the resource type in the provided content.
     pub fn locations_datasets_fhir_stores_fhir__resource_validate(&self, request: HttpBody, parent: &str, type_: &str) -> ProjectLocationDatasetFhirStoreFhirResourceValidateCall<'a, S> {
         ProjectLocationDatasetFhirStoreFhirResourceValidateCall {
             hub: self.hub,
@@ -4559,7 +5021,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// 
     /// # Arguments
     ///
-    /// * `name` - Name of the FHIR store to retrieve the capabilities for.
+    /// * `name` - Required. Name of the FHIR store to retrieve the capabilities for.
     pub fn locations_datasets_fhir_stores_fhir_capabilities(&self, name: &str) -> ProjectLocationDatasetFhirStoreFhirCapabilityCall<'a, S> {
         ProjectLocationDatasetFhirStoreFhirCapabilityCall {
             hub: self.hub,
@@ -4572,13 +5034,74 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// Creates a FHIR resource. Implements the FHIR standard create interaction ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#create), [STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#create), [R4](http://hl7.org/implement/standards/fhir/R4/http.html#create)), which creates a new resource with a server-assigned resource ID. The request body must contain a JSON-encoded FHIR resource, and the request headers must contain `Content-Type: application/fhir+json`. On success, the response body contains a JSON-encoded representation of the resource as it was created on the server, including the server-assigned resource ID and version ID. Errors generated by the FHIR store contain a JSON-encoded `OperationOutcome` resource describing the reason for the error. If the request cannot be mapped to a valid API method on a FHIR store, a generic GCP error might be returned instead. For samples that show how to call `create`, see [Creating a FHIR resource](https://cloud.google.com/healthcare/docs/how-tos/fhir-resources#creating_a_fhir_resource).
+    /// Deletes a FHIR resource that match an identifier search query. Implements the FHIR standard conditional delete interaction, limited to searching by resource identifier. If multiple resources match, 412 Precondition Failed error will be returned. Search term for identifier should be in the pattern `identifier=system|value` or `identifier=value` - similar to the `search` method on resources with a specific identifier. Note: Unless resource versioning is disabled by setting the disable_resource_versioning flag on the FHIR store, the deleted resource is moved to a history repository that can still be retrieved through vread and related methods, unless they are removed by the purge method. For samples that show how to call `conditionalDelete`, see [Conditionally deleting a FHIR resource](https://cloud.google.com/healthcare/docs/how-tos/fhir-resources#conditionally_deleting_a_fhir_resource).
+    /// 
+    /// # Arguments
+    ///
+    /// * `parent` - Required. The name of the FHIR store this resource belongs to.
+    /// * `type` - Required. The FHIR resource type to delete, such as Patient or Observation. For a complete list, see the FHIR Resource Index ([DSTU2](https://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html), [STU3](https://hl7.org/implement/standards/fhir/STU3/resourcelist.html), [R4](https://hl7.org/implement/standards/fhir/R4/resourcelist.html)).
+    pub fn locations_datasets_fhir_stores_fhir_conditional_delete(&self, parent: &str, type_: &str) -> ProjectLocationDatasetFhirStoreFhirConditionalDeleteCall<'a, S> {
+        ProjectLocationDatasetFhirStoreFhirConditionalDeleteCall {
+            hub: self.hub,
+            _parent: parent.to_string(),
+            _type_: type_.to_string(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// If a resource is found with the identifier specified in the query parameters, updates part of that resource by applying the operations specified in a [JSON Patch](http://jsonpatch.com/) document. Implements the FHIR standard conditional patch interaction, limited to searching by resource identifier. DSTU2 doesn't define a conditional patch method, but the server supports it in the same way it supports STU3. Search term for identifier should be in the pattern `identifier=system|value` or `identifier=value` - similar to the `search` method on resources with a specific identifier. If the search criteria identify more than one match, the request returns a `412 Precondition Failed` error. The request body must contain a JSON Patch document, and the request headers must contain `Content-Type: application/json-patch+json`. On success, the response body contains a JSON-encoded representation of the updated resource, including the server-assigned version ID. Errors generated by the FHIR store contain a JSON-encoded `OperationOutcome` resource describing the reason for the error. If the request cannot be mapped to a valid API method on a FHIR store, a generic GCP error might be returned instead. For samples that show how to call `conditionalPatch`, see [Conditionally patching a FHIR resource](https://cloud.google.com/healthcare/docs/how-tos/fhir-resources#conditionally_patching_a_fhir_resource).
     /// 
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `parent` - The name of the FHIR store this resource belongs to.
-    /// * `type` - The FHIR resource type to create, such as Patient or Observation. For a complete list, see the FHIR Resource Index ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html), [STU3](http://hl7.org/implement/standards/fhir/STU3/resourcelist.html), [R4](http://hl7.org/implement/standards/fhir/R4/resourcelist.html)). Must match the resource type in the provided content.
+    /// * `parent` - Required. The name of the FHIR store this resource belongs to.
+    /// * `type` - Required. The FHIR resource type to update, such as Patient or Observation. For a complete list, see the FHIR Resource Index ([DSTU2](https://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html), [STU3](https://hl7.org/implement/standards/fhir/STU3/resourcelist.html), [R4](https://hl7.org/implement/standards/fhir/R4/resourcelist.html)).
+    pub fn locations_datasets_fhir_stores_fhir_conditional_patch(&self, request: HttpBody, parent: &str, type_: &str) -> ProjectLocationDatasetFhirStoreFhirConditionalPatchCall<'a, S> {
+        ProjectLocationDatasetFhirStoreFhirConditionalPatchCall {
+            hub: self.hub,
+            _request: request,
+            _parent: parent.to_string(),
+            _type_: type_.to_string(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// If a resource is found with the identifier specified in the query parameters, updates the entire contents of that resource. Implements the FHIR standard conditional update interaction, limited to searching by resource identifier. Search term for identifier should be in the pattern `identifier=system|value` or `identifier=value` - similar to the `search` method on resources with a specific identifier. If the search criteria identify more than one match, the request returns a `412 Precondition Failed` error. If the search criteria identify zero matches, and the supplied resource body contains an `id`, and the FHIR store has enable_update_create set, creates the resource with the client-specified ID. It is strongly advised not to include or encode any sensitive data such as patient identifiers in client-specified resource IDs. Those IDs are part of the FHIR resource path recorded in Cloud Audit Logs and Pub/Sub notifications. Those IDs can also be contained in reference fields within other resources. If the search criteria identify zero matches, and the supplied resource body does not contain an `id`, the resource is created with a server-assigned ID as per the create method. The request body must contain a JSON-encoded FHIR resource, and the request headers must contain `Content-Type: application/fhir+json`. On success, the response body contains a JSON-encoded representation of the updated resource, including the server-assigned version ID. Errors generated by the FHIR store contain a JSON-encoded `OperationOutcome` resource describing the reason for the error. If the request cannot be mapped to a valid API method on a FHIR store, a generic GCP error might be returned instead. For samples that show how to call `conditionalUpdate`, see [Conditionally updating a FHIR resource](https://cloud.google.com/healthcare/docs/how-tos/fhir-resources#conditionally_updating_a_fhir_resource).
+    /// 
+    /// # Arguments
+    ///
+    /// * `request` - No description provided.
+    /// * `parent` - Required. The name of the FHIR store this resource belongs to.
+    /// * `type` - Required. The FHIR resource type to update, such as Patient or Observation. For a complete list, see the FHIR Resource Index ([DSTU2](https://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html), [STU3](https://hl7.org/implement/standards/fhir/STU3/resourcelist.html), [R4](https://hl7.org/implement/standards/fhir/R4/resourcelist.html)). Must match the resource type in the provided content.
+    pub fn locations_datasets_fhir_stores_fhir_conditional_update(&self, request: HttpBody, parent: &str, type_: &str) -> ProjectLocationDatasetFhirStoreFhirConditionalUpdateCall<'a, S> {
+        ProjectLocationDatasetFhirStoreFhirConditionalUpdateCall {
+            hub: self.hub,
+            _request: request,
+            _parent: parent.to_string(),
+            _type_: type_.to_string(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// Creates a FHIR resource. Implements the FHIR standard create interaction ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#create), [STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#create), [R4](http://hl7.org/implement/standards/fhir/R4/http.html#create)), which creates a new resource with a server-assigned resource ID. Also supports the FHIR standard conditional create interaction ([DSTU2](https://hl7.org/implement/standards/fhir/DSTU2/http.html#ccreate), [STU3](https://hl7.org/implement/standards/fhir/STU3/http.html#ccreate), [R4](https://hl7.org/implement/standards/fhir/R4/http.html#ccreate)), specified by supplying an `If-None-Exist` header containing a FHIR search query, limited to searching by resource identifier. If no resources match this search query, the server processes the create operation as normal. When using conditional create, the search term for identifier should be in the pattern `identifier=system|value` or `identifier=value` - similar to the `search` method on resources with a specific identifier. The request body must contain a JSON-encoded FHIR resource, and the request headers must contain `Content-Type: application/fhir+json`. On success, the response body contains a JSON-encoded representation of the resource as it was created on the server, including the server-assigned resource ID and version ID. Errors generated by the FHIR store contain a JSON-encoded `OperationOutcome` resource describing the reason for the error. If the request cannot be mapped to a valid API method on a FHIR store, a generic GCP error might be returned instead. For samples that show how to call `create`, see [Creating a FHIR resource](https://cloud.google.com/healthcare/docs/how-tos/fhir-resources#creating_a_fhir_resource).
+    /// 
+    /// # Arguments
+    ///
+    /// * `request` - No description provided.
+    /// * `parent` - Required. The name of the FHIR store this resource belongs to.
+    /// * `type` - Required. The FHIR resource type to create, such as Patient or Observation. For a complete list, see the FHIR Resource Index ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html), [STU3](http://hl7.org/implement/standards/fhir/STU3/resourcelist.html), [R4](http://hl7.org/implement/standards/fhir/R4/resourcelist.html)). Must match the resource type in the provided content.
     pub fn locations_datasets_fhir_stores_fhir_create(&self, request: HttpBody, parent: &str, type_: &str) -> ProjectLocationDatasetFhirStoreFhirCreateCall<'a, S> {
         ProjectLocationDatasetFhirStoreFhirCreateCall {
             hub: self.hub,
@@ -4597,7 +5120,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// 
     /// # Arguments
     ///
-    /// * `name` - The name of the resource to delete.
+    /// * `name` - Required. The name of the resource to delete.
     pub fn locations_datasets_fhir_stores_fhir_delete(&self, name: &str) -> ProjectLocationDatasetFhirStoreFhirDeleteCall<'a, S> {
         ProjectLocationDatasetFhirStoreFhirDeleteCall {
             hub: self.hub,
@@ -4615,7 +5138,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `parent` - Name of the FHIR store in which this bundle will be executed.
+    /// * `parent` - Required. Name of the FHIR store in which this bundle will be executed.
     pub fn locations_datasets_fhir_stores_fhir_execute_bundle(&self, request: HttpBody, parent: &str) -> ProjectLocationDatasetFhirStoreFhirExecuteBundleCall<'a, S> {
         ProjectLocationDatasetFhirStoreFhirExecuteBundleCall {
             hub: self.hub,
@@ -4633,7 +5156,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// 
     /// # Arguments
     ///
-    /// * `name` - The name of the resource to retrieve.
+    /// * `name` - Required. The name of the resource to retrieve.
     pub fn locations_datasets_fhir_stores_fhir_history(&self, name: &str) -> ProjectLocationDatasetFhirStoreFhirHistoryCall<'a, S> {
         ProjectLocationDatasetFhirStoreFhirHistoryCall {
             hub: self.hub,
@@ -4655,7 +5178,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `name` - The name of the resource to update.
+    /// * `name` - Required. The name of the resource to update.
     pub fn locations_datasets_fhir_stores_fhir_patch(&self, request: HttpBody, name: &str) -> ProjectLocationDatasetFhirStoreFhirPatchCall<'a, S> {
         ProjectLocationDatasetFhirStoreFhirPatchCall {
             hub: self.hub,
@@ -4673,7 +5196,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// 
     /// # Arguments
     ///
-    /// * `name` - The name of the resource to retrieve.
+    /// * `name` - Required. The name of the resource to retrieve.
     pub fn locations_datasets_fhir_stores_fhir_read(&self, name: &str) -> ProjectLocationDatasetFhirStoreFhirReadCall<'a, S> {
         ProjectLocationDatasetFhirStoreFhirReadCall {
             hub: self.hub,
@@ -4686,12 +5209,12 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// Searches for resources in the given FHIR store according to criteria specified as query parameters. Implements the FHIR standard search interaction ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#search), [STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#search), [R4](http://hl7.org/implement/standards/fhir/R4/http.html#search)) using the search semantics described in the FHIR Search specification ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/search.html), [STU3](http://hl7.org/implement/standards/fhir/STU3/search.html), [R4](http://hl7.org/implement/standards/fhir/R4/search.html)). Supports four methods of search defined by the specification: * `GET [base]?[parameters]` to search across all resources. * `GET [base]/[type]?[parameters]` to search resources of a specified type. * `POST [base]/_search?[parameters]` as an alternate form having the same semantics as the `GET` method across all resources. * `POST [base]/[type]/_search?[parameters]` as an alternate form having the same semantics as the `GET` method for the specified type. The `GET` and `POST` methods do not support compartment searches. The `POST` method does not support `application/x-www-form-urlencoded` search parameters. On success, the response body contains a JSON-encoded representation of a `Bundle` resource of type `searchset`, containing the results of the search. Errors generated by the FHIR store contain a JSON-encoded `OperationOutcome` resource describing the reason for the error. If the request cannot be mapped to a valid API method on a FHIR store, a generic GCP error might be returned instead. The server's capability statement, retrieved through capabilities, indicates what search parameters are supported on each FHIR resource. A list of all search parameters defined by the specification can be found in the FHIR Search Parameter Registry ([STU3](http://hl7.org/implement/standards/fhir/STU3/searchparameter-registry.html), [R4](http://hl7.org/implement/standards/fhir/R4/searchparameter-registry.html)). FHIR search parameters for DSTU2 can be found on each resource's definition page. Supported search modifiers: `:missing`, `:exact`, `:contains`, `:text`, `:in`, `:not-in`, `:above`, `:below`, `:[type]`, `:not`, and `recurse` (DSTU2 and STU3) or `:iterate` (R4). Supported search result parameters: `_sort`, `_count`, `_include`, `_revinclude`, `_summary=text`, `_summary=data`, and `_elements`. The maximum number of search results returned defaults to 100, which can be overridden by the `_count` parameter up to a maximum limit of 1000. If there are additional results, the returned `Bundle` contains a link of `relation` "next", which has a `_page_token` parameter for an opaque pagination token that can be used to retrieve the next page. Resources with a total size larger than 5MB or a field count larger than 50,000 might not be fully searchable as the server might trim its generated search index in those cases. Note: FHIR resources are indexed asynchronously, so there might be a slight delay between the time a resource is created or changes and when the change is reflected in search results. For samples and detailed information, see [Searching for FHIR resources](https://cloud.google.com/healthcare/docs/how-tos/fhir-search) and [Advanced FHIR search features](https://cloud.google.com/healthcare/docs/how-tos/fhir-advanced-search).
+    /// Searches for resources in the given FHIR store according to criteria specified as query parameters. Implements the FHIR standard search interaction ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#search), [STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#search), [R4](http://hl7.org/implement/standards/fhir/R4/http.html#search)) using the search semantics described in the FHIR Search specification ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/search.html), [STU3](http://hl7.org/implement/standards/fhir/STU3/search.html), [R4](http://hl7.org/implement/standards/fhir/R4/search.html)). Supports four methods of search defined by the specification: * `GET [base]?[parameters]` to search across all resources. * `GET [base]/[type]?[parameters]` to search resources of a specified type. * `POST [base]/_search?[parameters]` as an alternate form having the same semantics as the `GET` method across all resources. * `POST [base]/[type]/_search?[parameters]` as an alternate form having the same semantics as the `GET` method for the specified type. The `GET` and `POST` methods do not support compartment searches. The `POST` method does not support `application/x-www-form-urlencoded` search parameters. On success, the response body contains a JSON-encoded representation of a `Bundle` resource of type `searchset`, containing the results of the search. Errors generated by the FHIR store contain a JSON-encoded `OperationOutcome` resource describing the reason for the error. If the request cannot be mapped to a valid API method on a FHIR store, a generic GCP error might be returned instead. The server's capability statement, retrieved through capabilities, indicates what search parameters are supported on each FHIR resource. A list of all search parameters defined by the specification can be found in the FHIR Search Parameter Registry ([STU3](http://hl7.org/implement/standards/fhir/STU3/searchparameter-registry.html), [R4](http://hl7.org/implement/standards/fhir/R4/searchparameter-registry.html)). FHIR search parameters for DSTU2 can be found on each resource's definition page. Supported search modifiers: `:missing`, `:exact`, `:contains`, `:text`, `:in`, `:not-in`, `:above`, `:below`, `:[type]`, `:not`, and `recurse` (DSTU2 and STU3) or `:iterate` (R4). Supported search result parameters: `_sort`, `_count`, `_include`, `_revinclude`, `_summary=text`, `_summary=data`, and `_elements`. The maximum number of search results returned defaults to 100, which can be overridden by the `_count` parameter up to a maximum limit of 1000. The server might return fewer resources than requested to prevent excessively large responses. If there are additional results, the returned `Bundle` contains a link of `relation` "next", which has a `_page_token` parameter for an opaque pagination token that can be used to retrieve the next page. Resources with a total size larger than 5MB or a field count larger than 50,000 might not be fully searchable as the server might trim its generated search index in those cases. Note: FHIR resources are indexed asynchronously, so there might be a slight delay between the time a resource is created or changed, and the time when the change reflects in search results. The only exception is resource identifier data, which is indexed synchronously as a special index. As a result, searching using resource identifier is not subject to indexing delay. To use the special synchronous index, the search term for identifier should be in the pattern `identifier=[system]|[value]` or `identifier=[value]`, and any of the following search result parameters can be used: * `_count` * `_include` * `_revinclude` * `_summary` * `_elements` If your query contains any other search parameters, the standard asynchronous index will be used instead. Note that searching against the special index is optimized for resolving a small number of matches. The search isn't optimized if your identifier search criteria matches a large number (i.e. more than 2,000) of resources. For a search query that will match a large number of resources, you can avoiding using the special synchronous index by including an additional `_sort` parameter in your query. Use `_sort=-_lastUpdated` if you want to keep the default sorting order. Note: The special synchronous identifier index are currently disabled for DocumentReference and DocumentManifest searches. For samples and detailed information, see [Searching for FHIR resources](https://cloud.google.com/healthcare/docs/how-tos/fhir-search) and [Advanced FHIR search features](https://cloud.google.com/healthcare/docs/how-tos/fhir-advanced-search).
     /// 
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `parent` - Name of the FHIR store to retrieve resources from.
+    /// * `parent` - Required. Name of the FHIR store to retrieve resources from.
     pub fn locations_datasets_fhir_stores_fhir_search(&self, request: SearchResourcesRequest, parent: &str) -> ProjectLocationDatasetFhirStoreFhirSearchCall<'a, S> {
         ProjectLocationDatasetFhirStoreFhirSearchCall {
             hub: self.hub,
@@ -4705,13 +5228,13 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// Searches for resources in the given FHIR store according to criteria specified as query parameters. Implements the FHIR standard search interaction ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#search), [STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#search), [R4](http://hl7.org/implement/standards/fhir/R4/http.html#search)) using the search semantics described in the FHIR Search specification ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/search.html), [STU3](http://hl7.org/implement/standards/fhir/STU3/search.html), [R4](http://hl7.org/implement/standards/fhir/R4/search.html)). Supports four methods of search defined by the specification: * `GET [base]?[parameters]` to search across all resources. * `GET [base]/[type]?[parameters]` to search resources of a specified type. * `POST [base]/_search?[parameters]` as an alternate form having the same semantics as the `GET` method across all resources. * `POST [base]/[type]/_search?[parameters]` as an alternate form having the same semantics as the `GET` method for the specified type. The `GET` and `POST` methods do not support compartment searches. The `POST` method does not support `application/x-www-form-urlencoded` search parameters. On success, the response body contains a JSON-encoded representation of a `Bundle` resource of type `searchset`, containing the results of the search. Errors generated by the FHIR store contain a JSON-encoded `OperationOutcome` resource describing the reason for the error. If the request cannot be mapped to a valid API method on a FHIR store, a generic GCP error might be returned instead. The server's capability statement, retrieved through capabilities, indicates what search parameters are supported on each FHIR resource. A list of all search parameters defined by the specification can be found in the FHIR Search Parameter Registry ([STU3](http://hl7.org/implement/standards/fhir/STU3/searchparameter-registry.html), [R4](http://hl7.org/implement/standards/fhir/R4/searchparameter-registry.html)). FHIR search parameters for DSTU2 can be found on each resource's definition page. Supported search modifiers: `:missing`, `:exact`, `:contains`, `:text`, `:in`, `:not-in`, `:above`, `:below`, `:[type]`, `:not`, and `recurse` (DSTU2 and STU3) or `:iterate` (R4). Supported search result parameters: `_sort`, `_count`, `_include`, `_revinclude`, `_summary=text`, `_summary=data`, and `_elements`. The maximum number of search results returned defaults to 100, which can be overridden by the `_count` parameter up to a maximum limit of 1000. If there are additional results, the returned `Bundle` contains a link of `relation` "next", which has a `_page_token` parameter for an opaque pagination token that can be used to retrieve the next page. Resources with a total size larger than 5MB or a field count larger than 50,000 might not be fully searchable as the server might trim its generated search index in those cases. Note: FHIR resources are indexed asynchronously, so there might be a slight delay between the time a resource is created or changes and when the change is reflected in search results. For samples and detailed information, see [Searching for FHIR resources](https://cloud.google.com/healthcare/docs/how-tos/fhir-search) and [Advanced FHIR search features](https://cloud.google.com/healthcare/docs/how-tos/fhir-advanced-search).
+    /// Searches for resources in the given FHIR store according to criteria specified as query parameters. Implements the FHIR standard search interaction ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#search), [STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#search), [R4](http://hl7.org/implement/standards/fhir/R4/http.html#search)) using the search semantics described in the FHIR Search specification ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/search.html), [STU3](http://hl7.org/implement/standards/fhir/STU3/search.html), [R4](http://hl7.org/implement/standards/fhir/R4/search.html)). Supports four methods of search defined by the specification: * `GET [base]?[parameters]` to search across all resources. * `GET [base]/[type]?[parameters]` to search resources of a specified type. * `POST [base]/_search?[parameters]` as an alternate form having the same semantics as the `GET` method across all resources. * `POST [base]/[type]/_search?[parameters]` as an alternate form having the same semantics as the `GET` method for the specified type. The `GET` and `POST` methods do not support compartment searches. The `POST` method does not support `application/x-www-form-urlencoded` search parameters. On success, the response body contains a JSON-encoded representation of a `Bundle` resource of type `searchset`, containing the results of the search. Errors generated by the FHIR store contain a JSON-encoded `OperationOutcome` resource describing the reason for the error. If the request cannot be mapped to a valid API method on a FHIR store, a generic GCP error might be returned instead. The server's capability statement, retrieved through capabilities, indicates what search parameters are supported on each FHIR resource. A list of all search parameters defined by the specification can be found in the FHIR Search Parameter Registry ([STU3](http://hl7.org/implement/standards/fhir/STU3/searchparameter-registry.html), [R4](http://hl7.org/implement/standards/fhir/R4/searchparameter-registry.html)). FHIR search parameters for DSTU2 can be found on each resource's definition page. Supported search modifiers: `:missing`, `:exact`, `:contains`, `:text`, `:in`, `:not-in`, `:above`, `:below`, `:[type]`, `:not`, and `recurse` (DSTU2 and STU3) or `:iterate` (R4). Supported search result parameters: `_sort`, `_count`, `_include`, `_revinclude`, `_summary=text`, `_summary=data`, and `_elements`. The maximum number of search results returned defaults to 100, which can be overridden by the `_count` parameter up to a maximum limit of 1000. The server might return fewer resources than requested to prevent excessively large responses. If there are additional results, the returned `Bundle` contains a link of `relation` "next", which has a `_page_token` parameter for an opaque pagination token that can be used to retrieve the next page. Resources with a total size larger than 5MB or a field count larger than 50,000 might not be fully searchable as the server might trim its generated search index in those cases. Note: FHIR resources are indexed asynchronously, so there might be a slight delay between the time a resource is created or changed, and the time when the change reflects in search results. The only exception is resource identifier data, which is indexed synchronously as a special index. As a result, searching using resource identifier is not subject to indexing delay. To use the special synchronous index, the search term for identifier should be in the pattern `identifier=[system]|[value]` or `identifier=[value]`, and any of the following search result parameters can be used: * `_count` * `_include` * `_revinclude` * `_summary` * `_elements` If your query contains any other search parameters, the standard asynchronous index will be used instead. Note that searching against the special index is optimized for resolving a small number of matches. The search isn't optimized if your identifier search criteria matches a large number (i.e. more than 2,000) of resources. For a search query that will match a large number of resources, you can avoiding using the special synchronous index by including an additional `_sort` parameter in your query. Use `_sort=-_lastUpdated` if you want to keep the default sorting order. Note: The special synchronous identifier index are currently disabled for DocumentReference and DocumentManifest searches. For samples and detailed information, see [Searching for FHIR resources](https://cloud.google.com/healthcare/docs/how-tos/fhir-search) and [Advanced FHIR search features](https://cloud.google.com/healthcare/docs/how-tos/fhir-advanced-search).
     /// 
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `parent` - Name of the FHIR store to retrieve resources from.
-    /// * `resourceType` - The FHIR resource type to search, such as Patient or Observation. For a complete list, see the FHIR Resource Index ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html), [STU3](http://hl7.org/implement/standards/fhir/STU3/resourcelist.html), [R4](http://hl7.org/implement/standards/fhir/R4/resourcelist.html)).
+    /// * `parent` - Required. Name of the FHIR store to retrieve resources from.
+    /// * `resourceType` - Required. The FHIR resource type to search, such as Patient or Observation. For a complete list, see the FHIR Resource Index ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html), [STU3](http://hl7.org/implement/standards/fhir/STU3/resourcelist.html), [R4](http://hl7.org/implement/standards/fhir/R4/resourcelist.html)).
     pub fn locations_datasets_fhir_stores_fhir_search_type(&self, request: SearchResourcesRequest, parent: &str, resource_type: &str) -> ProjectLocationDatasetFhirStoreFhirSearchTypeCall<'a, S> {
         ProjectLocationDatasetFhirStoreFhirSearchTypeCall {
             hub: self.hub,
@@ -4731,7 +5254,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `name` - The name of the resource to update.
+    /// * `name` - Required. The name of the resource to update.
     pub fn locations_datasets_fhir_stores_fhir_update(&self, request: HttpBody, name: &str) -> ProjectLocationDatasetFhirStoreFhirUpdateCall<'a, S> {
         ProjectLocationDatasetFhirStoreFhirUpdateCall {
             hub: self.hub,
@@ -4749,7 +5272,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// 
     /// # Arguments
     ///
-    /// * `name` - The name of the resource version to retrieve.
+    /// * `name` - Required. The name of the resource version to retrieve.
     pub fn locations_datasets_fhir_stores_fhir_vread(&self, name: &str) -> ProjectLocationDatasetFhirStoreFhirVreadCall<'a, S> {
         ProjectLocationDatasetFhirStoreFhirVreadCall {
             hub: self.hub,
@@ -4767,7 +5290,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `parent` - The name of the dataset this FHIR store belongs to.
+    /// * `parent` - Required. The name of the dataset this FHIR store belongs to.
     pub fn locations_datasets_fhir_stores_create(&self, request: FhirStore, parent: &str) -> ProjectLocationDatasetFhirStoreCreateCall<'a, S> {
         ProjectLocationDatasetFhirStoreCreateCall {
             hub: self.hub,
@@ -4787,7 +5310,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `sourceStore` - Source FHIR store resource name. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/fhirStores/{fhir_store_id}`.
+    /// * `sourceStore` - Required. Source FHIR store resource name. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/fhirStores/{fhir_store_id}`.
     pub fn locations_datasets_fhir_stores_deidentify(&self, request: DeidentifyFhirStoreRequest, source_store: &str) -> ProjectLocationDatasetFhirStoreDeidentifyCall<'a, S> {
         ProjectLocationDatasetFhirStoreDeidentifyCall {
             hub: self.hub,
@@ -4805,7 +5328,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// 
     /// # Arguments
     ///
-    /// * `name` - The resource name of the FHIR store to delete.
+    /// * `name` - Required. The resource name of the FHIR store to delete.
     pub fn locations_datasets_fhir_stores_delete(&self, name: &str) -> ProjectLocationDatasetFhirStoreDeleteCall<'a, S> {
         ProjectLocationDatasetFhirStoreDeleteCall {
             hub: self.hub,
@@ -4823,7 +5346,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `name` - The name of the FHIR store to export resource from, in the format of `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/fhirStores/{fhir_store_id}`.
+    /// * `name` - Required. The name of the FHIR store to export resource from, in the format of `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/fhirStores/{fhir_store_id}`.
     pub fn locations_datasets_fhir_stores_export(&self, request: ExportResourcesRequest, name: &str) -> ProjectLocationDatasetFhirStoreExportCall<'a, S> {
         ProjectLocationDatasetFhirStoreExportCall {
             hub: self.hub,
@@ -4841,9 +5364,26 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// 
     /// # Arguments
     ///
-    /// * `name` - The resource name of the FHIR store to get.
+    /// * `name` - Required. The resource name of the FHIR store to get.
     pub fn locations_datasets_fhir_stores_get(&self, name: &str) -> ProjectLocationDatasetFhirStoreGetCall<'a, S> {
         ProjectLocationDatasetFhirStoreGetCall {
+            hub: self.hub,
+            _name: name.to_string(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// Gets metrics associated with the FHIR store.
+    /// 
+    /// # Arguments
+    ///
+    /// * `name` - Required. The resource name of the FHIR store to get metrics for.
+    pub fn locations_datasets_fhir_stores_get_fhir_store_metrics(&self, name: &str) -> ProjectLocationDatasetFhirStoreGetFHIRStoreMetricCall<'a, S> {
+        ProjectLocationDatasetFhirStoreGetFHIRStoreMetricCall {
             hub: self.hub,
             _name: name.to_string(),
             _delegate: Default::default(),
@@ -4877,7 +5417,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `name` - The name of the FHIR store to import FHIR resources to, in the format of `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/fhirStores/{fhir_store_id}`.
+    /// * `name` - Required. The name of the FHIR store to import FHIR resources to, in the format of `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/fhirStores/{fhir_store_id}`.
     pub fn locations_datasets_fhir_stores_import(&self, request: ImportResourcesRequest, name: &str) -> ProjectLocationDatasetFhirStoreImportCall<'a, S> {
         ProjectLocationDatasetFhirStoreImportCall {
             hub: self.hub,
@@ -4895,7 +5435,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// 
     /// # Arguments
     ///
-    /// * `parent` - Name of the dataset.
+    /// * `parent` - Required. Name of the dataset.
     pub fn locations_datasets_fhir_stores_list(&self, parent: &str) -> ProjectLocationDatasetFhirStoreListCall<'a, S> {
         ProjectLocationDatasetFhirStoreListCall {
             hub: self.hub,
@@ -4916,13 +5456,32 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `name` - Output only. Resource name of the FHIR store, of the form `projects/{project_id}/datasets/{dataset_id}/fhirStores/{fhir_store_id}`.
+    /// * `name` - Output only. Identifier. Resource name of the FHIR store, of the form `projects/{project_id}/datasets/{dataset_id}/fhirStores/{fhir_store_id}`.
     pub fn locations_datasets_fhir_stores_patch(&self, request: FhirStore, name: &str) -> ProjectLocationDatasetFhirStorePatchCall<'a, S> {
         ProjectLocationDatasetFhirStorePatchCall {
             hub: self.hub,
             _request: request,
             _name: name.to_string(),
             _update_mask: Default::default(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// Rolls back resources from the FHIR store to the specified time. This method returns an Operation that can be used to track the status of the rollback by calling GetOperation. Immediate fatal errors appear in the error field, errors are also logged to Cloud Logging (see [Viewing error logs in Cloud Logging](https://cloud.google.com/healthcare/docs/how-tos/logging)). Otherwise, when the operation finishes, a detailed response of type RollbackFhirResourcesResponse is returned in the response field. The metadata field type for this operation is OperationMetadata.
+    /// 
+    /// # Arguments
+    ///
+    /// * `request` - No description provided.
+    /// * `name` - Required. The name of the FHIR store to rollback, in the format of "projects/{project_id}/locations/{location_id}/datasets/{dataset_id} /fhirStores/{fhir_store_id}".
+    pub fn locations_datasets_fhir_stores_rollback(&self, request: RollbackFhirResourcesRequest, name: &str) -> ProjectLocationDatasetFhirStoreRollbackCall<'a, S> {
+        ProjectLocationDatasetFhirStoreRollbackCall {
+            hub: self.hub,
+            _request: request,
+            _name: name.to_string(),
             _delegate: Default::default(),
             _additional_params: Default::default(),
             _scopes: Default::default(),
@@ -4974,7 +5533,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `parent` - The name of the dataset this message belongs to.
+    /// * `parent` - Required. The name of the HL7v2 store this message belongs to.
     pub fn locations_datasets_hl7_v2_stores_messages_create(&self, request: CreateMessageRequest, parent: &str) -> ProjectLocationDatasetHl7V2StoreMessageCreateCall<'a, S> {
         ProjectLocationDatasetHl7V2StoreMessageCreateCall {
             hub: self.hub,
@@ -4992,7 +5551,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// 
     /// # Arguments
     ///
-    /// * `name` - The resource name of the HL7v2 message to delete.
+    /// * `name` - Required. The resource name of the HL7v2 message to delete.
     pub fn locations_datasets_hl7_v2_stores_messages_delete(&self, name: &str) -> ProjectLocationDatasetHl7V2StoreMessageDeleteCall<'a, S> {
         ProjectLocationDatasetHl7V2StoreMessageDeleteCall {
             hub: self.hub,
@@ -5009,7 +5568,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// 
     /// # Arguments
     ///
-    /// * `name` - The resource name of the HL7v2 message to retrieve.
+    /// * `name` - Required. The resource name of the HL7v2 message to retrieve.
     pub fn locations_datasets_hl7_v2_stores_messages_get(&self, name: &str) -> ProjectLocationDatasetHl7V2StoreMessageGetCall<'a, S> {
         ProjectLocationDatasetHl7V2StoreMessageGetCall {
             hub: self.hub,
@@ -5028,7 +5587,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `parent` - The name of the HL7v2 store this message belongs to.
+    /// * `parent` - Required. The name of the HL7v2 store this message belongs to.
     pub fn locations_datasets_hl7_v2_stores_messages_ingest(&self, request: IngestMessageRequest, parent: &str) -> ProjectLocationDatasetHl7V2StoreMessageIngestCall<'a, S> {
         ProjectLocationDatasetHl7V2StoreMessageIngestCall {
             hub: self.hub,
@@ -5046,7 +5605,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// 
     /// # Arguments
     ///
-    /// * `parent` - Name of the HL7v2 store to retrieve messages from.
+    /// * `parent` - Required. Name of the HL7v2 store to retrieve messages from.
     pub fn locations_datasets_hl7_v2_stores_messages_list(&self, parent: &str) -> ProjectLocationDatasetHl7V2StoreMessageListCall<'a, S> {
         ProjectLocationDatasetHl7V2StoreMessageListCall {
             hub: self.hub,
@@ -5069,7 +5628,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `name` - Resource name of the Message, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7V2Stores/{hl7_v2_store_id}/messages/{message_id}`. Assigned by the server.
+    /// * `name` - Output only. Resource name of the Message, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7V2Stores/{hl7_v2_store_id}/messages/{message_id}`. Assigned by the server.
     pub fn locations_datasets_hl7_v2_stores_messages_patch(&self, request: Message, name: &str) -> ProjectLocationDatasetHl7V2StoreMessagePatchCall<'a, S> {
         ProjectLocationDatasetHl7V2StoreMessagePatchCall {
             hub: self.hub,
@@ -5089,7 +5648,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `parent` - The name of the dataset this HL7v2 store belongs to.
+    /// * `parent` - Required. The name of the dataset this HL7v2 store belongs to.
     pub fn locations_datasets_hl7_v2_stores_create(&self, request: Hl7V2Store, parent: &str) -> ProjectLocationDatasetHl7V2StoreCreateCall<'a, S> {
         ProjectLocationDatasetHl7V2StoreCreateCall {
             hub: self.hub,
@@ -5108,7 +5667,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// 
     /// # Arguments
     ///
-    /// * `name` - The resource name of the HL7v2 store to delete.
+    /// * `name` - Required. The resource name of the HL7v2 store to delete.
     pub fn locations_datasets_hl7_v2_stores_delete(&self, name: &str) -> ProjectLocationDatasetHl7V2StoreDeleteCall<'a, S> {
         ProjectLocationDatasetHl7V2StoreDeleteCall {
             hub: self.hub,
@@ -5126,7 +5685,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `name` - The name of the source HL7v2 store, in the format `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7v2Stores/{hl7v2_store_id}`
+    /// * `name` - Required. The name of the source HL7v2 store, in the format `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7v2Stores/{hl7v2_store_id}`
     pub fn locations_datasets_hl7_v2_stores_export(&self, request: ExportMessagesRequest, name: &str) -> ProjectLocationDatasetHl7V2StoreExportCall<'a, S> {
         ProjectLocationDatasetHl7V2StoreExportCall {
             hub: self.hub,
@@ -5144,9 +5703,26 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// 
     /// # Arguments
     ///
-    /// * `name` - The resource name of the HL7v2 store to get.
+    /// * `name` - Required. The resource name of the HL7v2 store to get.
     pub fn locations_datasets_hl7_v2_stores_get(&self, name: &str) -> ProjectLocationDatasetHl7V2StoreGetCall<'a, S> {
         ProjectLocationDatasetHl7V2StoreGetCall {
+            hub: self.hub,
+            _name: name.to_string(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// Gets metrics associated with the HL7v2 store.
+    /// 
+    /// # Arguments
+    ///
+    /// * `name` - Required. The resource name of the HL7v2 store to get metrics for, in the format `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7V2Stores/{hl7v2_store_id}`.
+    pub fn locations_datasets_hl7_v2_stores_get_hl7v2_store_metrics(&self, name: &str) -> ProjectLocationDatasetHl7V2StoreGetHL7v2StoreMetricCall<'a, S> {
+        ProjectLocationDatasetHl7V2StoreGetHL7v2StoreMetricCall {
             hub: self.hub,
             _name: name.to_string(),
             _delegate: Default::default(),
@@ -5180,7 +5756,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `name` - The name of the target HL7v2 store, in the format `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7v2Stores/{hl7v2_store_id}`
+    /// * `name` - Required. The name of the target HL7v2 store, in the format `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7v2Stores/{hl7v2_store_id}`
     pub fn locations_datasets_hl7_v2_stores_import(&self, request: ImportMessagesRequest, name: &str) -> ProjectLocationDatasetHl7V2StoreImportCall<'a, S> {
         ProjectLocationDatasetHl7V2StoreImportCall {
             hub: self.hub,
@@ -5198,7 +5774,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// 
     /// # Arguments
     ///
-    /// * `parent` - Name of the dataset.
+    /// * `parent` - Required. Name of the dataset.
     pub fn locations_datasets_hl7_v2_stores_list(&self, parent: &str) -> ProjectLocationDatasetHl7V2StoreListCall<'a, S> {
         ProjectLocationDatasetHl7V2StoreListCall {
             hub: self.hub,
@@ -5219,7 +5795,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `name` - Resource name of the HL7v2 store, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7V2Stores/{hl7v2_store_id}`.
+    /// * `name` - Identifier. Resource name of the HL7v2 store, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7V2Stores/{hl7v2_store_id}`.
     pub fn locations_datasets_hl7_v2_stores_patch(&self, request: Hl7V2Store, name: &str) -> ProjectLocationDatasetHl7V2StorePatchCall<'a, S> {
         ProjectLocationDatasetHl7V2StorePatchCall {
             hub: self.hub,
@@ -5308,7 +5884,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns `UNIMPLEMENTED`. NOTE: the `name` binding allows API services to override the binding to use different resource name schemes, such as `users/*/operations`. To override the binding, API services can add a binding such as `"/v1/{name=users/*}/operations"` to their service configuration. For backwards compatibility, the default name includes the operations collection id, however overriding users must ensure the name binding is the parent resource, without the operations collection id.
+    /// Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns `UNIMPLEMENTED`.
     /// 
     /// # Arguments
     ///
@@ -5333,7 +5909,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `parent` - The name of the project where the server creates the dataset. For example, `projects/{project_id}/locations/{location_id}`.
+    /// * `parent` - Required. The name of the project where the server creates the dataset. For example, `projects/{project_id}/locations/{location_id}`.
     pub fn locations_datasets_create(&self, request: Dataset, parent: &str) -> ProjectLocationDatasetCreateCall<'a, S> {
         ProjectLocationDatasetCreateCall {
             hub: self.hub,
@@ -5353,7 +5929,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `sourceDataset` - Source dataset resource name. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}`.
+    /// * `sourceDataset` - Required. Source dataset resource name. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}`.
     pub fn locations_datasets_deidentify(&self, request: DeidentifyDatasetRequest, source_dataset: &str) -> ProjectLocationDatasetDeidentifyCall<'a, S> {
         ProjectLocationDatasetDeidentifyCall {
             hub: self.hub,
@@ -5371,7 +5947,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// 
     /// # Arguments
     ///
-    /// * `name` - The name of the dataset to delete. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}`.
+    /// * `name` - Required. The name of the dataset to delete. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}`.
     pub fn locations_datasets_delete(&self, name: &str) -> ProjectLocationDatasetDeleteCall<'a, S> {
         ProjectLocationDatasetDeleteCall {
             hub: self.hub,
@@ -5388,7 +5964,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// 
     /// # Arguments
     ///
-    /// * `name` - The name of the dataset to read. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}`.
+    /// * `name` - Required. The name of the dataset to read. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}`.
     pub fn locations_datasets_get(&self, name: &str) -> ProjectLocationDatasetGetCall<'a, S> {
         ProjectLocationDatasetGetCall {
             hub: self.hub,
@@ -5423,7 +5999,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// 
     /// # Arguments
     ///
-    /// * `parent` - The name of the project whose datasets should be listed. For example, `projects/{project_id}/locations/{location_id}`.
+    /// * `parent` - Required. The name of the project whose datasets should be listed. For example, `projects/{project_id}/locations/{location_id}`.
     pub fn locations_datasets_list(&self, parent: &str) -> ProjectLocationDatasetListCall<'a, S> {
         ProjectLocationDatasetListCall {
             hub: self.hub,
@@ -5443,7 +6019,7 @@ impl<'a, S> ProjectMethods<'a, S> {
     /// # Arguments
     ///
     /// * `request` - No description provided.
-    /// * `name` - Resource name of the dataset, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}`.
+    /// * `name` - Identifier. Resource name of the dataset, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}`.
     pub fn locations_datasets_patch(&self, request: Dataset, name: &str) -> ProjectLocationDatasetPatchCall<'a, S> {
         ProjectLocationDatasetPatchCall {
             hub: self.hub,
@@ -5582,7 +6158,7 @@ impl<'a, S> ProjectMethods<'a, S> {
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -5649,7 +6225,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/attributeDefinitions";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
@@ -5791,7 +6367,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreAttributeDefinitionCreateCall<'a, S> {
@@ -5828,7 +6405,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -5884,7 +6461,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -5940,7 +6517,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -6052,7 +6629,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreAttributeDefinitionDeleteCall<'a, S> {
@@ -6089,7 +6667,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -6145,7 +6723,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -6201,7 +6779,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -6313,7 +6891,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreAttributeDefinitionGetCall<'a, S> {
@@ -6350,7 +6929,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -6406,7 +6985,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -6477,7 +7056,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/attributeDefinitions";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
@@ -6610,7 +7189,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreAttributeDefinitionListCall<'a, S> {
@@ -6647,7 +7227,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -6704,7 +7284,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -6771,7 +7351,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -6892,7 +7472,7 @@ where
         self._request = new_value;
         self
     }
-    /// Resource name of the Attribute definition, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/consentStores/{consent_store_id}/attributeDefinitions/{attribute_definition_id}`. Cannot be changed after creation.
+    /// Identifier. Resource name of the Attribute definition, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/consentStores/{consent_store_id}/attributeDefinitions/{attribute_definition_id}`. Cannot be changed after creation.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -6913,7 +7493,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreAttributeDefinitionPatchCall<'a, S> {
@@ -6950,7 +7531,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -7007,7 +7588,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -7069,7 +7650,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/consentArtifacts";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
@@ -7204,7 +7785,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreConsentArtifactCreateCall<'a, S> {
@@ -7241,7 +7823,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -7297,7 +7879,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -7353,7 +7935,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -7465,7 +8047,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreConsentArtifactDeleteCall<'a, S> {
@@ -7502,7 +8085,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -7558,7 +8141,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -7614,7 +8197,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -7726,7 +8309,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreConsentArtifactGetCall<'a, S> {
@@ -7763,7 +8347,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -7819,7 +8403,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -7890,7 +8474,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/consentArtifacts";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
@@ -8023,7 +8607,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreConsentArtifactListCall<'a, S> {
@@ -8060,7 +8645,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -8117,7 +8702,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -8179,7 +8764,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}:activate";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -8314,7 +8899,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreConsentActivateCall<'a, S> {
@@ -8351,7 +8937,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -8408,7 +8994,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -8470,7 +9056,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/consents";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
@@ -8605,7 +9191,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreConsentCreateCall<'a, S> {
@@ -8642,7 +9229,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -8698,7 +9285,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -8754,7 +9341,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -8866,7 +9453,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreConsentDeleteCall<'a, S> {
@@ -8903,7 +9491,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -8959,7 +9547,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -9015,7 +9603,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}:deleteRevision";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -9127,7 +9715,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreConsentDeleteRevisionCall<'a, S> {
@@ -9164,7 +9753,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -9220,7 +9809,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -9276,7 +9865,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -9388,7 +9977,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreConsentGetCall<'a, S> {
@@ -9425,7 +10015,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -9481,7 +10071,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -9552,7 +10142,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/consents";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
@@ -9685,7 +10275,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreConsentListCall<'a, S> {
@@ -9722,7 +10313,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -9778,7 +10369,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -9849,7 +10440,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}:listRevisions";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -9982,7 +10573,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreConsentListRevisionCall<'a, S> {
@@ -10019,7 +10611,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -10076,7 +10668,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -10143,7 +10735,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -10264,7 +10856,7 @@ where
         self._request = new_value;
         self
     }
-    /// Resource name of the Consent, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/consentStores/{consent_store_id}/consents/{consent_id}`. Cannot be changed after creation.
+    /// Identifier. Resource name of the Consent, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/consentStores/{consent_store_id}/consents/{consent_id}`. Cannot be changed after creation.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -10285,7 +10877,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreConsentPatchCall<'a, S> {
@@ -10322,7 +10915,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -10379,7 +10972,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -10441,7 +11034,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}:reject";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -10576,7 +11169,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreConsentRejectCall<'a, S> {
@@ -10613,7 +11207,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -10670,7 +11264,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -10732,7 +11326,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}:revoke";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -10867,7 +11461,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreConsentRevokeCall<'a, S> {
@@ -10904,7 +11499,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -10961,7 +11556,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -11023,7 +11618,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}:archive";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -11158,7 +11753,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreUserDataMappingArchiveCall<'a, S> {
@@ -11195,7 +11791,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -11252,7 +11848,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -11314,7 +11910,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/userDataMappings";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
@@ -11449,7 +12045,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreUserDataMappingCreateCall<'a, S> {
@@ -11486,7 +12083,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -11542,7 +12139,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -11598,7 +12195,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -11710,7 +12307,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreUserDataMappingDeleteCall<'a, S> {
@@ -11747,7 +12345,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -11803,7 +12401,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -11859,7 +12457,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -11971,7 +12569,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreUserDataMappingGetCall<'a, S> {
@@ -12008,7 +12607,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -12064,7 +12663,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -12135,7 +12734,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/userDataMappings";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
@@ -12268,7 +12867,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreUserDataMappingListCall<'a, S> {
@@ -12305,7 +12905,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -12362,7 +12962,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -12429,7 +13029,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -12571,7 +13171,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreUserDataMappingPatchCall<'a, S> {
@@ -12608,7 +13209,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -12665,7 +13266,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -12727,7 +13328,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+consentStore}:checkDataAccess";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+consentStore}", "consentStore")].iter() {
@@ -12862,7 +13463,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreCheckDataAccesCall<'a, S> {
@@ -12899,7 +13501,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -12956,7 +13558,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -13023,7 +13625,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/consentStores";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
@@ -13165,7 +13767,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreCreateCall<'a, S> {
@@ -13202,7 +13805,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -13258,7 +13861,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -13314,7 +13917,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -13426,7 +14029,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreDeleteCall<'a, S> {
@@ -13463,7 +14067,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -13520,7 +14124,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -13582,7 +14186,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+consentStore}:evaluateUserConsents";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+consentStore}", "consentStore")].iter() {
@@ -13717,7 +14321,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreEvaluateUserConsentCall<'a, S> {
@@ -13754,7 +14359,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -13810,7 +14415,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -13866,7 +14471,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -13978,7 +14583,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreGetCall<'a, S> {
@@ -14015,7 +14621,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -14071,7 +14677,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -14132,7 +14738,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+resource}:getIamPolicy";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
@@ -14251,7 +14857,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreGetIamPolicyCall<'a, S> {
@@ -14288,7 +14895,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -14344,7 +14951,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -14415,7 +15022,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/consentStores";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
@@ -14548,7 +15155,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreListCall<'a, S> {
@@ -14585,7 +15193,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -14642,7 +15250,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -14709,7 +15317,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -14830,7 +15438,7 @@ where
         self._request = new_value;
         self
     }
-    /// Resource name of the consent store, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/consentStores/{consent_store_id}`. Cannot be changed after creation.
+    /// Identifier. Resource name of the consent store, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/consentStores/{consent_store_id}`. Cannot be changed after creation.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -14851,7 +15459,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStorePatchCall<'a, S> {
@@ -14888,7 +15497,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -14945,7 +15554,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -15007,7 +15616,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+consentStore}:queryAccessibleData";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+consentStore}", "consentStore")].iter() {
@@ -15142,7 +15751,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreQueryAccessibleDataCall<'a, S> {
@@ -15179,7 +15789,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -15236,7 +15846,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -15298,7 +15908,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+resource}:setIamPolicy";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
@@ -15433,7 +16043,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreSetIamPolicyCall<'a, S> {
@@ -15470,7 +16081,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -15527,7 +16138,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -15589,7 +16200,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+resource}:testIamPermissions";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
@@ -15724,7 +16335,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetConsentStoreTestIamPermissionCall<'a, S> {
@@ -15761,7 +16373,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -15795,7 +16407,1389 @@ where
 }
 
 
-/// RetrieveFrames returns instances associated with the given study, series, SOP Instance UID and frame numbers. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4}. For details on the implementation of RetrieveFrames, see [DICOM frames](https://cloud.google.com/healthcare/docs/dicom#dicom_frames) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveFrames, see [Retrieving DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieving_dicom_data).
+/// Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
+///
+/// A builder for the *locations.datasets.dataMapperWorkspaces.getIamPolicy* method supported by a *project* resource.
+/// It is not used directly, but through a [`ProjectMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_healthcare1 as healthcare1;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use healthcare1::{CloudHealthcare, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.projects().locations_datasets_data_mapper_workspaces_get_iam_policy("resource")
+///              .options_requested_policy_version(-72)
+///              .doit().await;
+/// # }
+/// ```
+pub struct ProjectLocationDatasetDataMapperWorkspaceGetIamPolicyCall<'a, S>
+    where S: 'a {
+
+    hub: &'a CloudHealthcare<S>,
+    _resource: String,
+    _options_requested_policy_version: Option<i32>,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for ProjectLocationDatasetDataMapperWorkspaceGetIamPolicyCall<'a, S> {}
+
+impl<'a, S> ProjectLocationDatasetDataMapperWorkspaceGetIamPolicyCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, Policy)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "healthcare.projects.locations.datasets.dataMapperWorkspaces.getIamPolicy",
+                               http_method: hyper::Method::GET });
+
+        for &field in ["alt", "resource", "options.requestedPolicyVersion"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(4 + self._additional_params.len());
+        params.push("resource", self._resource);
+        if let Some(value) = self._options_requested_policy_version.as_ref() {
+            params.push("options.requestedPolicyVersion", value.to_string());
+        }
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+resource}:getIamPolicy";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["resource"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::GET)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .body(hyper::body::Body::empty());
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    /// REQUIRED: The resource for which the policy is being requested. See [Resource names](https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    ///
+    /// Sets the *resource* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn resource(mut self, new_value: &str) -> ProjectLocationDatasetDataMapperWorkspaceGetIamPolicyCall<'a, S> {
+        self._resource = new_value.to_string();
+        self
+    }
+    /// Optional. The maximum policy version that will be used to format the policy. Valid values are 0, 1, and 3. Requests specifying an invalid value will be rejected. Requests for policies with any conditional role bindings must specify version 3. Policies with no conditional role bindings may specify any valid value or leave the field unset. The policy in the response might use the policy version that you specified, or it might use a lower policy version. For example, if you specify version 3, but the policy has no conditional role bindings, the response uses version 1. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies).
+    ///
+    /// Sets the *options.requested policy version* query property to the given value.
+    pub fn options_requested_policy_version(mut self, new_value: i32) -> ProjectLocationDatasetDataMapperWorkspaceGetIamPolicyCall<'a, S> {
+        self._options_requested_policy_version = Some(new_value);
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDataMapperWorkspaceGetIamPolicyCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationDatasetDataMapperWorkspaceGetIamPolicyCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::CloudHealthcare`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationDatasetDataMapperWorkspaceGetIamPolicyCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationDatasetDataMapperWorkspaceGetIamPolicyCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> ProjectLocationDatasetDataMapperWorkspaceGetIamPolicyCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
+/// Sets the access control policy on the specified resource. Replaces any existing policy. Can return `NOT_FOUND`, `INVALID_ARGUMENT`, and `PERMISSION_DENIED` errors.
+///
+/// A builder for the *locations.datasets.dataMapperWorkspaces.setIamPolicy* method supported by a *project* resource.
+/// It is not used directly, but through a [`ProjectMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_healthcare1 as healthcare1;
+/// use healthcare1::api::SetIamPolicyRequest;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use healthcare1::{CloudHealthcare, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // As the method needs a request, you would usually fill it with the desired information
+/// // into the respective structure. Some of the parts shown here might not be applicable !
+/// // Values shown here are possibly random and not representative !
+/// let mut req = SetIamPolicyRequest::default();
+/// 
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.projects().locations_datasets_data_mapper_workspaces_set_iam_policy(req, "resource")
+///              .doit().await;
+/// # }
+/// ```
+pub struct ProjectLocationDatasetDataMapperWorkspaceSetIamPolicyCall<'a, S>
+    where S: 'a {
+
+    hub: &'a CloudHealthcare<S>,
+    _request: SetIamPolicyRequest,
+    _resource: String,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for ProjectLocationDatasetDataMapperWorkspaceSetIamPolicyCall<'a, S> {}
+
+impl<'a, S> ProjectLocationDatasetDataMapperWorkspaceSetIamPolicyCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, Policy)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "healthcare.projects.locations.datasets.dataMapperWorkspaces.setIamPolicy",
+                               http_method: hyper::Method::POST });
+
+        for &field in ["alt", "resource"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(4 + self._additional_params.len());
+        params.push("resource", self._resource);
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+resource}:setIamPolicy";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["resource"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+        let mut json_mime_type = mime::APPLICATION_JSON;
+        let mut request_value_reader =
+            {
+                let mut value = json::value::to_value(&self._request).expect("serde to work");
+                client::remove_json_null_values(&mut value);
+                let mut dst = io::Cursor::new(Vec::with_capacity(128));
+                json::to_writer(&mut dst, &value).unwrap();
+                dst
+            };
+        let request_size = request_value_reader.seek(io::SeekFrom::End(0)).unwrap();
+        request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::POST)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .header(CONTENT_TYPE, json_mime_type.to_string())
+                        .header(CONTENT_LENGTH, request_size as u64)
+                        .body(hyper::body::Body::from(request_value_reader.get_ref().clone()));
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    ///
+    /// Sets the *request* property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn request(mut self, new_value: SetIamPolicyRequest) -> ProjectLocationDatasetDataMapperWorkspaceSetIamPolicyCall<'a, S> {
+        self._request = new_value;
+        self
+    }
+    /// REQUIRED: The resource for which the policy is being specified. See [Resource names](https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    ///
+    /// Sets the *resource* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn resource(mut self, new_value: &str) -> ProjectLocationDatasetDataMapperWorkspaceSetIamPolicyCall<'a, S> {
+        self._resource = new_value.to_string();
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDataMapperWorkspaceSetIamPolicyCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationDatasetDataMapperWorkspaceSetIamPolicyCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::CloudHealthcare`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationDatasetDataMapperWorkspaceSetIamPolicyCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationDatasetDataMapperWorkspaceSetIamPolicyCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> ProjectLocationDatasetDataMapperWorkspaceSetIamPolicyCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
+/// Returns permissions that a caller has on the specified resource. If the resource does not exist, this will return an empty set of permissions, not a `NOT_FOUND` error. Note: This operation is designed to be used for building permission-aware UIs and command-line tools, not for authorization checking. This operation may "fail open" without warning.
+///
+/// A builder for the *locations.datasets.dataMapperWorkspaces.testIamPermissions* method supported by a *project* resource.
+/// It is not used directly, but through a [`ProjectMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_healthcare1 as healthcare1;
+/// use healthcare1::api::TestIamPermissionsRequest;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use healthcare1::{CloudHealthcare, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // As the method needs a request, you would usually fill it with the desired information
+/// // into the respective structure. Some of the parts shown here might not be applicable !
+/// // Values shown here are possibly random and not representative !
+/// let mut req = TestIamPermissionsRequest::default();
+/// 
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.projects().locations_datasets_data_mapper_workspaces_test_iam_permissions(req, "resource")
+///              .doit().await;
+/// # }
+/// ```
+pub struct ProjectLocationDatasetDataMapperWorkspaceTestIamPermissionCall<'a, S>
+    where S: 'a {
+
+    hub: &'a CloudHealthcare<S>,
+    _request: TestIamPermissionsRequest,
+    _resource: String,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for ProjectLocationDatasetDataMapperWorkspaceTestIamPermissionCall<'a, S> {}
+
+impl<'a, S> ProjectLocationDatasetDataMapperWorkspaceTestIamPermissionCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, TestIamPermissionsResponse)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "healthcare.projects.locations.datasets.dataMapperWorkspaces.testIamPermissions",
+                               http_method: hyper::Method::POST });
+
+        for &field in ["alt", "resource"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(4 + self._additional_params.len());
+        params.push("resource", self._resource);
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+resource}:testIamPermissions";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["resource"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+        let mut json_mime_type = mime::APPLICATION_JSON;
+        let mut request_value_reader =
+            {
+                let mut value = json::value::to_value(&self._request).expect("serde to work");
+                client::remove_json_null_values(&mut value);
+                let mut dst = io::Cursor::new(Vec::with_capacity(128));
+                json::to_writer(&mut dst, &value).unwrap();
+                dst
+            };
+        let request_size = request_value_reader.seek(io::SeekFrom::End(0)).unwrap();
+        request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::POST)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .header(CONTENT_TYPE, json_mime_type.to_string())
+                        .header(CONTENT_LENGTH, request_size as u64)
+                        .body(hyper::body::Body::from(request_value_reader.get_ref().clone()));
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    ///
+    /// Sets the *request* property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn request(mut self, new_value: TestIamPermissionsRequest) -> ProjectLocationDatasetDataMapperWorkspaceTestIamPermissionCall<'a, S> {
+        self._request = new_value;
+        self
+    }
+    /// REQUIRED: The resource for which the policy detail is being requested. See [Resource names](https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.
+    ///
+    /// Sets the *resource* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn resource(mut self, new_value: &str) -> ProjectLocationDatasetDataMapperWorkspaceTestIamPermissionCall<'a, S> {
+        self._resource = new_value.to_string();
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDataMapperWorkspaceTestIamPermissionCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationDatasetDataMapperWorkspaceTestIamPermissionCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::CloudHealthcare`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationDatasetDataMapperWorkspaceTestIamPermissionCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationDatasetDataMapperWorkspaceTestIamPermissionCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> ProjectLocationDatasetDataMapperWorkspaceTestIamPermissionCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
+/// GetSeriesMetrics returns metrics for a series.
+///
+/// A builder for the *locations.datasets.dicomStores.dicomWeb.studies.series.getSeriesMetrics* method supported by a *project* resource.
+/// It is not used directly, but through a [`ProjectMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_healthcare1 as healthcare1;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use healthcare1::{CloudHealthcare, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.projects().locations_datasets_dicom_stores_dicom_web_studies_series_get_series_metrics("series")
+///              .doit().await;
+/// # }
+/// ```
+pub struct ProjectLocationDatasetDicomStoreDicomWebStudySeriesGetSeriesMetricCall<'a, S>
+    where S: 'a {
+
+    hub: &'a CloudHealthcare<S>,
+    _series: String,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for ProjectLocationDatasetDicomStoreDicomWebStudySeriesGetSeriesMetricCall<'a, S> {}
+
+impl<'a, S> ProjectLocationDatasetDicomStoreDicomWebStudySeriesGetSeriesMetricCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, SeriesMetrics)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "healthcare.projects.locations.datasets.dicomStores.dicomWeb.studies.series.getSeriesMetrics",
+                               http_method: hyper::Method::GET });
+
+        for &field in ["alt", "series"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(3 + self._additional_params.len());
+        params.push("series", self._series);
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+series}:getSeriesMetrics";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+series}", "series")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["series"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::GET)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .body(hyper::body::Body::empty());
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    /// Required. The series resource path. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}/dicomWeb/studies/{study_uid}/series/{series_uid}`.
+    ///
+    /// Sets the *series* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn series(mut self, new_value: &str) -> ProjectLocationDatasetDicomStoreDicomWebStudySeriesGetSeriesMetricCall<'a, S> {
+        self._series = new_value.to_string();
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreDicomWebStudySeriesGetSeriesMetricCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationDatasetDicomStoreDicomWebStudySeriesGetSeriesMetricCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::CloudHealthcare`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationDatasetDicomStoreDicomWebStudySeriesGetSeriesMetricCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationDatasetDicomStoreDicomWebStudySeriesGetSeriesMetricCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> ProjectLocationDatasetDicomStoreDicomWebStudySeriesGetSeriesMetricCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
+/// GetStudyMetrics returns metrics for a study.
+///
+/// A builder for the *locations.datasets.dicomStores.dicomWeb.studies.getStudyMetrics* method supported by a *project* resource.
+/// It is not used directly, but through a [`ProjectMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_healthcare1 as healthcare1;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use healthcare1::{CloudHealthcare, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.projects().locations_datasets_dicom_stores_dicom_web_studies_get_study_metrics("study")
+///              .doit().await;
+/// # }
+/// ```
+pub struct ProjectLocationDatasetDicomStoreDicomWebStudyGetStudyMetricCall<'a, S>
+    where S: 'a {
+
+    hub: &'a CloudHealthcare<S>,
+    _study: String,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for ProjectLocationDatasetDicomStoreDicomWebStudyGetStudyMetricCall<'a, S> {}
+
+impl<'a, S> ProjectLocationDatasetDicomStoreDicomWebStudyGetStudyMetricCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, StudyMetrics)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "healthcare.projects.locations.datasets.dicomStores.dicomWeb.studies.getStudyMetrics",
+                               http_method: hyper::Method::GET });
+
+        for &field in ["alt", "study"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(3 + self._additional_params.len());
+        params.push("study", self._study);
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+study}:getStudyMetrics";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+study}", "study")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["study"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::GET)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .body(hyper::body::Body::empty());
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    /// Required. The study resource path. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}/dicomWeb/studies/{study_uid}`.
+    ///
+    /// Sets the *study* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn study(mut self, new_value: &str) -> ProjectLocationDatasetDicomStoreDicomWebStudyGetStudyMetricCall<'a, S> {
+        self._study = new_value.to_string();
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreDicomWebStudyGetStudyMetricCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationDatasetDicomStoreDicomWebStudyGetStudyMetricCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::CloudHealthcare`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationDatasetDicomStoreDicomWebStudyGetStudyMetricCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationDatasetDicomStoreDicomWebStudyGetStudyMetricCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> ProjectLocationDatasetDicomStoreDicomWebStudyGetStudyMetricCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
+/// RetrieveFrames returns instances associated with the given study, series, SOP Instance UID and frame numbers. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4}. For details on the implementation of RetrieveFrames, see [DICOM frames](https://cloud.google.com/healthcare/docs/dicom#dicom_frames) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveFrames, see [Retrieve DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieve-dicom).
 ///
 /// A builder for the *locations.datasets.dicomStores.studies.series.instances.frames.retrieveFrames* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -15817,7 +17811,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -15875,7 +17869,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/dicomWeb/{+dicomWebPath}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent"), ("{+dicomWebPath}", "dicomWebPath")].iter() {
@@ -15973,7 +17967,7 @@ where
     }
 
 
-    /// The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -15983,7 +17977,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The path of the RetrieveFrames DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}/instances/{instance_uid}/frames/{frame_list}`.
+    /// Required. The path of the RetrieveFrames DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}/instances/{instance_uid}/frames/{frame_list}`.
     ///
     /// Sets the *dicom web path* path property to the given value.
     ///
@@ -15997,7 +17991,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreStudySeriesInstanceFrameRetrieveFrameCall<'a, S> {
@@ -16034,7 +18029,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -16068,7 +18063,7 @@ where
 }
 
 
-/// RetrieveRenderedFrames returns instances associated with the given study, series, SOP Instance UID and frame numbers in an acceptable Rendered Media Type. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveRenderedFrames, see [Rendered resources](https://cloud.google.com/healthcare/docs/dicom#rendered_resources) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveRenderedFrames, see [Retrieving consumer image formats](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieving_consumer_image_formats).
+/// RetrieveRenderedFrames returns instances associated with the given study, series, SOP Instance UID and frame numbers in an acceptable Rendered Media Type. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveRenderedFrames, see [Rendered resources](https://cloud.google.com/healthcare/docs/dicom#rendered_resources) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveRenderedFrames, see [Retrieve consumer image formats](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieve-consumer).
 ///
 /// A builder for the *locations.datasets.dicomStores.studies.series.instances.frames.retrieveRendered* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -16090,7 +18085,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -16148,7 +18143,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/dicomWeb/{+dicomWebPath}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent"), ("{+dicomWebPath}", "dicomWebPath")].iter() {
@@ -16246,7 +18241,7 @@ where
     }
 
 
-    /// The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -16256,7 +18251,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The path of the RetrieveRenderedFrames DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}/instances/{instance_uid}/frames/{frame_list}/rendered`.
+    /// Required. The path of the RetrieveRenderedFrames DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}/instances/{instance_uid}/frames/{frame_list}/rendered`.
     ///
     /// Sets the *dicom web path* path property to the given value.
     ///
@@ -16270,7 +18265,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreStudySeriesInstanceFrameRetrieveRenderedCall<'a, S> {
@@ -16307,7 +18303,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -16341,7 +18337,7 @@ where
 }
 
 
-/// DeleteInstance deletes an instance associated with the given study, series, and SOP Instance UID. Delete requests are equivalent to the GET requests specified in the Retrieve transaction. Study and series search results can take a few seconds to be updated after an instance is deleted using DeleteInstance. For samples that show how to call DeleteInstance, see [Deleting a study, series, or instance](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#deleting_a_study_series_or_instance).
+/// DeleteInstance deletes an instance associated with the given study, series, and SOP Instance UID. Delete requests are equivalent to the GET requests specified in the Retrieve transaction. Study and series search results can take a few seconds to be updated after an instance is deleted using DeleteInstance. For samples that show how to call DeleteInstance, see [Delete a study, series, or instance](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#delete-dicom).
 ///
 /// A builder for the *locations.datasets.dicomStores.studies.series.instances.delete* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -16363,7 +18359,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -16421,7 +18417,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/dicomWeb/{+dicomWebPath}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent"), ("{+dicomWebPath}", "dicomWebPath")].iter() {
@@ -16519,7 +18515,7 @@ where
     }
 
 
-    /// The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -16529,7 +18525,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The path of the DeleteInstance request. For example, `studies/{study_uid}/series/{series_uid}/instances/{instance_uid}`.
+    /// Required. The path of the DeleteInstance request. For example, `studies/{study_uid}/series/{series_uid}/instances/{instance_uid}`.
     ///
     /// Sets the *dicom web path* path property to the given value.
     ///
@@ -16543,7 +18539,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreStudySeriesInstanceDeleteCall<'a, S> {
@@ -16580,7 +18577,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -16614,7 +18611,7 @@ where
 }
 
 
-/// RetrieveInstance returns instance associated with the given study, series, and SOP Instance UID. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveInstance, see [DICOM study/series/instances](https://cloud.google.com/healthcare/docs/dicom#dicom_studyseriesinstances) and [DICOM instances](https://cloud.google.com/healthcare/docs/dicom#dicom_instances) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveInstance, see [Retrieving an instance](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieving_an_instance).
+/// RetrieveInstance returns instance associated with the given study, series, and SOP Instance UID. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveInstance, see [DICOM study/series/instances](https://cloud.google.com/healthcare/docs/dicom#dicom_studyseriesinstances) and [DICOM instances](https://cloud.google.com/healthcare/docs/dicom#dicom_instances) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveInstance, see [Retrieve an instance](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieve-instance).
 ///
 /// A builder for the *locations.datasets.dicomStores.studies.series.instances.retrieveInstance* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -16636,7 +18633,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -16694,7 +18691,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/dicomWeb/{+dicomWebPath}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent"), ("{+dicomWebPath}", "dicomWebPath")].iter() {
@@ -16792,7 +18789,7 @@ where
     }
 
 
-    /// The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -16802,7 +18799,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The path of the RetrieveInstance DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}/instances/{instance_uid}`.
+    /// Required. The path of the RetrieveInstance DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}/instances/{instance_uid}`.
     ///
     /// Sets the *dicom web path* path property to the given value.
     ///
@@ -16816,7 +18813,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreStudySeriesInstanceRetrieveInstanceCall<'a, S> {
@@ -16853,7 +18851,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -16887,7 +18885,7 @@ where
 }
 
 
-/// RetrieveInstanceMetadata returns instance associated with the given study, series, and SOP Instance UID presented as metadata with the bulk data removed. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveInstanceMetadata, see [Metadata resources](https://cloud.google.com/healthcare/docs/dicom#metadata_resources) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveInstanceMetadata, see [Retrieving metadata](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieving_metadata).
+/// RetrieveInstanceMetadata returns instance associated with the given study, series, and SOP Instance UID presented as metadata with the bulk data removed. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveInstanceMetadata, see [Metadata resources](https://cloud.google.com/healthcare/docs/dicom#metadata_resources) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveInstanceMetadata, see [Retrieve metadata](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieve-metadata).
 ///
 /// A builder for the *locations.datasets.dicomStores.studies.series.instances.retrieveMetadata* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -16909,7 +18907,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -16967,7 +18965,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/dicomWeb/{+dicomWebPath}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent"), ("{+dicomWebPath}", "dicomWebPath")].iter() {
@@ -17065,7 +19063,7 @@ where
     }
 
 
-    /// The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -17075,7 +19073,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The path of the RetrieveInstanceMetadata DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}/instances/{instance_uid}/metadata`.
+    /// Required. The path of the RetrieveInstanceMetadata DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}/instances/{instance_uid}/metadata`.
     ///
     /// Sets the *dicom web path* path property to the given value.
     ///
@@ -17089,7 +19087,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreStudySeriesInstanceRetrieveMetadataCall<'a, S> {
@@ -17126,7 +19125,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -17160,7 +19159,7 @@ where
 }
 
 
-/// RetrieveRenderedInstance returns instance associated with the given study, series, and SOP Instance UID in an acceptable Rendered Media Type. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveRenderedInstance, see [Rendered resources](https://cloud.google.com/healthcare/docs/dicom#rendered_resources) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveRenderedInstance, see [Retrieving consumer image formats](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieving_consumer_image_formats).
+/// RetrieveRenderedInstance returns instance associated with the given study, series, and SOP Instance UID in an acceptable Rendered Media Type. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveRenderedInstance, see [Rendered resources](https://cloud.google.com/healthcare/docs/dicom#rendered_resources) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveRenderedInstance, see [Retrieve consumer image formats](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieve-consumer).
 ///
 /// A builder for the *locations.datasets.dicomStores.studies.series.instances.retrieveRendered* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -17182,7 +19181,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -17240,7 +19239,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/dicomWeb/{+dicomWebPath}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent"), ("{+dicomWebPath}", "dicomWebPath")].iter() {
@@ -17338,7 +19337,7 @@ where
     }
 
 
-    /// The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -17348,7 +19347,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The path of the RetrieveRenderedInstance DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}/instances/{instance_uid}/rendered`.
+    /// Required. The path of the RetrieveRenderedInstance DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}/instances/{instance_uid}/rendered`.
     ///
     /// Sets the *dicom web path* path property to the given value.
     ///
@@ -17362,7 +19361,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreStudySeriesInstanceRetrieveRenderedCall<'a, S> {
@@ -17399,7 +19399,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -17433,7 +19433,7 @@ where
 }
 
 
-/// DeleteSeries deletes all instances within the given study and series. Delete requests are equivalent to the GET requests specified in the Retrieve transaction. The method returns an Operation which will be marked successful when the deletion is complete. Warning: Instances cannot be inserted into a series that is being deleted by an operation until the operation completes. For samples that show how to call DeleteSeries, see [Deleting a study, series, or instance](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#deleting_a_study_series_or_instance).
+/// DeleteSeries deletes all instances within the given study and series. Delete requests are equivalent to the GET requests specified in the Retrieve transaction. The method returns an Operation which will be marked successful when the deletion is complete. Warning: Instances cannot be inserted into a series that is being deleted by an operation until the operation completes. For samples that show how to call DeleteSeries, see [Delete a study, series, or instance](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#delete-dicom).
 ///
 /// A builder for the *locations.datasets.dicomStores.studies.series.delete* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -17455,7 +19455,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -17513,7 +19513,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/dicomWeb/{+dicomWebPath}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent"), ("{+dicomWebPath}", "dicomWebPath")].iter() {
@@ -17611,7 +19611,7 @@ where
     }
 
 
-    /// The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -17621,7 +19621,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The path of the DeleteSeries request. For example, `studies/{study_uid}/series/{series_uid}`.
+    /// Required. The path of the DeleteSeries request. For example, `studies/{study_uid}/series/{series_uid}`.
     ///
     /// Sets the *dicom web path* path property to the given value.
     ///
@@ -17635,7 +19635,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreStudySeriesDeleteCall<'a, S> {
@@ -17672,7 +19673,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -17706,7 +19707,7 @@ where
 }
 
 
-/// RetrieveSeriesMetadata returns instance associated with the given study and series, presented as metadata with the bulk data removed. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveSeriesMetadata, see [Metadata resources](https://cloud.google.com/healthcare/docs/dicom#metadata_resources) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveSeriesMetadata, see [Retrieving metadata](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieving_metadata).
+/// RetrieveSeriesMetadata returns instance associated with the given study and series, presented as metadata with the bulk data removed. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveSeriesMetadata, see [Metadata resources](https://cloud.google.com/healthcare/docs/dicom#metadata_resources) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveSeriesMetadata, see [Retrieve metadata](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieve-metadata).
 ///
 /// A builder for the *locations.datasets.dicomStores.studies.series.retrieveMetadata* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -17728,7 +19729,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -17786,7 +19787,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/dicomWeb/{+dicomWebPath}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent"), ("{+dicomWebPath}", "dicomWebPath")].iter() {
@@ -17884,7 +19885,7 @@ where
     }
 
 
-    /// The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -17894,7 +19895,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The path of the RetrieveSeriesMetadata DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}/metadata`.
+    /// Required. The path of the RetrieveSeriesMetadata DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}/metadata`.
     ///
     /// Sets the *dicom web path* path property to the given value.
     ///
@@ -17908,7 +19909,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreStudySeriesRetrieveMetadataCall<'a, S> {
@@ -17945,7 +19947,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -17979,7 +19981,7 @@ where
 }
 
 
-/// RetrieveSeries returns all instances within the given study and series. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveSeries, see [DICOM study/series/instances](https://cloud.google.com/healthcare/docs/dicom#dicom_studyseriesinstances) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveSeries, see [Retrieving DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieving_dicom_data).
+/// RetrieveSeries returns all instances within the given study and series. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveSeries, see [DICOM study/series/instances](https://cloud.google.com/healthcare/docs/dicom#dicom_studyseriesinstances) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveSeries, see [Retrieve DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieve-dicom).
 ///
 /// A builder for the *locations.datasets.dicomStores.studies.series.retrieveSeries* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -18001,7 +20003,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -18059,7 +20061,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/dicomWeb/{+dicomWebPath}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent"), ("{+dicomWebPath}", "dicomWebPath")].iter() {
@@ -18157,7 +20159,7 @@ where
     }
 
 
-    /// The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -18167,7 +20169,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The path of the RetrieveSeries DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}`.
+    /// Required. The path of the RetrieveSeries DICOMweb request. For example, `studies/{study_uid}/series/{series_uid}`.
     ///
     /// Sets the *dicom web path* path property to the given value.
     ///
@@ -18181,7 +20183,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreStudySeriesRetrieveSeryCall<'a, S> {
@@ -18218,7 +20221,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -18252,7 +20255,7 @@ where
 }
 
 
-/// SearchForInstances returns a list of matching instances. See [Search Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.6). For details on the implementation of SearchForInstances, see [Search transaction](https://cloud.google.com/healthcare/docs/dicom#search_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call SearchForInstances, see [Searching for studies, series, instances, and frames](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#searching_for_studies_series_instances_and_frames).
+/// SearchForInstances returns a list of matching instances. See [Search Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.6). For details on the implementation of SearchForInstances, see [Search transaction](https://cloud.google.com/healthcare/docs/dicom#search_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call SearchForInstances, see [Search for DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#search-dicom).
 ///
 /// A builder for the *locations.datasets.dicomStores.studies.series.searchForInstances* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -18274,7 +20277,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -18332,7 +20335,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/dicomWeb/{+dicomWebPath}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent"), ("{+dicomWebPath}", "dicomWebPath")].iter() {
@@ -18430,7 +20433,7 @@ where
     }
 
 
-    /// The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -18440,7 +20443,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The path of the SearchForInstancesRequest DICOMweb request. For example, `instances`, `series/{series_uid}/instances`, or `studies/{study_uid}/instances`.
+    /// Required. The path of the SearchForInstancesRequest DICOMweb request. For example, `instances`, `series/{series_uid}/instances`, or `studies/{study_uid}/instances`.
     ///
     /// Sets the *dicom web path* path property to the given value.
     ///
@@ -18454,7 +20457,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreStudySeriesSearchForInstanceCall<'a, S> {
@@ -18491,7 +20495,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -18525,7 +20529,7 @@ where
 }
 
 
-/// DeleteStudy deletes all instances within the given study. Delete requests are equivalent to the GET requests specified in the Retrieve transaction. The method returns an Operation which will be marked successful when the deletion is complete. Warning: Instances cannot be inserted into a study that is being deleted by an operation until the operation completes. For samples that show how to call DeleteStudy, see [Deleting a study, series, or instance](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#deleting_a_study_series_or_instance).
+/// DeleteStudy deletes all instances within the given study. Delete requests are equivalent to the GET requests specified in the Retrieve transaction. The method returns an Operation which will be marked successful when the deletion is complete. Warning: Instances cannot be inserted into a study that is being deleted by an operation until the operation completes. For samples that show how to call DeleteStudy, see [Delete a study, series, or instance](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#delete-dicom).
 ///
 /// A builder for the *locations.datasets.dicomStores.studies.delete* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -18547,7 +20551,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -18605,7 +20609,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/dicomWeb/{+dicomWebPath}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent"), ("{+dicomWebPath}", "dicomWebPath")].iter() {
@@ -18712,7 +20716,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The path of the DeleteStudy request. For example, `studies/{study_uid}`.
+    /// Required. The path of the DeleteStudy request. For example, `studies/{study_uid}`.
     ///
     /// Sets the *dicom web path* path property to the given value.
     ///
@@ -18726,7 +20730,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreStudyDeleteCall<'a, S> {
@@ -18763,7 +20768,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -18797,7 +20802,7 @@ where
 }
 
 
-/// RetrieveStudyMetadata returns instance associated with the given study presented as metadata with the bulk data removed. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveStudyMetadata, see [Metadata resources](https://cloud.google.com/healthcare/docs/dicom#metadata_resources) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveStudyMetadata, see [Retrieving metadata](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieving_metadata).
+/// RetrieveStudyMetadata returns instance associated with the given study presented as metadata with the bulk data removed. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveStudyMetadata, see [Metadata resources](https://cloud.google.com/healthcare/docs/dicom#metadata_resources) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveStudyMetadata, see [Retrieve metadata](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieve-metadata).
 ///
 /// A builder for the *locations.datasets.dicomStores.studies.retrieveMetadata* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -18819,7 +20824,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -18877,7 +20882,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/dicomWeb/{+dicomWebPath}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent"), ("{+dicomWebPath}", "dicomWebPath")].iter() {
@@ -18975,7 +20980,7 @@ where
     }
 
 
-    /// The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -18985,7 +20990,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The path of the RetrieveStudyMetadata DICOMweb request. For example, `studies/{study_uid}/metadata`.
+    /// Required. The path of the RetrieveStudyMetadata DICOMweb request. For example, `studies/{study_uid}/metadata`.
     ///
     /// Sets the *dicom web path* path property to the given value.
     ///
@@ -18999,7 +21004,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreStudyRetrieveMetadataCall<'a, S> {
@@ -19036,7 +21042,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -19070,7 +21076,7 @@ where
 }
 
 
-/// RetrieveStudy returns all instances within the given study. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveStudy, see [DICOM study/series/instances](https://cloud.google.com/healthcare/docs/dicom#dicom_studyseriesinstances) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveStudy, see [Retrieving DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieving_dicom_data).
+/// RetrieveStudy returns all instances within the given study. See [RetrieveTransaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.4). For details on the implementation of RetrieveStudy, see [DICOM study/series/instances](https://cloud.google.com/healthcare/docs/dicom#dicom_studyseriesinstances) in the Cloud Healthcare API conformance statement. For samples that show how to call RetrieveStudy, see [Retrieve DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#retrieve-dicom).
 ///
 /// A builder for the *locations.datasets.dicomStores.studies.retrieveStudy* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -19092,7 +21098,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -19150,7 +21156,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/dicomWeb/{+dicomWebPath}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent"), ("{+dicomWebPath}", "dicomWebPath")].iter() {
@@ -19248,7 +21254,7 @@ where
     }
 
 
-    /// The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -19258,7 +21264,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The path of the RetrieveStudy DICOMweb request. For example, `studies/{study_uid}`.
+    /// Required. The path of the RetrieveStudy DICOMweb request. For example, `studies/{study_uid}`.
     ///
     /// Sets the *dicom web path* path property to the given value.
     ///
@@ -19272,7 +21278,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreStudyRetrieveStudyCall<'a, S> {
@@ -19309,7 +21316,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -19343,7 +21350,7 @@ where
 }
 
 
-/// SearchForInstances returns a list of matching instances. See [Search Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.6). For details on the implementation of SearchForInstances, see [Search transaction](https://cloud.google.com/healthcare/docs/dicom#search_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call SearchForInstances, see [Searching for studies, series, instances, and frames](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#searching_for_studies_series_instances_and_frames).
+/// SearchForInstances returns a list of matching instances. See [Search Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.6). For details on the implementation of SearchForInstances, see [Search transaction](https://cloud.google.com/healthcare/docs/dicom#search_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call SearchForInstances, see [Search for DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#search-dicom).
 ///
 /// A builder for the *locations.datasets.dicomStores.studies.searchForInstances* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -19365,7 +21372,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -19423,7 +21430,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/dicomWeb/{+dicomWebPath}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent"), ("{+dicomWebPath}", "dicomWebPath")].iter() {
@@ -19521,7 +21528,7 @@ where
     }
 
 
-    /// The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -19531,7 +21538,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The path of the SearchForInstancesRequest DICOMweb request. For example, `instances`, `series/{series_uid}/instances`, or `studies/{study_uid}/instances`.
+    /// Required. The path of the SearchForInstancesRequest DICOMweb request. For example, `instances`, `series/{series_uid}/instances`, or `studies/{study_uid}/instances`.
     ///
     /// Sets the *dicom web path* path property to the given value.
     ///
@@ -19545,7 +21552,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreStudySearchForInstanceCall<'a, S> {
@@ -19582,7 +21590,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -19616,7 +21624,7 @@ where
 }
 
 
-/// SearchForSeries returns a list of matching series. See [Search Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.6). For details on the implementation of SearchForSeries, see [Search transaction](https://cloud.google.com/healthcare/docs/dicom#search_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call SearchForSeries, see [Searching for studies, series, instances, and frames](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#searching_for_studies_series_instances_and_frames).
+/// SearchForSeries returns a list of matching series. See [Search Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.6). For details on the implementation of SearchForSeries, see [Search transaction](https://cloud.google.com/healthcare/docs/dicom#search_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call SearchForSeries, see [Search for DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#search-dicom).
 ///
 /// A builder for the *locations.datasets.dicomStores.studies.searchForSeries* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -19638,7 +21646,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -19696,7 +21704,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/dicomWeb/{+dicomWebPath}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent"), ("{+dicomWebPath}", "dicomWebPath")].iter() {
@@ -19794,7 +21802,7 @@ where
     }
 
 
-    /// The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -19804,7 +21812,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The path of the SearchForSeries DICOMweb request. For example, `series` or `studies/{study_uid}/series`.
+    /// Required. The path of the SearchForSeries DICOMweb request. For example, `series` or `studies/{study_uid}/series`.
     ///
     /// Sets the *dicom web path* path property to the given value.
     ///
@@ -19818,7 +21826,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreStudySearchForSeryCall<'a, S> {
@@ -19855,7 +21864,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -19889,7 +21898,7 @@ where
 }
 
 
-/// StoreInstances stores DICOM instances associated with study instance unique identifiers (SUID). See [Store Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.5). For details on the implementation of StoreInstances, see [Store transaction](https://cloud.google.com/healthcare/docs/dicom#store_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call StoreInstances, see [Storing DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#storing_dicom_data).
+/// StoreInstances stores DICOM instances associated with study instance unique identifiers (SUID). See [Store Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.5). For details on the implementation of StoreInstances, see [Store transaction](https://cloud.google.com/healthcare/docs/dicom#store_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call StoreInstances, see [Store DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#store-dicom).
 ///
 /// A builder for the *locations.datasets.dicomStores.studies.storeInstances* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -19912,7 +21921,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -19976,7 +21985,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/dicomWeb/{+dicomWebPath}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent"), ("{+dicomWebPath}", "dicomWebPath")].iter() {
@@ -20097,7 +22106,7 @@ where
         self._request = new_value;
         self
     }
-    /// The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -20107,7 +22116,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The path of the StoreInstances DICOMweb request. For example, `studies/[{study_uid}]`. Note that the `study_uid` is optional.
+    /// Required. The path of the StoreInstances DICOMweb request. For example, `studies/[{study_uid}]`. Note that the `study_uid` is optional.
     ///
     /// Sets the *dicom web path* path property to the given value.
     ///
@@ -20121,7 +22130,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreStudyStoreInstanceCall<'a, S> {
@@ -20158,7 +22168,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -20215,7 +22225,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -20225,7 +22235,7 @@ where
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_datasets_dicom_stores_create(req, "parent")
-///              .dicom_store_id("est")
+///              .dicom_store_id("sed")
 ///              .doit().await;
 /// # }
 /// ```
@@ -20282,7 +22292,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/dicomStores";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
@@ -20403,7 +22413,7 @@ where
         self._request = new_value;
         self
     }
-    /// The name of the dataset this DICOM store belongs to.
+    /// Required. The name of the dataset this DICOM store belongs to.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -20413,7 +22423,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The ID of the DICOM store that is being created. Any string value up to 256 characters in length.
+    /// Required. The ID of the DICOM store that is being created. Any string value up to 256 characters in length.
     ///
     /// Sets the *dicom store id* query property to the given value.
     pub fn dicom_store_id(mut self, new_value: &str) -> ProjectLocationDatasetDicomStoreCreateCall<'a, S> {
@@ -20424,7 +22434,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreCreateCall<'a, S> {
@@ -20461,7 +22472,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -20518,7 +22529,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -20580,7 +22591,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+sourceStore}:deidentify";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+sourceStore}", "sourceStore")].iter() {
@@ -20701,7 +22712,7 @@ where
         self._request = new_value;
         self
     }
-    /// Source DICOM store resource name. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// Required. Source DICOM store resource name. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     ///
     /// Sets the *source store* path property to the given value.
     ///
@@ -20715,7 +22726,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreDeidentifyCall<'a, S> {
@@ -20752,7 +22764,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -20808,7 +22820,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -20864,7 +22876,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -20962,7 +22974,7 @@ where
     }
 
 
-    /// The resource name of the DICOM store to delete.
+    /// Required. The resource name of the DICOM store to delete.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -20976,7 +22988,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreDeleteCall<'a, S> {
@@ -21013,7 +23026,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -21070,7 +23083,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -21132,7 +23145,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}:export";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -21253,7 +23266,7 @@ where
         self._request = new_value;
         self
     }
-    /// The DICOM store resource name from which to export the data. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// Required. The DICOM store resource name from which to export the data. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -21267,7 +23280,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreExportCall<'a, S> {
@@ -21304,7 +23318,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -21360,7 +23374,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -21416,7 +23430,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -21514,7 +23528,7 @@ where
     }
 
 
-    /// The resource name of the DICOM store to get.
+    /// Required. The resource name of the DICOM store to get.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -21528,7 +23542,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreGetCall<'a, S> {
@@ -21565,7 +23580,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -21599,6 +23614,268 @@ where
 }
 
 
+/// Gets metrics associated with the DICOM store.
+///
+/// A builder for the *locations.datasets.dicomStores.getDICOMStoreMetrics* method supported by a *project* resource.
+/// It is not used directly, but through a [`ProjectMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_healthcare1 as healthcare1;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use healthcare1::{CloudHealthcare, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.projects().locations_datasets_dicom_stores_get_dicom_store_metrics("name")
+///              .doit().await;
+/// # }
+/// ```
+pub struct ProjectLocationDatasetDicomStoreGetDICOMStoreMetricCall<'a, S>
+    where S: 'a {
+
+    hub: &'a CloudHealthcare<S>,
+    _name: String,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for ProjectLocationDatasetDicomStoreGetDICOMStoreMetricCall<'a, S> {}
+
+impl<'a, S> ProjectLocationDatasetDicomStoreGetDICOMStoreMetricCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, DicomStoreMetrics)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "healthcare.projects.locations.datasets.dicomStores.getDICOMStoreMetrics",
+                               http_method: hyper::Method::GET });
+
+        for &field in ["alt", "name"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(3 + self._additional_params.len());
+        params.push("name", self._name);
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+name}:getDICOMStoreMetrics";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+name}", "name")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["name"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::GET)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .body(hyper::body::Body::empty());
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    /// Required. The resource name of the DICOM store to get metrics for.
+    ///
+    /// Sets the *name* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn name(mut self, new_value: &str) -> ProjectLocationDatasetDicomStoreGetDICOMStoreMetricCall<'a, S> {
+        self._name = new_value.to_string();
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreGetDICOMStoreMetricCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationDatasetDicomStoreGetDICOMStoreMetricCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::CloudHealthcare`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationDatasetDicomStoreGetDICOMStoreMetricCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationDatasetDicomStoreGetDICOMStoreMetricCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> ProjectLocationDatasetDicomStoreGetDICOMStoreMetricCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
 /// Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
 ///
 /// A builder for the *locations.datasets.dicomStores.getIamPolicy* method supported by a *project* resource.
@@ -21621,12 +23898,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_datasets_dicom_stores_get_iam_policy("resource")
-///              .options_requested_policy_version(-93)
+///              .options_requested_policy_version(-77)
 ///              .doit().await;
 /// # }
 /// ```
@@ -21682,7 +23959,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+resource}:getIamPolicy";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
@@ -21801,7 +24078,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreGetIamPolicyCall<'a, S> {
@@ -21838,7 +24116,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -21895,7 +24173,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -21957,7 +24235,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}:import";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -22078,7 +24356,7 @@ where
         self._request = new_value;
         self
     }
-    /// The name of the DICOM store resource into which the data is imported. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// Required. The name of the DICOM store resource into which the data is imported. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -22092,7 +24370,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreImportCall<'a, S> {
@@ -22129,7 +24408,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -22185,14 +24464,14 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_datasets_dicom_stores_list("parent")
-///              .page_token("elitr")
-///              .page_size(-80)
-///              .filter("no")
+///              .page_token("dolores")
+///              .page_size(-95)
+///              .filter("erat")
 ///              .doit().await;
 /// # }
 /// ```
@@ -22256,7 +24535,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/dicomStores";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
@@ -22354,7 +24633,7 @@ where
     }
 
 
-    /// Name of the dataset.
+    /// Required. Name of the dataset.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -22389,7 +24668,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreListCall<'a, S> {
@@ -22426,7 +24706,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -22483,7 +24763,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -22550,7 +24830,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -22671,7 +24951,7 @@ where
         self._request = new_value;
         self
     }
-    /// Resource name of the DICOM store, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// Identifier. Resource name of the DICOM store, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -22681,7 +24961,7 @@ where
         self._name = new_value.to_string();
         self
     }
-    /// The update mask applies to the resource. For the `FieldMask` definition, see https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask
+    /// Required. The update mask applies to the resource. For the `FieldMask` definition, see https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask
     ///
     /// Sets the *update mask* query property to the given value.
     pub fn update_mask(mut self, new_value: client::FieldMask) -> ProjectLocationDatasetDicomStorePatchCall<'a, S> {
@@ -22692,7 +24972,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStorePatchCall<'a, S> {
@@ -22729,7 +25010,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -22763,7 +25044,7 @@ where
 }
 
 
-/// SearchForInstances returns a list of matching instances. See [Search Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.6). For details on the implementation of SearchForInstances, see [Search transaction](https://cloud.google.com/healthcare/docs/dicom#search_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call SearchForInstances, see [Searching for studies, series, instances, and frames](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#searching_for_studies_series_instances_and_frames).
+/// SearchForInstances returns a list of matching instances. See [Search Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.6). For details on the implementation of SearchForInstances, see [Search transaction](https://cloud.google.com/healthcare/docs/dicom#search_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call SearchForInstances, see [Search for DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#search-dicom).
 ///
 /// A builder for the *locations.datasets.dicomStores.searchForInstances* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -22785,7 +25066,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -22843,7 +25124,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/dicomWeb/{+dicomWebPath}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent"), ("{+dicomWebPath}", "dicomWebPath")].iter() {
@@ -22941,7 +25222,7 @@ where
     }
 
 
-    /// The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -22951,7 +25232,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The path of the SearchForInstancesRequest DICOMweb request. For example, `instances`, `series/{series_uid}/instances`, or `studies/{study_uid}/instances`.
+    /// Required. The path of the SearchForInstancesRequest DICOMweb request. For example, `instances`, `series/{series_uid}/instances`, or `studies/{study_uid}/instances`.
     ///
     /// Sets the *dicom web path* path property to the given value.
     ///
@@ -22965,7 +25246,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreSearchForInstanceCall<'a, S> {
@@ -23002,7 +25284,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -23036,7 +25318,7 @@ where
 }
 
 
-/// SearchForSeries returns a list of matching series. See [Search Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.6). For details on the implementation of SearchForSeries, see [Search transaction](https://cloud.google.com/healthcare/docs/dicom#search_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call SearchForSeries, see [Searching for studies, series, instances, and frames](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#searching_for_studies_series_instances_and_frames).
+/// SearchForSeries returns a list of matching series. See [Search Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.6). For details on the implementation of SearchForSeries, see [Search transaction](https://cloud.google.com/healthcare/docs/dicom#search_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call SearchForSeries, see [Search for DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#search-dicom).
 ///
 /// A builder for the *locations.datasets.dicomStores.searchForSeries* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -23058,7 +25340,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -23116,7 +25398,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/dicomWeb/{+dicomWebPath}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent"), ("{+dicomWebPath}", "dicomWebPath")].iter() {
@@ -23214,7 +25496,7 @@ where
     }
 
 
-    /// The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -23224,7 +25506,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The path of the SearchForSeries DICOMweb request. For example, `series` or `studies/{study_uid}/series`.
+    /// Required. The path of the SearchForSeries DICOMweb request. For example, `series` or `studies/{study_uid}/series`.
     ///
     /// Sets the *dicom web path* path property to the given value.
     ///
@@ -23238,7 +25520,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreSearchForSeryCall<'a, S> {
@@ -23275,7 +25558,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -23309,7 +25592,7 @@ where
 }
 
 
-/// SearchForStudies returns a list of matching studies. See [Search Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.6). For details on the implementation of SearchForStudies, see [Search transaction](https://cloud.google.com/healthcare/docs/dicom#search_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call SearchForStudies, see [Searching for studies, series, instances, and frames](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#searching_for_studies_series_instances_and_frames).
+/// SearchForStudies returns a list of matching studies. See [Search Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.6). For details on the implementation of SearchForStudies, see [Search transaction](https://cloud.google.com/healthcare/docs/dicom#search_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call SearchForStudies, see [Search for DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#search-dicom).
 ///
 /// A builder for the *locations.datasets.dicomStores.searchForStudies* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -23331,7 +25614,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -23389,7 +25672,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/dicomWeb/{+dicomWebPath}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent"), ("{+dicomWebPath}", "dicomWebPath")].iter() {
@@ -23487,7 +25770,7 @@ where
     }
 
 
-    /// The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -23497,7 +25780,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The path of the SearchForStudies DICOMweb request. For example, `studies`.
+    /// Required. The path of the SearchForStudies DICOMweb request. For example, `studies`.
     ///
     /// Sets the *dicom web path* path property to the given value.
     ///
@@ -23511,7 +25794,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreSearchForStudyCall<'a, S> {
@@ -23548,7 +25832,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -23605,7 +25889,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -23667,7 +25951,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+resource}:setIamPolicy";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
@@ -23802,7 +26086,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreSetIamPolicyCall<'a, S> {
@@ -23839,7 +26124,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -23873,7 +26158,7 @@ where
 }
 
 
-/// StoreInstances stores DICOM instances associated with study instance unique identifiers (SUID). See [Store Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.5). For details on the implementation of StoreInstances, see [Store transaction](https://cloud.google.com/healthcare/docs/dicom#store_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call StoreInstances, see [Storing DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#storing_dicom_data).
+/// StoreInstances stores DICOM instances associated with study instance unique identifiers (SUID). See [Store Transaction] (http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_10.5). For details on the implementation of StoreInstances, see [Store transaction](https://cloud.google.com/healthcare/docs/dicom#store_transaction) in the Cloud Healthcare API conformance statement. For samples that show how to call StoreInstances, see [Store DICOM data](https://cloud.google.com/healthcare/docs/how-tos/dicomweb#store-dicom).
 ///
 /// A builder for the *locations.datasets.dicomStores.storeInstances* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -23896,7 +26181,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -23960,7 +26245,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/dicomWeb/{+dicomWebPath}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent"), ("{+dicomWebPath}", "dicomWebPath")].iter() {
@@ -24081,7 +26366,7 @@ where
         self._request = new_value;
         self
     }
-    /// The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
+    /// Required. The name of the DICOM store that is being accessed. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomStores/{dicom_store_id}`.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -24091,7 +26376,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The path of the StoreInstances DICOMweb request. For example, `studies/[{study_uid}]`. Note that the `study_uid` is optional.
+    /// Required. The path of the StoreInstances DICOMweb request. For example, `studies/[{study_uid}]`. Note that the `study_uid` is optional.
     ///
     /// Sets the *dicom web path* path property to the given value.
     ///
@@ -24105,7 +26390,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreStoreInstanceCall<'a, S> {
@@ -24142,7 +26428,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -24199,7 +26485,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -24261,7 +26547,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+resource}:testIamPermissions";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
@@ -24396,7 +26682,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDicomStoreTestIamPermissionCall<'a, S> {
@@ -24433,7 +26720,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -24489,17 +26776,17 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_datasets_fhir_stores_fhir__patient_everything("name")
-///              .start("consetetur")
-///              .end("consetetur")
-///              ._type("Stet")
-///              ._since("est")
-///              ._page_token("aliquyam")
-///              ._count(-94)
+///              .start("diam")
+///              .end("est")
+///              ._type("sit")
+///              ._since("sed")
+///              ._page_token("eos")
+///              ._count(-56)
 ///              .doit().await;
 /// # }
 /// ```
@@ -24575,7 +26862,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}/$everything";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -24673,7 +26960,7 @@ where
     }
 
 
-    /// Name of the `Patient` resource for which the information is required.
+    /// Required. Name of the `Patient` resource for which the information is required.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -24683,28 +26970,28 @@ where
         self._name = new_value.to_string();
         self
     }
-    /// The response includes records subsequent to the start date. The date uses the format YYYY-MM-DD. If no start date is provided, all records prior to the end date are in scope.
+    /// Optional. The response includes records subsequent to the start date. The date uses the format YYYY-MM-DD. If no start date is provided, all records prior to the end date are in scope.
     ///
     /// Sets the *start* query property to the given value.
     pub fn start(mut self, new_value: &str) -> ProjectLocationDatasetFhirStoreFhirPatientEverythingCall<'a, S> {
         self._start = Some(new_value.to_string());
         self
     }
-    /// The response includes records prior to the end date. The date uses the format YYYY-MM-DD. If no end date is provided, all records subsequent to the start date are in scope.
+    /// Optional. The response includes records prior to the end date. The date uses the format YYYY-MM-DD. If no end date is provided, all records subsequent to the start date are in scope.
     ///
     /// Sets the *end* query property to the given value.
     pub fn end(mut self, new_value: &str) -> ProjectLocationDatasetFhirStoreFhirPatientEverythingCall<'a, S> {
         self._end = Some(new_value.to_string());
         self
     }
-    /// String of comma-delimited FHIR resource types. If provided, only resources of the specified resource type(s) are returned.
+    /// Optional. String of comma-delimited FHIR resource types. If provided, only resources of the specified resource type(s) are returned. Specifying multiple `_type` parameters isn't supported. For example, the result of `_type=Observation&_type=Encounter` is undefined. Use `_type=Observation,Encounter` instead.
     ///
     /// Sets the *_type* query property to the given value.
     pub fn _type(mut self, new_value: &str) -> ProjectLocationDatasetFhirStoreFhirPatientEverythingCall<'a, S> {
         self.__type = Some(new_value.to_string());
         self
     }
-    /// If provided, only resources updated after this time are returned. The time uses the format YYYY-MM-DDThh:mm:ss.sss+zz:zz. For example, `2015-02-07T13:28:17.239+02:00` or `2017-01-01T00:00:00Z`. The time must be specified to the second and include a time zone.
+    /// Optional. If provided, only resources updated after this time are returned. The time uses the format YYYY-MM-DDThh:mm:ss.sss+zz:zz. For example, `2015-02-07T13:28:17.239+02:00` or `2017-01-01T00:00:00Z`. The time must be specified to the second and include a time zone.
     ///
     /// Sets the *_since* query property to the given value.
     pub fn _since(mut self, new_value: &str) -> ProjectLocationDatasetFhirStoreFhirPatientEverythingCall<'a, S> {
@@ -24718,7 +27005,7 @@ where
         self.__page_token = Some(new_value.to_string());
         self
     }
-    /// Maximum number of resources in a page. If not specified, 100 is used. May not be larger than 1000.
+    /// Optional. Maximum number of resources in a page. If not specified, 100 is used. May not be larger than 1000.
     ///
     /// Sets the *_count* query property to the given value.
     pub fn _count(mut self, new_value: i32) -> ProjectLocationDatasetFhirStoreFhirPatientEverythingCall<'a, S> {
@@ -24729,7 +27016,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreFhirPatientEverythingCall<'a, S> {
@@ -24766,7 +27054,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -24822,7 +27110,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -24878,7 +27166,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}/$purge";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -24976,7 +27264,7 @@ where
     }
 
 
-    /// The name of the resource to purge.
+    /// Required. The name of the resource to purge.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -24990,7 +27278,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreFhirResourcePurgeCall<'a, S> {
@@ -25027,7 +27316,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -25084,7 +27373,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -25094,7 +27383,7 @@ where
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_datasets_fhir_stores_fhir__resource_validate(req, "parent", "type")
-///              .profile("sit")
+///              .profile("eos")
 ///              .doit().await;
 /// # }
 /// ```
@@ -25153,7 +27442,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/fhir/{+type}/$validate";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent"), ("{+type}", "type")].iter() {
@@ -25274,7 +27563,7 @@ where
         self._request = new_value;
         self
     }
-    /// The name of the FHIR store that holds the profiles being used for validation.
+    /// Required. The name of the FHIR store that holds the profiles being used for validation.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -25284,7 +27573,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The FHIR resource type of the resource being validated. For a complete list, see the FHIR Resource Index ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html), [STU3](http://hl7.org/implement/standards/fhir/STU3/resourcelist.html), or [R4](http://hl7.org/implement/standards/fhir/R4/resourcelist.html)). Must match the resource type in the provided content.
+    /// Required. The FHIR resource type of the resource being validated. For a complete list, see the FHIR Resource Index ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html), [STU3](http://hl7.org/implement/standards/fhir/STU3/resourcelist.html), or [R4](http://hl7.org/implement/standards/fhir/R4/resourcelist.html)). Must match the resource type in the provided content.
     ///
     /// Sets the *type* path property to the given value.
     ///
@@ -25294,7 +27583,7 @@ where
         self._type_ = new_value.to_string();
         self
     }
-    /// The canonical URL of a profile that this resource should be validated against. For example, to validate a Patient resource against the US Core Patient profile this parameter would be `http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient`. A StructureDefinition with this canonical URL must exist in the FHIR store.
+    /// Required. The canonical URL of a profile that this resource should be validated against. For example, to validate a Patient resource against the US Core Patient profile this parameter would be `http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient`. A StructureDefinition with this canonical URL must exist in the FHIR store.
     ///
     /// Sets the *profile* query property to the given value.
     pub fn profile(mut self, new_value: &str) -> ProjectLocationDatasetFhirStoreFhirResourceValidateCall<'a, S> {
@@ -25305,7 +27594,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreFhirResourceValidateCall<'a, S> {
@@ -25342,7 +27632,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -25398,7 +27688,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -25454,7 +27744,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}/fhir/metadata";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -25552,7 +27842,7 @@ where
     }
 
 
-    /// Name of the FHIR store to retrieve the capabilities for.
+    /// Required. Name of the FHIR store to retrieve the capabilities for.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -25566,7 +27856,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreFhirCapabilityCall<'a, S> {
@@ -25603,7 +27894,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -25637,7 +27928,889 @@ where
 }
 
 
-/// Creates a FHIR resource. Implements the FHIR standard create interaction ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#create), [STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#create), [R4](http://hl7.org/implement/standards/fhir/R4/http.html#create)), which creates a new resource with a server-assigned resource ID. The request body must contain a JSON-encoded FHIR resource, and the request headers must contain `Content-Type: application/fhir+json`. On success, the response body contains a JSON-encoded representation of the resource as it was created on the server, including the server-assigned resource ID and version ID. Errors generated by the FHIR store contain a JSON-encoded `OperationOutcome` resource describing the reason for the error. If the request cannot be mapped to a valid API method on a FHIR store, a generic GCP error might be returned instead. For samples that show how to call `create`, see [Creating a FHIR resource](https://cloud.google.com/healthcare/docs/how-tos/fhir-resources#creating_a_fhir_resource).
+/// Deletes a FHIR resource that match an identifier search query. Implements the FHIR standard conditional delete interaction, limited to searching by resource identifier. If multiple resources match, 412 Precondition Failed error will be returned. Search term for identifier should be in the pattern `identifier=system|value` or `identifier=value` - similar to the `search` method on resources with a specific identifier. Note: Unless resource versioning is disabled by setting the disable_resource_versioning flag on the FHIR store, the deleted resource is moved to a history repository that can still be retrieved through vread and related methods, unless they are removed by the purge method. For samples that show how to call `conditionalDelete`, see [Conditionally deleting a FHIR resource](https://cloud.google.com/healthcare/docs/how-tos/fhir-resources#conditionally_deleting_a_fhir_resource).
+///
+/// A builder for the *locations.datasets.fhirStores.fhir.conditionalDelete* method supported by a *project* resource.
+/// It is not used directly, but through a [`ProjectMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_healthcare1 as healthcare1;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use healthcare1::{CloudHealthcare, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.projects().locations_datasets_fhir_stores_fhir_conditional_delete("parent", "type")
+///              .doit().await;
+/// # }
+/// ```
+pub struct ProjectLocationDatasetFhirStoreFhirConditionalDeleteCall<'a, S>
+    where S: 'a {
+
+    hub: &'a CloudHealthcare<S>,
+    _parent: String,
+    _type_: String,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for ProjectLocationDatasetFhirStoreFhirConditionalDeleteCall<'a, S> {}
+
+impl<'a, S> ProjectLocationDatasetFhirStoreFhirConditionalDeleteCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, Empty)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "healthcare.projects.locations.datasets.fhirStores.fhir.conditionalDelete",
+                               http_method: hyper::Method::DELETE });
+
+        for &field in ["alt", "parent", "type"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(4 + self._additional_params.len());
+        params.push("parent", self._parent);
+        params.push("type", self._type_);
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+parent}/fhir/{+type}";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+parent}", "parent"), ("{+type}", "type")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["type", "parent"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::DELETE)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .body(hyper::body::Body::empty());
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    /// Required. The name of the FHIR store this resource belongs to.
+    ///
+    /// Sets the *parent* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn parent(mut self, new_value: &str) -> ProjectLocationDatasetFhirStoreFhirConditionalDeleteCall<'a, S> {
+        self._parent = new_value.to_string();
+        self
+    }
+    /// Required. The FHIR resource type to delete, such as Patient or Observation. For a complete list, see the FHIR Resource Index ([DSTU2](https://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html), [STU3](https://hl7.org/implement/standards/fhir/STU3/resourcelist.html), [R4](https://hl7.org/implement/standards/fhir/R4/resourcelist.html)).
+    ///
+    /// Sets the *type* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn type_(mut self, new_value: &str) -> ProjectLocationDatasetFhirStoreFhirConditionalDeleteCall<'a, S> {
+        self._type_ = new_value.to_string();
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreFhirConditionalDeleteCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationDatasetFhirStoreFhirConditionalDeleteCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::CloudHealthcare`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationDatasetFhirStoreFhirConditionalDeleteCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationDatasetFhirStoreFhirConditionalDeleteCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> ProjectLocationDatasetFhirStoreFhirConditionalDeleteCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
+/// If a resource is found with the identifier specified in the query parameters, updates part of that resource by applying the operations specified in a [JSON Patch](http://jsonpatch.com/) document. Implements the FHIR standard conditional patch interaction, limited to searching by resource identifier. DSTU2 doesn't define a conditional patch method, but the server supports it in the same way it supports STU3. Search term for identifier should be in the pattern `identifier=system|value` or `identifier=value` - similar to the `search` method on resources with a specific identifier. If the search criteria identify more than one match, the request returns a `412 Precondition Failed` error. The request body must contain a JSON Patch document, and the request headers must contain `Content-Type: application/json-patch+json`. On success, the response body contains a JSON-encoded representation of the updated resource, including the server-assigned version ID. Errors generated by the FHIR store contain a JSON-encoded `OperationOutcome` resource describing the reason for the error. If the request cannot be mapped to a valid API method on a FHIR store, a generic GCP error might be returned instead. For samples that show how to call `conditionalPatch`, see [Conditionally patching a FHIR resource](https://cloud.google.com/healthcare/docs/how-tos/fhir-resources#conditionally_patching_a_fhir_resource).
+///
+/// A builder for the *locations.datasets.fhirStores.fhir.conditionalPatch* method supported by a *project* resource.
+/// It is not used directly, but through a [`ProjectMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_healthcare1 as healthcare1;
+/// use healthcare1::api::HttpBody;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use healthcare1::{CloudHealthcare, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // As the method needs a request, you would usually fill it with the desired information
+/// // into the respective structure. Some of the parts shown here might not be applicable !
+/// // Values shown here are possibly random and not representative !
+/// let mut req = HttpBody::default();
+/// 
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.projects().locations_datasets_fhir_stores_fhir_conditional_patch(req, "parent", "type")
+///              .doit().await;
+/// # }
+/// ```
+pub struct ProjectLocationDatasetFhirStoreFhirConditionalPatchCall<'a, S>
+    where S: 'a {
+
+    hub: &'a CloudHealthcare<S>,
+    _request: HttpBody,
+    _parent: String,
+    _type_: String,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for ProjectLocationDatasetFhirStoreFhirConditionalPatchCall<'a, S> {}
+
+impl<'a, S> ProjectLocationDatasetFhirStoreFhirConditionalPatchCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, HttpBody)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "healthcare.projects.locations.datasets.fhirStores.fhir.conditionalPatch",
+                               http_method: hyper::Method::PATCH });
+
+        for &field in ["alt", "parent", "type"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(5 + self._additional_params.len());
+        params.push("parent", self._parent);
+        params.push("type", self._type_);
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+parent}/fhir/{+type}";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+parent}", "parent"), ("{+type}", "type")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["type", "parent"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+        let mut json_mime_type = mime::APPLICATION_JSON;
+        let mut request_value_reader =
+            {
+                let mut value = json::value::to_value(&self._request).expect("serde to work");
+                client::remove_json_null_values(&mut value);
+                let mut dst = io::Cursor::new(Vec::with_capacity(128));
+                json::to_writer(&mut dst, &value).unwrap();
+                dst
+            };
+        let request_size = request_value_reader.seek(io::SeekFrom::End(0)).unwrap();
+        request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::PATCH)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .header(CONTENT_TYPE, json_mime_type.to_string())
+                        .header(CONTENT_LENGTH, request_size as u64)
+                        .body(hyper::body::Body::from(request_value_reader.get_ref().clone()));
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    ///
+    /// Sets the *request* property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn request(mut self, new_value: HttpBody) -> ProjectLocationDatasetFhirStoreFhirConditionalPatchCall<'a, S> {
+        self._request = new_value;
+        self
+    }
+    /// Required. The name of the FHIR store this resource belongs to.
+    ///
+    /// Sets the *parent* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn parent(mut self, new_value: &str) -> ProjectLocationDatasetFhirStoreFhirConditionalPatchCall<'a, S> {
+        self._parent = new_value.to_string();
+        self
+    }
+    /// Required. The FHIR resource type to update, such as Patient or Observation. For a complete list, see the FHIR Resource Index ([DSTU2](https://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html), [STU3](https://hl7.org/implement/standards/fhir/STU3/resourcelist.html), [R4](https://hl7.org/implement/standards/fhir/R4/resourcelist.html)).
+    ///
+    /// Sets the *type* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn type_(mut self, new_value: &str) -> ProjectLocationDatasetFhirStoreFhirConditionalPatchCall<'a, S> {
+        self._type_ = new_value.to_string();
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreFhirConditionalPatchCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationDatasetFhirStoreFhirConditionalPatchCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::CloudHealthcare`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationDatasetFhirStoreFhirConditionalPatchCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationDatasetFhirStoreFhirConditionalPatchCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> ProjectLocationDatasetFhirStoreFhirConditionalPatchCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
+/// If a resource is found with the identifier specified in the query parameters, updates the entire contents of that resource. Implements the FHIR standard conditional update interaction, limited to searching by resource identifier. Search term for identifier should be in the pattern `identifier=system|value` or `identifier=value` - similar to the `search` method on resources with a specific identifier. If the search criteria identify more than one match, the request returns a `412 Precondition Failed` error. If the search criteria identify zero matches, and the supplied resource body contains an `id`, and the FHIR store has enable_update_create set, creates the resource with the client-specified ID. It is strongly advised not to include or encode any sensitive data such as patient identifiers in client-specified resource IDs. Those IDs are part of the FHIR resource path recorded in Cloud Audit Logs and Pub/Sub notifications. Those IDs can also be contained in reference fields within other resources. If the search criteria identify zero matches, and the supplied resource body does not contain an `id`, the resource is created with a server-assigned ID as per the create method. The request body must contain a JSON-encoded FHIR resource, and the request headers must contain `Content-Type: application/fhir+json`. On success, the response body contains a JSON-encoded representation of the updated resource, including the server-assigned version ID. Errors generated by the FHIR store contain a JSON-encoded `OperationOutcome` resource describing the reason for the error. If the request cannot be mapped to a valid API method on a FHIR store, a generic GCP error might be returned instead. For samples that show how to call `conditionalUpdate`, see [Conditionally updating a FHIR resource](https://cloud.google.com/healthcare/docs/how-tos/fhir-resources#conditionally_updating_a_fhir_resource).
+///
+/// A builder for the *locations.datasets.fhirStores.fhir.conditionalUpdate* method supported by a *project* resource.
+/// It is not used directly, but through a [`ProjectMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_healthcare1 as healthcare1;
+/// use healthcare1::api::HttpBody;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use healthcare1::{CloudHealthcare, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // As the method needs a request, you would usually fill it with the desired information
+/// // into the respective structure. Some of the parts shown here might not be applicable !
+/// // Values shown here are possibly random and not representative !
+/// let mut req = HttpBody::default();
+/// 
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.projects().locations_datasets_fhir_stores_fhir_conditional_update(req, "parent", "type")
+///              .doit().await;
+/// # }
+/// ```
+pub struct ProjectLocationDatasetFhirStoreFhirConditionalUpdateCall<'a, S>
+    where S: 'a {
+
+    hub: &'a CloudHealthcare<S>,
+    _request: HttpBody,
+    _parent: String,
+    _type_: String,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for ProjectLocationDatasetFhirStoreFhirConditionalUpdateCall<'a, S> {}
+
+impl<'a, S> ProjectLocationDatasetFhirStoreFhirConditionalUpdateCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, HttpBody)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "healthcare.projects.locations.datasets.fhirStores.fhir.conditionalUpdate",
+                               http_method: hyper::Method::PUT });
+
+        for &field in ["alt", "parent", "type"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(5 + self._additional_params.len());
+        params.push("parent", self._parent);
+        params.push("type", self._type_);
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+parent}/fhir/{+type}";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+parent}", "parent"), ("{+type}", "type")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["type", "parent"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+        let mut json_mime_type = mime::APPLICATION_JSON;
+        let mut request_value_reader =
+            {
+                let mut value = json::value::to_value(&self._request).expect("serde to work");
+                client::remove_json_null_values(&mut value);
+                let mut dst = io::Cursor::new(Vec::with_capacity(128));
+                json::to_writer(&mut dst, &value).unwrap();
+                dst
+            };
+        let request_size = request_value_reader.seek(io::SeekFrom::End(0)).unwrap();
+        request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::PUT)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .header(CONTENT_TYPE, json_mime_type.to_string())
+                        .header(CONTENT_LENGTH, request_size as u64)
+                        .body(hyper::body::Body::from(request_value_reader.get_ref().clone()));
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    ///
+    /// Sets the *request* property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn request(mut self, new_value: HttpBody) -> ProjectLocationDatasetFhirStoreFhirConditionalUpdateCall<'a, S> {
+        self._request = new_value;
+        self
+    }
+    /// Required. The name of the FHIR store this resource belongs to.
+    ///
+    /// Sets the *parent* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn parent(mut self, new_value: &str) -> ProjectLocationDatasetFhirStoreFhirConditionalUpdateCall<'a, S> {
+        self._parent = new_value.to_string();
+        self
+    }
+    /// Required. The FHIR resource type to update, such as Patient or Observation. For a complete list, see the FHIR Resource Index ([DSTU2](https://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html), [STU3](https://hl7.org/implement/standards/fhir/STU3/resourcelist.html), [R4](https://hl7.org/implement/standards/fhir/R4/resourcelist.html)). Must match the resource type in the provided content.
+    ///
+    /// Sets the *type* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn type_(mut self, new_value: &str) -> ProjectLocationDatasetFhirStoreFhirConditionalUpdateCall<'a, S> {
+        self._type_ = new_value.to_string();
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreFhirConditionalUpdateCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationDatasetFhirStoreFhirConditionalUpdateCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::CloudHealthcare`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationDatasetFhirStoreFhirConditionalUpdateCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationDatasetFhirStoreFhirConditionalUpdateCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> ProjectLocationDatasetFhirStoreFhirConditionalUpdateCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
+/// Creates a FHIR resource. Implements the FHIR standard create interaction ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#create), [STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#create), [R4](http://hl7.org/implement/standards/fhir/R4/http.html#create)), which creates a new resource with a server-assigned resource ID. Also supports the FHIR standard conditional create interaction ([DSTU2](https://hl7.org/implement/standards/fhir/DSTU2/http.html#ccreate), [STU3](https://hl7.org/implement/standards/fhir/STU3/http.html#ccreate), [R4](https://hl7.org/implement/standards/fhir/R4/http.html#ccreate)), specified by supplying an `If-None-Exist` header containing a FHIR search query, limited to searching by resource identifier. If no resources match this search query, the server processes the create operation as normal. When using conditional create, the search term for identifier should be in the pattern `identifier=system|value` or `identifier=value` - similar to the `search` method on resources with a specific identifier. The request body must contain a JSON-encoded FHIR resource, and the request headers must contain `Content-Type: application/fhir+json`. On success, the response body contains a JSON-encoded representation of the resource as it was created on the server, including the server-assigned resource ID and version ID. Errors generated by the FHIR store contain a JSON-encoded `OperationOutcome` resource describing the reason for the error. If the request cannot be mapped to a valid API method on a FHIR store, a generic GCP error might be returned instead. For samples that show how to call `create`, see [Creating a FHIR resource](https://cloud.google.com/healthcare/docs/how-tos/fhir-resources#creating_a_fhir_resource).
 ///
 /// A builder for the *locations.datasets.fhirStores.fhir.create* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -25660,7 +28833,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -25724,7 +28897,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/fhir/{+type}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent"), ("{+type}", "type")].iter() {
@@ -25845,7 +29018,7 @@ where
         self._request = new_value;
         self
     }
-    /// The name of the FHIR store this resource belongs to.
+    /// Required. The name of the FHIR store this resource belongs to.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -25855,7 +29028,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The FHIR resource type to create, such as Patient or Observation. For a complete list, see the FHIR Resource Index ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html), [STU3](http://hl7.org/implement/standards/fhir/STU3/resourcelist.html), [R4](http://hl7.org/implement/standards/fhir/R4/resourcelist.html)). Must match the resource type in the provided content.
+    /// Required. The FHIR resource type to create, such as Patient or Observation. For a complete list, see the FHIR Resource Index ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html), [STU3](http://hl7.org/implement/standards/fhir/STU3/resourcelist.html), [R4](http://hl7.org/implement/standards/fhir/R4/resourcelist.html)). Must match the resource type in the provided content.
     ///
     /// Sets the *type* path property to the given value.
     ///
@@ -25869,7 +29042,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreFhirCreateCall<'a, S> {
@@ -25906,7 +29080,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -25962,7 +29136,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -26018,7 +29192,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -26116,7 +29290,7 @@ where
     }
 
 
-    /// The name of the resource to delete.
+    /// Required. The name of the resource to delete.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -26130,7 +29304,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreFhirDeleteCall<'a, S> {
@@ -26167,7 +29342,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -26224,7 +29399,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -26286,7 +29461,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/fhir";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
@@ -26407,7 +29582,7 @@ where
         self._request = new_value;
         self
     }
-    /// Name of the FHIR store in which this bundle will be executed.
+    /// Required. Name of the FHIR store in which this bundle will be executed.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -26421,7 +29596,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreFhirExecuteBundleCall<'a, S> {
@@ -26458,7 +29634,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -26514,15 +29690,15 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_datasets_fhir_stores_fhir_history("name")
-///              ._since("eos")
-///              ._page_token("et")
-///              ._count(-10)
-///              ._at("et")
+///              ._since("accusam")
+///              ._page_token("sea")
+///              ._count(-59)
+///              ._at("Lorem")
 ///              .doit().await;
 /// # }
 /// ```
@@ -26590,7 +29766,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}/_history";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -26688,7 +29864,7 @@ where
     }
 
 
-    /// The name of the resource to retrieve.
+    /// Required. The name of the resource to retrieve.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -26730,7 +29906,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreFhirHistoryCall<'a, S> {
@@ -26767,7 +29944,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -26824,7 +30001,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -26886,7 +30063,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -27007,7 +30184,7 @@ where
         self._request = new_value;
         self
     }
-    /// The name of the resource to update.
+    /// Required. The name of the resource to update.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -27021,7 +30198,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreFhirPatchCall<'a, S> {
@@ -27058,7 +30236,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -27114,7 +30292,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -27170,7 +30348,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -27268,7 +30446,7 @@ where
     }
 
 
-    /// The name of the resource to retrieve.
+    /// Required. The name of the resource to retrieve.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -27282,7 +30460,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreFhirReadCall<'a, S> {
@@ -27319,7 +30498,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -27353,7 +30532,7 @@ where
 }
 
 
-/// Searches for resources in the given FHIR store according to criteria specified as query parameters. Implements the FHIR standard search interaction ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#search), [STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#search), [R4](http://hl7.org/implement/standards/fhir/R4/http.html#search)) using the search semantics described in the FHIR Search specification ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/search.html), [STU3](http://hl7.org/implement/standards/fhir/STU3/search.html), [R4](http://hl7.org/implement/standards/fhir/R4/search.html)). Supports four methods of search defined by the specification: * `GET [base]?[parameters]` to search across all resources. * `GET [base]/[type]?[parameters]` to search resources of a specified type. * `POST [base]/_search?[parameters]` as an alternate form having the same semantics as the `GET` method across all resources. * `POST [base]/[type]/_search?[parameters]` as an alternate form having the same semantics as the `GET` method for the specified type. The `GET` and `POST` methods do not support compartment searches. The `POST` method does not support `application/x-www-form-urlencoded` search parameters. On success, the response body contains a JSON-encoded representation of a `Bundle` resource of type `searchset`, containing the results of the search. Errors generated by the FHIR store contain a JSON-encoded `OperationOutcome` resource describing the reason for the error. If the request cannot be mapped to a valid API method on a FHIR store, a generic GCP error might be returned instead. The server's capability statement, retrieved through capabilities, indicates what search parameters are supported on each FHIR resource. A list of all search parameters defined by the specification can be found in the FHIR Search Parameter Registry ([STU3](http://hl7.org/implement/standards/fhir/STU3/searchparameter-registry.html), [R4](http://hl7.org/implement/standards/fhir/R4/searchparameter-registry.html)). FHIR search parameters for DSTU2 can be found on each resource's definition page. Supported search modifiers: `:missing`, `:exact`, `:contains`, `:text`, `:in`, `:not-in`, `:above`, `:below`, `:[type]`, `:not`, and `recurse` (DSTU2 and STU3) or `:iterate` (R4). Supported search result parameters: `_sort`, `_count`, `_include`, `_revinclude`, `_summary=text`, `_summary=data`, and `_elements`. The maximum number of search results returned defaults to 100, which can be overridden by the `_count` parameter up to a maximum limit of 1000. If there are additional results, the returned `Bundle` contains a link of `relation` "next", which has a `_page_token` parameter for an opaque pagination token that can be used to retrieve the next page. Resources with a total size larger than 5MB or a field count larger than 50,000 might not be fully searchable as the server might trim its generated search index in those cases. Note: FHIR resources are indexed asynchronously, so there might be a slight delay between the time a resource is created or changes and when the change is reflected in search results. For samples and detailed information, see [Searching for FHIR resources](https://cloud.google.com/healthcare/docs/how-tos/fhir-search) and [Advanced FHIR search features](https://cloud.google.com/healthcare/docs/how-tos/fhir-advanced-search).
+/// Searches for resources in the given FHIR store according to criteria specified as query parameters. Implements the FHIR standard search interaction ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#search), [STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#search), [R4](http://hl7.org/implement/standards/fhir/R4/http.html#search)) using the search semantics described in the FHIR Search specification ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/search.html), [STU3](http://hl7.org/implement/standards/fhir/STU3/search.html), [R4](http://hl7.org/implement/standards/fhir/R4/search.html)). Supports four methods of search defined by the specification: * `GET [base]?[parameters]` to search across all resources. * `GET [base]/[type]?[parameters]` to search resources of a specified type. * `POST [base]/_search?[parameters]` as an alternate form having the same semantics as the `GET` method across all resources. * `POST [base]/[type]/_search?[parameters]` as an alternate form having the same semantics as the `GET` method for the specified type. The `GET` and `POST` methods do not support compartment searches. The `POST` method does not support `application/x-www-form-urlencoded` search parameters. On success, the response body contains a JSON-encoded representation of a `Bundle` resource of type `searchset`, containing the results of the search. Errors generated by the FHIR store contain a JSON-encoded `OperationOutcome` resource describing the reason for the error. If the request cannot be mapped to a valid API method on a FHIR store, a generic GCP error might be returned instead. The server's capability statement, retrieved through capabilities, indicates what search parameters are supported on each FHIR resource. A list of all search parameters defined by the specification can be found in the FHIR Search Parameter Registry ([STU3](http://hl7.org/implement/standards/fhir/STU3/searchparameter-registry.html), [R4](http://hl7.org/implement/standards/fhir/R4/searchparameter-registry.html)). FHIR search parameters for DSTU2 can be found on each resource's definition page. Supported search modifiers: `:missing`, `:exact`, `:contains`, `:text`, `:in`, `:not-in`, `:above`, `:below`, `:[type]`, `:not`, and `recurse` (DSTU2 and STU3) or `:iterate` (R4). Supported search result parameters: `_sort`, `_count`, `_include`, `_revinclude`, `_summary=text`, `_summary=data`, and `_elements`. The maximum number of search results returned defaults to 100, which can be overridden by the `_count` parameter up to a maximum limit of 1000. The server might return fewer resources than requested to prevent excessively large responses. If there are additional results, the returned `Bundle` contains a link of `relation` "next", which has a `_page_token` parameter for an opaque pagination token that can be used to retrieve the next page. Resources with a total size larger than 5MB or a field count larger than 50,000 might not be fully searchable as the server might trim its generated search index in those cases. Note: FHIR resources are indexed asynchronously, so there might be a slight delay between the time a resource is created or changed, and the time when the change reflects in search results. The only exception is resource identifier data, which is indexed synchronously as a special index. As a result, searching using resource identifier is not subject to indexing delay. To use the special synchronous index, the search term for identifier should be in the pattern `identifier=[system]|[value]` or `identifier=[value]`, and any of the following search result parameters can be used: * `_count` * `_include` * `_revinclude` * `_summary` * `_elements` If your query contains any other search parameters, the standard asynchronous index will be used instead. Note that searching against the special index is optimized for resolving a small number of matches. The search isn't optimized if your identifier search criteria matches a large number (i.e. more than 2,000) of resources. For a search query that will match a large number of resources, you can avoiding using the special synchronous index by including an additional `_sort` parameter in your query. Use `_sort=-_lastUpdated` if you want to keep the default sorting order. Note: The special synchronous identifier index are currently disabled for DocumentReference and DocumentManifest searches. For samples and detailed information, see [Searching for FHIR resources](https://cloud.google.com/healthcare/docs/how-tos/fhir-search) and [Advanced FHIR search features](https://cloud.google.com/healthcare/docs/how-tos/fhir-advanced-search).
 ///
 /// A builder for the *locations.datasets.fhirStores.fhir.search* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -27376,7 +30555,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -27438,7 +30617,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/fhir/_search";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
@@ -27559,7 +30738,7 @@ where
         self._request = new_value;
         self
     }
-    /// Name of the FHIR store to retrieve resources from.
+    /// Required. Name of the FHIR store to retrieve resources from.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -27573,7 +30752,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreFhirSearchCall<'a, S> {
@@ -27610,7 +30790,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -27644,7 +30824,7 @@ where
 }
 
 
-/// Searches for resources in the given FHIR store according to criteria specified as query parameters. Implements the FHIR standard search interaction ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#search), [STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#search), [R4](http://hl7.org/implement/standards/fhir/R4/http.html#search)) using the search semantics described in the FHIR Search specification ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/search.html), [STU3](http://hl7.org/implement/standards/fhir/STU3/search.html), [R4](http://hl7.org/implement/standards/fhir/R4/search.html)). Supports four methods of search defined by the specification: * `GET [base]?[parameters]` to search across all resources. * `GET [base]/[type]?[parameters]` to search resources of a specified type. * `POST [base]/_search?[parameters]` as an alternate form having the same semantics as the `GET` method across all resources. * `POST [base]/[type]/_search?[parameters]` as an alternate form having the same semantics as the `GET` method for the specified type. The `GET` and `POST` methods do not support compartment searches. The `POST` method does not support `application/x-www-form-urlencoded` search parameters. On success, the response body contains a JSON-encoded representation of a `Bundle` resource of type `searchset`, containing the results of the search. Errors generated by the FHIR store contain a JSON-encoded `OperationOutcome` resource describing the reason for the error. If the request cannot be mapped to a valid API method on a FHIR store, a generic GCP error might be returned instead. The server's capability statement, retrieved through capabilities, indicates what search parameters are supported on each FHIR resource. A list of all search parameters defined by the specification can be found in the FHIR Search Parameter Registry ([STU3](http://hl7.org/implement/standards/fhir/STU3/searchparameter-registry.html), [R4](http://hl7.org/implement/standards/fhir/R4/searchparameter-registry.html)). FHIR search parameters for DSTU2 can be found on each resource's definition page. Supported search modifiers: `:missing`, `:exact`, `:contains`, `:text`, `:in`, `:not-in`, `:above`, `:below`, `:[type]`, `:not`, and `recurse` (DSTU2 and STU3) or `:iterate` (R4). Supported search result parameters: `_sort`, `_count`, `_include`, `_revinclude`, `_summary=text`, `_summary=data`, and `_elements`. The maximum number of search results returned defaults to 100, which can be overridden by the `_count` parameter up to a maximum limit of 1000. If there are additional results, the returned `Bundle` contains a link of `relation` "next", which has a `_page_token` parameter for an opaque pagination token that can be used to retrieve the next page. Resources with a total size larger than 5MB or a field count larger than 50,000 might not be fully searchable as the server might trim its generated search index in those cases. Note: FHIR resources are indexed asynchronously, so there might be a slight delay between the time a resource is created or changes and when the change is reflected in search results. For samples and detailed information, see [Searching for FHIR resources](https://cloud.google.com/healthcare/docs/how-tos/fhir-search) and [Advanced FHIR search features](https://cloud.google.com/healthcare/docs/how-tos/fhir-advanced-search).
+/// Searches for resources in the given FHIR store according to criteria specified as query parameters. Implements the FHIR standard search interaction ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/http.html#search), [STU3](http://hl7.org/implement/standards/fhir/STU3/http.html#search), [R4](http://hl7.org/implement/standards/fhir/R4/http.html#search)) using the search semantics described in the FHIR Search specification ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/search.html), [STU3](http://hl7.org/implement/standards/fhir/STU3/search.html), [R4](http://hl7.org/implement/standards/fhir/R4/search.html)). Supports four methods of search defined by the specification: * `GET [base]?[parameters]` to search across all resources. * `GET [base]/[type]?[parameters]` to search resources of a specified type. * `POST [base]/_search?[parameters]` as an alternate form having the same semantics as the `GET` method across all resources. * `POST [base]/[type]/_search?[parameters]` as an alternate form having the same semantics as the `GET` method for the specified type. The `GET` and `POST` methods do not support compartment searches. The `POST` method does not support `application/x-www-form-urlencoded` search parameters. On success, the response body contains a JSON-encoded representation of a `Bundle` resource of type `searchset`, containing the results of the search. Errors generated by the FHIR store contain a JSON-encoded `OperationOutcome` resource describing the reason for the error. If the request cannot be mapped to a valid API method on a FHIR store, a generic GCP error might be returned instead. The server's capability statement, retrieved through capabilities, indicates what search parameters are supported on each FHIR resource. A list of all search parameters defined by the specification can be found in the FHIR Search Parameter Registry ([STU3](http://hl7.org/implement/standards/fhir/STU3/searchparameter-registry.html), [R4](http://hl7.org/implement/standards/fhir/R4/searchparameter-registry.html)). FHIR search parameters for DSTU2 can be found on each resource's definition page. Supported search modifiers: `:missing`, `:exact`, `:contains`, `:text`, `:in`, `:not-in`, `:above`, `:below`, `:[type]`, `:not`, and `recurse` (DSTU2 and STU3) or `:iterate` (R4). Supported search result parameters: `_sort`, `_count`, `_include`, `_revinclude`, `_summary=text`, `_summary=data`, and `_elements`. The maximum number of search results returned defaults to 100, which can be overridden by the `_count` parameter up to a maximum limit of 1000. The server might return fewer resources than requested to prevent excessively large responses. If there are additional results, the returned `Bundle` contains a link of `relation` "next", which has a `_page_token` parameter for an opaque pagination token that can be used to retrieve the next page. Resources with a total size larger than 5MB or a field count larger than 50,000 might not be fully searchable as the server might trim its generated search index in those cases. Note: FHIR resources are indexed asynchronously, so there might be a slight delay between the time a resource is created or changed, and the time when the change reflects in search results. The only exception is resource identifier data, which is indexed synchronously as a special index. As a result, searching using resource identifier is not subject to indexing delay. To use the special synchronous index, the search term for identifier should be in the pattern `identifier=[system]|[value]` or `identifier=[value]`, and any of the following search result parameters can be used: * `_count` * `_include` * `_revinclude` * `_summary` * `_elements` If your query contains any other search parameters, the standard asynchronous index will be used instead. Note that searching against the special index is optimized for resolving a small number of matches. The search isn't optimized if your identifier search criteria matches a large number (i.e. more than 2,000) of resources. For a search query that will match a large number of resources, you can avoiding using the special synchronous index by including an additional `_sort` parameter in your query. Use `_sort=-_lastUpdated` if you want to keep the default sorting order. Note: The special synchronous identifier index are currently disabled for DocumentReference and DocumentManifest searches. For samples and detailed information, see [Searching for FHIR resources](https://cloud.google.com/healthcare/docs/how-tos/fhir-search) and [Advanced FHIR search features](https://cloud.google.com/healthcare/docs/how-tos/fhir-advanced-search).
 ///
 /// A builder for the *locations.datasets.fhirStores.fhir.search-type* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -27667,7 +30847,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -27731,7 +30911,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/fhir/{resourceType}/_search";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent"), ("{resourceType}", "resourceType")].iter() {
@@ -27852,7 +31032,7 @@ where
         self._request = new_value;
         self
     }
-    /// Name of the FHIR store to retrieve resources from.
+    /// Required. Name of the FHIR store to retrieve resources from.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -27862,7 +31042,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The FHIR resource type to search, such as Patient or Observation. For a complete list, see the FHIR Resource Index ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html), [STU3](http://hl7.org/implement/standards/fhir/STU3/resourcelist.html), [R4](http://hl7.org/implement/standards/fhir/R4/resourcelist.html)).
+    /// Required. The FHIR resource type to search, such as Patient or Observation. For a complete list, see the FHIR Resource Index ([DSTU2](http://hl7.org/implement/standards/fhir/DSTU2/resourcelist.html), [STU3](http://hl7.org/implement/standards/fhir/STU3/resourcelist.html), [R4](http://hl7.org/implement/standards/fhir/R4/resourcelist.html)).
     ///
     /// Sets the *resource type* path property to the given value.
     ///
@@ -27876,7 +31056,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreFhirSearchTypeCall<'a, S> {
@@ -27913,7 +31094,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -27970,7 +31151,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -28032,7 +31213,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -28153,7 +31334,7 @@ where
         self._request = new_value;
         self
     }
-    /// The name of the resource to update.
+    /// Required. The name of the resource to update.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -28167,7 +31348,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreFhirUpdateCall<'a, S> {
@@ -28204,7 +31386,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -28260,7 +31442,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -28316,7 +31498,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -28414,7 +31596,7 @@ where
     }
 
 
-    /// The name of the resource version to retrieve.
+    /// Required. The name of the resource version to retrieve.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -28428,7 +31610,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreFhirVreadCall<'a, S> {
@@ -28465,7 +31648,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -28522,7 +31705,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -28532,7 +31715,7 @@ where
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_datasets_fhir_stores_create(req, "parent")
-///              .fhir_store_id("erat")
+///              .fhir_store_id("et")
 ///              .doit().await;
 /// # }
 /// ```
@@ -28589,7 +31772,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/fhirStores";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
@@ -28710,7 +31893,7 @@ where
         self._request = new_value;
         self
     }
-    /// The name of the dataset this FHIR store belongs to.
+    /// Required. The name of the dataset this FHIR store belongs to.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -28720,7 +31903,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The ID of the FHIR store that is being created. The string must match the following regex: `[\p{L}\p{N}_\-\.]{1,256}`.
+    /// Required. The ID of the FHIR store that is being created. The string must match the following regex: `[\p{L}\p{N}_\-\.]{1,256}`.
     ///
     /// Sets the *fhir store id* query property to the given value.
     pub fn fhir_store_id(mut self, new_value: &str) -> ProjectLocationDatasetFhirStoreCreateCall<'a, S> {
@@ -28731,7 +31914,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreCreateCall<'a, S> {
@@ -28768,7 +31952,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -28825,7 +32009,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -28887,7 +32071,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+sourceStore}:deidentify";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+sourceStore}", "sourceStore")].iter() {
@@ -29008,7 +32192,7 @@ where
         self._request = new_value;
         self
     }
-    /// Source FHIR store resource name. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/fhirStores/{fhir_store_id}`.
+    /// Required. Source FHIR store resource name. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/fhirStores/{fhir_store_id}`.
     ///
     /// Sets the *source store* path property to the given value.
     ///
@@ -29022,7 +32206,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreDeidentifyCall<'a, S> {
@@ -29059,7 +32244,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -29115,7 +32300,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -29171,7 +32356,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -29269,7 +32454,7 @@ where
     }
 
 
-    /// The resource name of the FHIR store to delete.
+    /// Required. The resource name of the FHIR store to delete.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -29283,7 +32468,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreDeleteCall<'a, S> {
@@ -29320,7 +32506,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -29377,7 +32563,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -29439,7 +32625,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}:export";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -29560,7 +32746,7 @@ where
         self._request = new_value;
         self
     }
-    /// The name of the FHIR store to export resource from, in the format of `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/fhirStores/{fhir_store_id}`.
+    /// Required. The name of the FHIR store to export resource from, in the format of `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/fhirStores/{fhir_store_id}`.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -29574,7 +32760,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreExportCall<'a, S> {
@@ -29611,7 +32798,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -29667,7 +32854,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -29723,7 +32910,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -29821,7 +33008,7 @@ where
     }
 
 
-    /// The resource name of the FHIR store to get.
+    /// Required. The resource name of the FHIR store to get.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -29835,7 +33022,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreGetCall<'a, S> {
@@ -29872,7 +33060,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -29906,6 +33094,268 @@ where
 }
 
 
+/// Gets metrics associated with the FHIR store.
+///
+/// A builder for the *locations.datasets.fhirStores.getFHIRStoreMetrics* method supported by a *project* resource.
+/// It is not used directly, but through a [`ProjectMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_healthcare1 as healthcare1;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use healthcare1::{CloudHealthcare, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.projects().locations_datasets_fhir_stores_get_fhir_store_metrics("name")
+///              .doit().await;
+/// # }
+/// ```
+pub struct ProjectLocationDatasetFhirStoreGetFHIRStoreMetricCall<'a, S>
+    where S: 'a {
+
+    hub: &'a CloudHealthcare<S>,
+    _name: String,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for ProjectLocationDatasetFhirStoreGetFHIRStoreMetricCall<'a, S> {}
+
+impl<'a, S> ProjectLocationDatasetFhirStoreGetFHIRStoreMetricCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, FhirStoreMetrics)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "healthcare.projects.locations.datasets.fhirStores.getFHIRStoreMetrics",
+                               http_method: hyper::Method::GET });
+
+        for &field in ["alt", "name"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(3 + self._additional_params.len());
+        params.push("name", self._name);
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+name}:getFHIRStoreMetrics";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+name}", "name")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["name"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::GET)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .body(hyper::body::Body::empty());
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    /// Required. The resource name of the FHIR store to get metrics for.
+    ///
+    /// Sets the *name* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn name(mut self, new_value: &str) -> ProjectLocationDatasetFhirStoreGetFHIRStoreMetricCall<'a, S> {
+        self._name = new_value.to_string();
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreGetFHIRStoreMetricCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationDatasetFhirStoreGetFHIRStoreMetricCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::CloudHealthcare`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationDatasetFhirStoreGetFHIRStoreMetricCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationDatasetFhirStoreGetFHIRStoreMetricCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> ProjectLocationDatasetFhirStoreGetFHIRStoreMetricCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
 /// Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
 ///
 /// A builder for the *locations.datasets.fhirStores.getIamPolicy* method supported by a *project* resource.
@@ -29928,12 +33378,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_datasets_fhir_stores_get_iam_policy("resource")
-///              .options_requested_policy_version(-77)
+///              .options_requested_policy_version(-25)
 ///              .doit().await;
 /// # }
 /// ```
@@ -29989,7 +33439,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+resource}:getIamPolicy";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
@@ -30108,7 +33558,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreGetIamPolicyCall<'a, S> {
@@ -30145,7 +33596,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -30202,7 +33653,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -30264,7 +33715,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}:import";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -30385,7 +33836,7 @@ where
         self._request = new_value;
         self
     }
-    /// The name of the FHIR store to import FHIR resources to, in the format of `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/fhirStores/{fhir_store_id}`.
+    /// Required. The name of the FHIR store to import FHIR resources to, in the format of `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/fhirStores/{fhir_store_id}`.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -30399,7 +33850,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreImportCall<'a, S> {
@@ -30436,7 +33888,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -30492,14 +33944,14 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_datasets_fhir_stores_list("parent")
-///              .page_token("sit")
-///              .page_size(-81)
-///              .filter("sea")
+///              .page_token("consetetur")
+///              .page_size(-62)
+///              .filter("dolor")
 ///              .doit().await;
 /// # }
 /// ```
@@ -30563,7 +34015,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/fhirStores";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
@@ -30661,7 +34113,7 @@ where
     }
 
 
-    /// Name of the dataset.
+    /// Required. Name of the dataset.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -30696,7 +34148,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreListCall<'a, S> {
@@ -30733,7 +34186,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -30790,7 +34243,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -30857,7 +34310,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -30978,7 +34431,7 @@ where
         self._request = new_value;
         self
     }
-    /// Output only. Resource name of the FHIR store, of the form `projects/{project_id}/datasets/{dataset_id}/fhirStores/{fhir_store_id}`.
+    /// Output only. Identifier. Resource name of the FHIR store, of the form `projects/{project_id}/datasets/{dataset_id}/fhirStores/{fhir_store_id}`.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -30988,7 +34441,7 @@ where
         self._name = new_value.to_string();
         self
     }
-    /// The update mask applies to the resource. For the `FieldMask` definition, see https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask
+    /// Required. The update mask applies to the resource. For the `FieldMask` definition, see https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask
     ///
     /// Sets the *update mask* query property to the given value.
     pub fn update_mask(mut self, new_value: client::FieldMask) -> ProjectLocationDatasetFhirStorePatchCall<'a, S> {
@@ -30999,7 +34452,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStorePatchCall<'a, S> {
@@ -31036,7 +34490,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -31070,6 +34524,298 @@ where
 }
 
 
+/// Rolls back resources from the FHIR store to the specified time. This method returns an Operation that can be used to track the status of the rollback by calling GetOperation. Immediate fatal errors appear in the error field, errors are also logged to Cloud Logging (see [Viewing error logs in Cloud Logging](https://cloud.google.com/healthcare/docs/how-tos/logging)). Otherwise, when the operation finishes, a detailed response of type RollbackFhirResourcesResponse is returned in the response field. The metadata field type for this operation is OperationMetadata.
+///
+/// A builder for the *locations.datasets.fhirStores.rollback* method supported by a *project* resource.
+/// It is not used directly, but through a [`ProjectMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_healthcare1 as healthcare1;
+/// use healthcare1::api::RollbackFhirResourcesRequest;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use healthcare1::{CloudHealthcare, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // As the method needs a request, you would usually fill it with the desired information
+/// // into the respective structure. Some of the parts shown here might not be applicable !
+/// // Values shown here are possibly random and not representative !
+/// let mut req = RollbackFhirResourcesRequest::default();
+/// 
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.projects().locations_datasets_fhir_stores_rollback(req, "name")
+///              .doit().await;
+/// # }
+/// ```
+pub struct ProjectLocationDatasetFhirStoreRollbackCall<'a, S>
+    where S: 'a {
+
+    hub: &'a CloudHealthcare<S>,
+    _request: RollbackFhirResourcesRequest,
+    _name: String,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for ProjectLocationDatasetFhirStoreRollbackCall<'a, S> {}
+
+impl<'a, S> ProjectLocationDatasetFhirStoreRollbackCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, Operation)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "healthcare.projects.locations.datasets.fhirStores.rollback",
+                               http_method: hyper::Method::POST });
+
+        for &field in ["alt", "name"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(4 + self._additional_params.len());
+        params.push("name", self._name);
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+name}:rollback";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+name}", "name")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["name"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+        let mut json_mime_type = mime::APPLICATION_JSON;
+        let mut request_value_reader =
+            {
+                let mut value = json::value::to_value(&self._request).expect("serde to work");
+                client::remove_json_null_values(&mut value);
+                let mut dst = io::Cursor::new(Vec::with_capacity(128));
+                json::to_writer(&mut dst, &value).unwrap();
+                dst
+            };
+        let request_size = request_value_reader.seek(io::SeekFrom::End(0)).unwrap();
+        request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            request_value_reader.seek(io::SeekFrom::Start(0)).unwrap();
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::POST)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .header(CONTENT_TYPE, json_mime_type.to_string())
+                        .header(CONTENT_LENGTH, request_size as u64)
+                        .body(hyper::body::Body::from(request_value_reader.get_ref().clone()));
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    ///
+    /// Sets the *request* property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn request(mut self, new_value: RollbackFhirResourcesRequest) -> ProjectLocationDatasetFhirStoreRollbackCall<'a, S> {
+        self._request = new_value;
+        self
+    }
+    /// Required. The name of the FHIR store to rollback, in the format of "projects/{project_id}/locations/{location_id}/datasets/{dataset_id} /fhirStores/{fhir_store_id}".
+    ///
+    /// Sets the *name* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn name(mut self, new_value: &str) -> ProjectLocationDatasetFhirStoreRollbackCall<'a, S> {
+        self._name = new_value.to_string();
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreRollbackCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationDatasetFhirStoreRollbackCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::CloudHealthcare`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationDatasetFhirStoreRollbackCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationDatasetFhirStoreRollbackCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> ProjectLocationDatasetFhirStoreRollbackCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
 /// Sets the access control policy on the specified resource. Replaces any existing policy. Can return `NOT_FOUND`, `INVALID_ARGUMENT`, and `PERMISSION_DENIED` errors.
 ///
 /// A builder for the *locations.datasets.fhirStores.setIamPolicy* method supported by a *project* resource.
@@ -31093,7 +34839,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -31155,7 +34901,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+resource}:setIamPolicy";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
@@ -31290,7 +35036,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreSetIamPolicyCall<'a, S> {
@@ -31327,7 +35074,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -31384,7 +35131,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -31446,7 +35193,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+resource}:testIamPermissions";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
@@ -31581,7 +35328,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetFhirStoreTestIamPermissionCall<'a, S> {
@@ -31618,7 +35366,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -31675,7 +35423,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -31737,7 +35485,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/messages";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
@@ -31858,7 +35606,7 @@ where
         self._request = new_value;
         self
     }
-    /// The name of the dataset this message belongs to.
+    /// Required. The name of the HL7v2 store this message belongs to.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -31872,7 +35620,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetHl7V2StoreMessageCreateCall<'a, S> {
@@ -31909,7 +35658,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -31965,7 +35714,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -32021,7 +35770,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -32119,7 +35868,7 @@ where
     }
 
 
-    /// The resource name of the HL7v2 message to delete.
+    /// Required. The resource name of the HL7v2 message to delete.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -32133,7 +35882,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetHl7V2StoreMessageDeleteCall<'a, S> {
@@ -32170,7 +35920,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -32226,12 +35976,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_datasets_hl7_v2_stores_messages_get("name")
-///              .view("sit")
+///              .view("sadipscing")
 ///              .doit().await;
 /// # }
 /// ```
@@ -32287,7 +36037,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -32385,7 +36135,7 @@ where
     }
 
 
-    /// The resource name of the HL7v2 message to retrieve.
+    /// Required. The resource name of the HL7v2 message to retrieve.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -32406,7 +36156,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetHl7V2StoreMessageGetCall<'a, S> {
@@ -32443,7 +36194,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -32500,7 +36251,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -32562,7 +36313,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/messages:ingest";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
@@ -32683,7 +36434,7 @@ where
         self._request = new_value;
         self
     }
-    /// The name of the HL7v2 store this message belongs to.
+    /// Required. The name of the HL7v2 store this message belongs to.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -32697,7 +36448,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetHl7V2StoreMessageIngestCall<'a, S> {
@@ -32734,7 +36486,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -32790,16 +36542,16 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_datasets_hl7_v2_stores_messages_list("parent")
-///              .view("At")
-///              .page_token("dolores")
-///              .page_size(-46)
-///              .order_by("gubergren")
-///              .filter("dolor")
+///              .view("duo")
+///              .page_token("sit")
+///              .page_size(-83)
+///              .order_by("et")
+///              .filter("rebum.")
 ///              .doit().await;
 /// # }
 /// ```
@@ -32871,7 +36623,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/messages";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
@@ -32969,7 +36721,7 @@ where
     }
 
 
-    /// Name of the HL7v2 store to retrieve messages from.
+    /// Required. Name of the HL7v2 store to retrieve messages from.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -33018,7 +36770,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetHl7V2StoreMessageListCall<'a, S> {
@@ -33055,7 +36808,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -33112,7 +36865,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -33179,7 +36932,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -33300,7 +37053,7 @@ where
         self._request = new_value;
         self
     }
-    /// Resource name of the Message, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7V2Stores/{hl7_v2_store_id}/messages/{message_id}`. Assigned by the server.
+    /// Output only. Resource name of the Message, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7V2Stores/{hl7_v2_store_id}/messages/{message_id}`. Assigned by the server.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -33310,7 +37063,7 @@ where
         self._name = new_value.to_string();
         self
     }
-    /// The update mask applies to the resource. For the `FieldMask` definition, see https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask
+    /// Required. The update mask applies to the resource. For the `FieldMask` definition, see https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask
     ///
     /// Sets the *update mask* query property to the given value.
     pub fn update_mask(mut self, new_value: client::FieldMask) -> ProjectLocationDatasetHl7V2StoreMessagePatchCall<'a, S> {
@@ -33321,7 +37074,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetHl7V2StoreMessagePatchCall<'a, S> {
@@ -33358,7 +37112,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -33415,7 +37169,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -33425,7 +37179,7 @@ where
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_datasets_hl7_v2_stores_create(req, "parent")
-///              .hl7_v2_store_id("amet.")
+///              .hl7_v2_store_id("justo")
 ///              .doit().await;
 /// # }
 /// ```
@@ -33482,7 +37236,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/hl7V2Stores";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
@@ -33603,7 +37357,7 @@ where
         self._request = new_value;
         self
     }
-    /// The name of the dataset this HL7v2 store belongs to.
+    /// Required. The name of the dataset this HL7v2 store belongs to.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -33613,7 +37367,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The ID of the HL7v2 store that is being created. The string must match the following regex: `[\p{L}\p{N}_\-\.]{1,256}`.
+    /// Required. The ID of the HL7v2 store that is being created. The string must match the following regex: `[\p{L}\p{N}_\-\.]{1,256}`.
     ///
     /// Sets the *hl7 v2 store id* query property to the given value.
     pub fn hl7_v2_store_id(mut self, new_value: &str) -> ProjectLocationDatasetHl7V2StoreCreateCall<'a, S> {
@@ -33624,7 +37378,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetHl7V2StoreCreateCall<'a, S> {
@@ -33661,7 +37416,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -33717,7 +37472,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -33773,7 +37528,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -33871,7 +37626,7 @@ where
     }
 
 
-    /// The resource name of the HL7v2 store to delete.
+    /// Required. The resource name of the HL7v2 store to delete.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -33885,7 +37640,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetHl7V2StoreDeleteCall<'a, S> {
@@ -33922,7 +37678,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -33979,7 +37735,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -34041,7 +37797,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}:export";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -34162,7 +37918,7 @@ where
         self._request = new_value;
         self
     }
-    /// The name of the source HL7v2 store, in the format `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7v2Stores/{hl7v2_store_id}`
+    /// Required. The name of the source HL7v2 store, in the format `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7v2Stores/{hl7v2_store_id}`
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -34176,7 +37932,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetHl7V2StoreExportCall<'a, S> {
@@ -34213,7 +37970,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -34269,7 +38026,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -34325,7 +38082,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -34423,7 +38180,7 @@ where
     }
 
 
-    /// The resource name of the HL7v2 store to get.
+    /// Required. The resource name of the HL7v2 store to get.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -34437,7 +38194,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetHl7V2StoreGetCall<'a, S> {
@@ -34474,7 +38232,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -34508,6 +38266,268 @@ where
 }
 
 
+/// Gets metrics associated with the HL7v2 store.
+///
+/// A builder for the *locations.datasets.hl7V2Stores.getHL7v2StoreMetrics* method supported by a *project* resource.
+/// It is not used directly, but through a [`ProjectMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_healthcare1 as healthcare1;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use healthcare1::{CloudHealthcare, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.projects().locations_datasets_hl7_v2_stores_get_hl7v2_store_metrics("name")
+///              .doit().await;
+/// # }
+/// ```
+pub struct ProjectLocationDatasetHl7V2StoreGetHL7v2StoreMetricCall<'a, S>
+    where S: 'a {
+
+    hub: &'a CloudHealthcare<S>,
+    _name: String,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for ProjectLocationDatasetHl7V2StoreGetHL7v2StoreMetricCall<'a, S> {}
+
+impl<'a, S> ProjectLocationDatasetHl7V2StoreGetHL7v2StoreMetricCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, Hl7V2StoreMetrics)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "healthcare.projects.locations.datasets.hl7V2Stores.getHL7v2StoreMetrics",
+                               http_method: hyper::Method::GET });
+
+        for &field in ["alt", "name"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(3 + self._additional_params.len());
+        params.push("name", self._name);
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/{+name}:getHL7v2StoreMetrics";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{+name}", "name")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, true);
+        }
+        {
+            let to_remove = ["name"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::GET)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .body(hyper::body::Body::empty());
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    /// Required. The resource name of the HL7v2 store to get metrics for, in the format `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7V2Stores/{hl7v2_store_id}`.
+    ///
+    /// Sets the *name* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn name(mut self, new_value: &str) -> ProjectLocationDatasetHl7V2StoreGetHL7v2StoreMetricCall<'a, S> {
+        self._name = new_value.to_string();
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetHl7V2StoreGetHL7v2StoreMetricCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationDatasetHl7V2StoreGetHL7v2StoreMetricCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::CloudHealthcare`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationDatasetHl7V2StoreGetHL7v2StoreMetricCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationDatasetHl7V2StoreGetHL7v2StoreMetricCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> ProjectLocationDatasetHl7V2StoreGetHL7v2StoreMetricCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
 /// Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.
 ///
 /// A builder for the *locations.datasets.hl7V2Stores.getIamPolicy* method supported by a *project* resource.
@@ -34530,12 +38550,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_datasets_hl7_v2_stores_get_iam_policy("resource")
-///              .options_requested_policy_version(-45)
+///              .options_requested_policy_version(-101)
 ///              .doit().await;
 /// # }
 /// ```
@@ -34591,7 +38611,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+resource}:getIamPolicy";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
@@ -34710,7 +38730,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetHl7V2StoreGetIamPolicyCall<'a, S> {
@@ -34747,7 +38768,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -34804,7 +38825,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -34866,7 +38887,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}:import";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -34987,7 +39008,7 @@ where
         self._request = new_value;
         self
     }
-    /// The name of the target HL7v2 store, in the format `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7v2Stores/{hl7v2_store_id}`
+    /// Required. The name of the target HL7v2 store, in the format `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7v2Stores/{hl7v2_store_id}`
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -35001,7 +39022,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetHl7V2StoreImportCall<'a, S> {
@@ -35038,7 +39060,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -35094,14 +39116,14 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_datasets_hl7_v2_stores_list("parent")
-///              .page_token("duo")
-///              .page_size(-53)
-///              .filter("magna")
+///              .page_token("rebum.")
+///              .page_size(-39)
+///              .filter("dolore")
 ///              .doit().await;
 /// # }
 /// ```
@@ -35165,7 +39187,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/hl7V2Stores";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
@@ -35263,7 +39285,7 @@ where
     }
 
 
-    /// Name of the dataset.
+    /// Required. Name of the dataset.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -35298,7 +39320,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetHl7V2StoreListCall<'a, S> {
@@ -35335,7 +39358,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -35392,7 +39415,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -35459,7 +39482,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -35580,7 +39603,7 @@ where
         self._request = new_value;
         self
     }
-    /// Resource name of the HL7v2 store, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7V2Stores/{hl7v2_store_id}`.
+    /// Identifier. Resource name of the HL7v2 store, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7V2Stores/{hl7v2_store_id}`.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -35590,7 +39613,7 @@ where
         self._name = new_value.to_string();
         self
     }
-    /// The update mask applies to the resource. For the `FieldMask` definition, see https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask
+    /// Required. The update mask applies to the resource. For the `FieldMask` definition, see https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask
     ///
     /// Sets the *update mask* query property to the given value.
     pub fn update_mask(mut self, new_value: client::FieldMask) -> ProjectLocationDatasetHl7V2StorePatchCall<'a, S> {
@@ -35601,7 +39624,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetHl7V2StorePatchCall<'a, S> {
@@ -35638,7 +39662,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -35695,7 +39719,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -35757,7 +39781,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+resource}:setIamPolicy";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
@@ -35892,7 +39916,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetHl7V2StoreSetIamPolicyCall<'a, S> {
@@ -35929,7 +39954,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -35986,7 +40011,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -36048,7 +40073,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+resource}:testIamPermissions";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
@@ -36183,7 +40208,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetHl7V2StoreTestIamPermissionCall<'a, S> {
@@ -36220,7 +40246,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -36277,7 +40303,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -36339,7 +40365,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}:cancel";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -36474,7 +40500,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetOperationCancelCall<'a, S> {
@@ -36511,7 +40538,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -36567,7 +40594,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -36623,7 +40650,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -36735,7 +40762,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetOperationGetCall<'a, S> {
@@ -36772,7 +40800,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -36806,7 +40834,7 @@ where
 }
 
 
-/// Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns `UNIMPLEMENTED`. NOTE: the `name` binding allows API services to override the binding to use different resource name schemes, such as `users/*/operations`. To override the binding, API services can add a binding such as `"/v1/{name=users/*}/operations"` to their service configuration. For backwards compatibility, the default name includes the operations collection id, however overriding users must ensure the name binding is the parent resource, without the operations collection id.
+/// Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns `UNIMPLEMENTED`.
 ///
 /// A builder for the *locations.datasets.operations.list* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
@@ -36828,14 +40856,14 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_datasets_operations_list("name")
-///              .page_token("no")
-///              .page_size(-91)
-///              .filter("sed")
+///              .page_token("sit")
+///              .page_size(-76)
+///              .filter("duo")
 ///              .doit().await;
 /// # }
 /// ```
@@ -36899,7 +40927,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}/operations";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -37032,7 +41060,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetOperationListCall<'a, S> {
@@ -37069,7 +41098,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -37126,7 +41155,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -37136,7 +41165,7 @@ where
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_datasets_create(req, "parent")
-///              .dataset_id("Lorem")
+///              .dataset_id("ut")
 ///              .doit().await;
 /// # }
 /// ```
@@ -37193,7 +41222,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/datasets";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
@@ -37314,7 +41343,7 @@ where
         self._request = new_value;
         self
     }
-    /// The name of the project where the server creates the dataset. For example, `projects/{project_id}/locations/{location_id}`.
+    /// Required. The name of the project where the server creates the dataset. For example, `projects/{project_id}/locations/{location_id}`.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -37324,7 +41353,7 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The ID of the dataset that is being created. The string must match the following regex: `[\p{L}\p{N}_\-\.]{1,256}`.
+    /// Required. The ID of the dataset that is being created. The string must match the following regex: `[\p{L}\p{N}_\-\.]{1,256}`.
     ///
     /// Sets the *dataset id* query property to the given value.
     pub fn dataset_id(mut self, new_value: &str) -> ProjectLocationDatasetCreateCall<'a, S> {
@@ -37335,7 +41364,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetCreateCall<'a, S> {
@@ -37372,7 +41402,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -37429,7 +41459,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -37491,7 +41521,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+sourceDataset}:deidentify";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+sourceDataset}", "sourceDataset")].iter() {
@@ -37612,7 +41642,7 @@ where
         self._request = new_value;
         self
     }
-    /// Source dataset resource name. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}`.
+    /// Required. Source dataset resource name. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}`.
     ///
     /// Sets the *source dataset* path property to the given value.
     ///
@@ -37626,7 +41656,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDeidentifyCall<'a, S> {
@@ -37663,7 +41694,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -37719,7 +41750,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -37775,7 +41806,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -37873,7 +41904,7 @@ where
     }
 
 
-    /// The name of the dataset to delete. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}`.
+    /// Required. The name of the dataset to delete. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}`.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -37887,7 +41918,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetDeleteCall<'a, S> {
@@ -37924,7 +41956,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -37980,7 +42012,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -38036,7 +42068,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -38134,7 +42166,7 @@ where
     }
 
 
-    /// The name of the dataset to read. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}`.
+    /// Required. The name of the dataset to read. For example, `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}`.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -38148,7 +42180,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetGetCall<'a, S> {
@@ -38185,7 +42218,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -38241,12 +42274,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_datasets_get_iam_policy("resource")
-///              .options_requested_policy_version(-34)
+///              .options_requested_policy_version(-39)
 ///              .doit().await;
 /// # }
 /// ```
@@ -38302,7 +42335,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+resource}:getIamPolicy";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
@@ -38421,7 +42454,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetGetIamPolicyCall<'a, S> {
@@ -38458,7 +42492,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -38514,13 +42548,13 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_datasets_list("parent")
-///              .page_token("amet.")
-///              .page_size(-84)
+///              .page_token("et")
+///              .page_size(-56)
 ///              .doit().await;
 /// # }
 /// ```
@@ -38580,7 +42614,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+parent}/datasets";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+parent}", "parent")].iter() {
@@ -38678,7 +42712,7 @@ where
     }
 
 
-    /// The name of the project whose datasets should be listed. For example, `projects/{project_id}/locations/{location_id}`.
+    /// Required. The name of the project whose datasets should be listed. For example, `projects/{project_id}/locations/{location_id}`.
     ///
     /// Sets the *parent* path property to the given value.
     ///
@@ -38706,7 +42740,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetListCall<'a, S> {
@@ -38743,7 +42778,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -38800,7 +42835,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -38867,7 +42902,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -38988,7 +43023,7 @@ where
         self._request = new_value;
         self
     }
-    /// Resource name of the dataset, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}`.
+    /// Identifier. Resource name of the dataset, of the form `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}`.
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -38998,7 +43033,7 @@ where
         self._name = new_value.to_string();
         self
     }
-    /// The update mask applies to the resource. For the `FieldMask` definition, see https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask
+    /// Required. The update mask applies to the resource. For the `FieldMask` definition, see https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask
     ///
     /// Sets the *update mask* query property to the given value.
     pub fn update_mask(mut self, new_value: client::FieldMask) -> ProjectLocationDatasetPatchCall<'a, S> {
@@ -39009,7 +43044,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetPatchCall<'a, S> {
@@ -39046,7 +43082,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -39103,7 +43139,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -39165,7 +43201,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+resource}:setIamPolicy";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
@@ -39300,7 +43336,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetSetIamPolicyCall<'a, S> {
@@ -39337,7 +43374,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -39394,7 +43431,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -39456,7 +43493,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+resource}:testIamPermissions";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+resource}", "resource")].iter() {
@@ -39591,7 +43628,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationDatasetTestIamPermissionCall<'a, S> {
@@ -39628,7 +43666,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -39685,7 +43723,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -39747,7 +43785,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+nlpService}:analyzeEntities";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+nlpService}", "nlpService")].iter() {
@@ -39882,7 +43920,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationServiceNlpAnalyzeEntityCall<'a, S> {
@@ -39919,7 +43958,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -39975,7 +44014,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -40031,7 +44070,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -40143,7 +44182,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationGetCall<'a, S> {
@@ -40180,7 +44220,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.
@@ -40236,14 +44276,14 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = CloudHealthcare::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.projects().locations_list("name")
-///              .page_token("sadipscing")
-///              .page_size(-87)
-///              .filter("rebum.")
+///              .page_token("Stet")
+///              .page_size(-82)
+///              .filter("ut")
 ///              .doit().await;
 /// # }
 /// ```
@@ -40307,7 +44347,7 @@ where
         params.push("alt", "json");
         let mut url = self.hub._base_url.clone() + "v1/{+name}/locations";
         if self._scopes.is_empty() {
-            self._scopes.insert(Scope::CloudPlatform.as_ref().to_string());
+            self._scopes.insert(Scope::CloudHealthcare.as_ref().to_string());
         }
 
         for &(find_this, param_name) in [("{+name}", "name")].iter() {
@@ -40440,7 +44480,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationListCall<'a, S> {
@@ -40477,7 +44518,7 @@ where
     /// Identifies the authorization scope for the method you are building.
     ///
     /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
-    /// [`Scope::CloudPlatform`].
+    /// [`Scope::CloudHealthcare`].
     ///
     /// The `scope` will be added to a set of scopes. This is important as one can maintain access
     /// tokens for more than one scope.

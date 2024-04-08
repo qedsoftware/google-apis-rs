@@ -261,7 +261,7 @@ let auth = oauth2::InstalledFlowAuthenticator::builder(
         secret,
         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
     ).build().await.unwrap();
-let mut hub = ${hub_type}::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);\
+let mut hub = ${hub_type}::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().unwrap().https_or_http().enable_http1().build()), auth);\
 </%def>
 
 ## You will still have to set the filter for your comment type - either nothing, or rust_doc_comment !
@@ -331,7 +331,7 @@ You can read the full text at the repository's [license file][repo-license].
 /// Identifies the an OAuth2 authorization scope.
 /// A scope is needed when requesting an
 /// [authorization token](https://developers.google.com/youtube/v3/guides/authentication).
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Ord, PartialOrd, Hash, Debug, Clone, Copy)]
 pub enum Scope {
 % for url, scope in auth.oauth2.scopes.items():
     ${scope.description | rust_doc_sanitize(documentationLink), rust_doc_comment}

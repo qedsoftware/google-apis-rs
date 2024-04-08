@@ -15,6 +15,7 @@ pub mod duration {
         ParseIntError(std::num::ParseIntError),
         SecondOverflow { seconds: i64, max_seconds: i64 },
         SecondUnderflow { seconds: i64, min_seconds: i64 },
+        DurationSeconds { seconds: i64 },
     }
 
     impl From<std::num::ParseIntError> for ParseDurationError {
@@ -47,6 +48,9 @@ pub mod duration {
                     "seconds underflow (got {}, minimum seconds possible {})",
                     seconds, min_seconds
                 ),
+                ParseDurationError::DurationSeconds { seconds } => {
+                    write!(f, "Could not create a duration from {seconds}")
+                }
             }
         }
     }
@@ -93,15 +97,18 @@ pub mod duration {
                 min_seconds: -MAX_SECONDS,
             })
         } else {
-            Ok(Duration::seconds(seconds) + Duration::nanoseconds(nanoseconds.into()))
+            Ok(Duration::try_seconds(seconds)
+                .ok_or(ParseDurationError::DurationSeconds { seconds })?
+                + Duration::nanoseconds(nanoseconds.into()))
         }
     }
 
     pub fn to_string(duration: &Duration) -> String {
         let seconds = duration.num_seconds();
-        let nanoseconds = (*duration - Duration::seconds(seconds))
-            .num_nanoseconds()
-            .expect("absolute number of nanoseconds is less than 1 billion")
+        let nanoseconds = (*duration
+            - Duration::try_seconds(seconds).expect("Seconds in bounds to create Duration from"))
+        .num_nanoseconds()
+        .expect("absolute number of nanoseconds is less than 1 billion")
             as i32;
         if nanoseconds != 0 {
             if seconds == 0 && nanoseconds.is_negative() {
@@ -136,9 +143,41 @@ pub mod duration {
     }
 }
 
+pub mod standard_base64 {
+    use serde::{Deserialize, Deserializer, Serializer};
+    use serde_with::{DeserializeAs, SerializeAs};
+    use std::borrow::Cow;
+
+    pub struct Wrapper;
+
+    pub fn to_string(bytes: &Vec<u8>) -> String {
+        base64::encode_config(bytes, base64::STANDARD)
+    }
+
+    impl SerializeAs<Vec<u8>> for Wrapper {
+        fn serialize_as<S>(value: &Vec<u8>, s: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+        {
+            s.serialize_str(&to_string(value))
+        }
+    }
+
+    impl<'de> DeserializeAs<'de, Vec<u8>> for Wrapper {
+        fn deserialize_as<D>(deserializer: D) -> Result<Vec<u8>, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            let s: Cow<str> = Deserialize::deserialize(deserializer)?;
+            base64::decode_config(s.as_ref(), base64::STANDARD).map_err(serde::de::Error::custom)
+        }
+    }
+}
+
 pub mod urlsafe_base64 {
     use serde::{Deserialize, Deserializer, Serializer};
     use serde_with::{DeserializeAs, SerializeAs};
+    use std::borrow::Cow;
 
     pub struct Wrapper;
 
@@ -160,8 +199,8 @@ pub mod urlsafe_base64 {
         where
             D: Deserializer<'de>,
         {
-            let s: &str = Deserialize::deserialize(deserializer)?;
-            base64::decode_config(s, base64::URL_SAFE).map_err(serde::de::Error::custom)
+            let s: Cow<str> = Deserialize::deserialize(deserializer)?;
+            base64::decode_config(s.as_ref(), base64::URL_SAFE).map_err(serde::de::Error::custom)
         }
     }
 }
@@ -172,7 +211,7 @@ pub fn datetime_to_string(datetime: &chrono::DateTime<chrono::offset::Utc>) -> S
 
 #[cfg(test)]
 mod test {
-    use super::{duration, urlsafe_base64};
+    use super::{duration, standard_base64, urlsafe_base64};
     use serde::{Deserialize, Serialize};
     use serde_with::{serde_as, DisplayFromStr};
 
@@ -185,8 +224,15 @@ mod test {
 
     #[serde_as]
     #[derive(Serialize, Deserialize, Debug, PartialEq)]
-    struct Base64Wrapper {
+    struct Base64URLSafeWrapper {
         #[serde_as(as = "Option<urlsafe_base64::Wrapper>")]
+        bytes: Option<Vec<u8>>,
+    }
+
+    #[serde_as]
+    #[derive(Serialize, Deserialize, Debug, PartialEq)]
+    struct Base64StandardWrapper {
+        #[serde_as(as = "Option<standard_base64::Wrapper>")]
         bytes: Option<Vec<u8>>,
     }
 
@@ -258,24 +304,77 @@ mod test {
     }
 
     #[test]
+    fn standard_base64_de_success_cases() {
+        let wrapper: Base64StandardWrapper =
+            serde_json::from_str(r#"{"bytes": "cVhabzk6U21uOkN+MylFWFRJMVFLdEh2MShmVHp9"}"#)
+                .unwrap();
+        assert_eq!(
+            Some(b"qXZo9:Smn:C~3)EXTI1QKtHv1(fTz}".as_slice()),
+            wrapper.bytes.as_deref()
+        );
+    }
+
+    #[test]
+    fn standard_base64_de_reader_success_cases() {
+        let standard: Base64StandardWrapper = serde_json::from_reader(
+            r#"{"bytes": "cVhabzk6U21uOkN+MylFWFRJMVFLdEh2MShmVHp9"}"#.as_bytes(),
+        )
+        .unwrap();
+        assert_eq!(
+            Some(b"qXZo9:Smn:C~3)EXTI1QKtHv1(fTz}".as_slice()),
+            standard.bytes.as_deref()
+        );
+    }
+
+    #[test]
     fn urlsafe_base64_de_success_cases() {
-        let wrapper: Base64Wrapper =
+        let wrapper: Base64URLSafeWrapper =
             serde_json::from_str(r#"{"bytes": "aGVsbG8gd29ybGQ="}"#).unwrap();
         assert_eq!(Some(b"hello world".as_slice()), wrapper.bytes.as_deref());
     }
 
     #[test]
+    fn urlsafe_base64_de_reader_success_cases() {
+        let wrapper: Base64URLSafeWrapper =
+            serde_json::from_reader(r#"{"bytes": "aGVsbG8gd29ybGQ="}"#.as_bytes()).unwrap();
+        assert_eq!(Some(b"hello world".as_slice()), wrapper.bytes.as_deref());
+    }
+
+    #[test]
     fn urlsafe_base64_de_failure_cases() {
-        assert!(serde_json::from_str::<Base64Wrapper>(r#"{"bytes": "aGVsbG8gd29ybG+Q"}"#).is_err());
+        assert!(
+            serde_json::from_str::<Base64URLSafeWrapper>(r#"{"bytes": "aGVsbG8gd29ybG+Q"}"#)
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn standard_base64_de_failure_cases() {
+        assert!(serde_json::from_str::<Base64StandardWrapper>(r#"{"bytes": "%"}"#).is_err());
     }
 
     #[test]
     fn urlsafe_base64_roundtrip() {
-        let wrapper = Base64Wrapper {
+        let wrapper = Base64URLSafeWrapper {
             bytes: Some(b"Hello world!".to_vec()),
         };
         let s = serde_json::to_string(&wrapper).expect("serialization of bytes infallible");
-        assert_eq!(wrapper, serde_json::from_str::<Base64Wrapper>(&s).unwrap());
+        assert_eq!(
+            wrapper,
+            serde_json::from_str::<Base64URLSafeWrapper>(&s).unwrap()
+        );
+    }
+
+    #[test]
+    fn standard_base64_roundtrip() {
+        let wrapper = Base64StandardWrapper {
+            bytes: Some(b"Hello world!".to_vec()),
+        };
+        let s = serde_json::to_string(&wrapper).expect("serialization of bytes infallible");
+        assert_eq!(
+            wrapper,
+            serde_json::from_str::<Base64StandardWrapper>(&s).unwrap()
+        );
     }
 
     #[test]
@@ -304,9 +403,14 @@ mod test {
             serde_json::from_str("{}").unwrap()
         );
         assert_eq!(
-            Base64Wrapper { bytes: None },
+            Base64URLSafeWrapper { bytes: None },
             serde_json::from_str("{}").unwrap()
         );
+        assert_eq!(
+            Base64StandardWrapper { bytes: None },
+            serde_json::from_str("{}").unwrap()
+        );
+
         assert_eq!(
             I64Wrapper { num: None },
             serde_json::from_str("{}").unwrap()

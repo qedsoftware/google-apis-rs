@@ -23,7 +23,7 @@ use crate::{client, client::GetToken, client::serde_with};
 /// Identifies the an OAuth2 authorization scope.
 /// A scope is needed when requesting an
 /// [authorization token](https://developers.google.com/youtube/v3/guides/authentication).
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Ord, PartialOrd, Hash, Debug, Clone, Copy)]
 pub enum Scope {
     /// View and manage your applications deployed on Google App Engine
     Admin,
@@ -85,7 +85,7 @@ impl Default for Scope {
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -133,7 +133,7 @@ impl<'a, S> Appengine<S> {
         Appengine {
             client,
             auth: Box::new(auth),
-            _user_agent: "google-api-rust-client/5.0.2".to_string(),
+            _user_agent: "google-api-rust-client/5.0.4".to_string(),
             _base_url: "https://appengine.googleapis.com/".to_string(),
             _root_url: "https://appengine.googleapis.com/".to_string(),
         }
@@ -147,7 +147,7 @@ impl<'a, S> Appengine<S> {
     }
 
     /// Set the user-agent header field to use in all requests to the server.
-    /// It defaults to `google-api-rust-client/5.0.2`.
+    /// It defaults to `google-api-rust-client/5.0.4`.
     ///
     /// Returns the previously set user-agent.
     pub fn user_agent(&mut self, agent_name: String) -> String {
@@ -230,8 +230,6 @@ impl client::Part for ApiEndpointHandler {}
 /// * [create apps](AppCreateCall) (request)
 /// * [get apps](AppGetCall) (response)
 /// * [patch apps](AppPatchCall) (request)
-/// * [locations applications get projects](ProjectLocationApplicationGetCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Application {
@@ -239,7 +237,7 @@ pub struct Application {
     #[serde(rename="authDomain")]
     
     pub auth_domain: Option<String>,
-    /// Google Cloud Storage bucket that can be used for storing files associated with this application. This bucket is associated with the application and can be used by the gcloud deployment commands.@OutputOnly
+    /// Output only. Google Cloud Storage bucket that can be used for storing files associated with this application. This bucket is associated with the application and can be used by the gcloud deployment commands.@OutputOnly
     #[serde(rename="codeBucket")]
     
     pub code_bucket: Option<String>,
@@ -247,7 +245,7 @@ pub struct Application {
     #[serde(rename="databaseType")]
     
     pub database_type: Option<String>,
-    /// Google Cloud Storage bucket that can be used by this application to store content.@OutputOnly
+    /// Output only. Google Cloud Storage bucket that can be used by this application to store content.@OutputOnly
     #[serde(rename="defaultBucket")]
     
     pub default_bucket: Option<String>,
@@ -256,7 +254,7 @@ pub struct Application {
     
     #[serde_as(as = "Option<::client::serde::duration::Wrapper>")]
     pub default_cookie_expiration: Option<client::chrono::Duration>,
-    /// Hostname used to reach this application, as resolved by App Engine.@OutputOnly
+    /// Output only. Hostname used to reach this application, as resolved by App Engine.@OutputOnly
     #[serde(rename="defaultHostname")]
     
     pub default_hostname: Option<String>,
@@ -268,10 +266,14 @@ pub struct Application {
     #[serde(rename="featureSettings")]
     
     pub feature_settings: Option<FeatureSettings>,
-    /// The Google Container Registry domain used for storing managed build docker images for this application.
+    /// Output only. The Google Container Registry domain used for storing managed build docker images for this application.
     #[serde(rename="gcrDomain")]
     
     pub gcr_domain: Option<String>,
+    /// Additional Google Generated Customer Metadata, this field won't be provided by default and can be requested by setting the IncludeExtraData field in GetApplicationRequest
+    #[serde(rename="generatedCustomerMetadata")]
+    
+    pub generated_customer_metadata: Option<HashMap<String, json::Value>>,
     /// no description provided
     
     pub iap: Option<IdentityAwareProxy>,
@@ -282,7 +284,7 @@ pub struct Application {
     #[serde(rename="locationId")]
     
     pub location_id: Option<String>,
-    /// Full path to the Application resource in the API. Example: apps/myapp.@OutputOnly
+    /// Output only. Full path to the Application resource in the API. Example: apps/myapp.@OutputOnly
     
     pub name: Option<String>,
     /// The service account associated with the application. This is the app-level default identity. If no identity provided during create version, Admin API will fallback to this one.
@@ -309,7 +311,6 @@ impl client::ResponseResult for Application {}
 /// * [authorized certificates create apps](AppAuthorizedCertificateCreateCall) (request|response)
 /// * [authorized certificates get apps](AppAuthorizedCertificateGetCall) (response)
 /// * [authorized certificates patch apps](AppAuthorizedCertificatePatchCall) (request|response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct AuthorizedCertificate {
@@ -353,7 +354,7 @@ impl client::RequestValue for AuthorizedCertificate {}
 impl client::ResponseResult for AuthorizedCertificate {}
 
 
-/// A domain that a user has been authorized to administer. To authorize use of a domain, verify ownership via Webmaster Central (https://www.google.com/webmasters/verification/home).
+/// A domain that a user has been authorized to administer. To authorize use of a domain, verify ownership via Search Console (https://search.google.com/search-console/welcome).
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
 /// 
@@ -467,7 +468,6 @@ impl client::Part for BasicScaling {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [firewall ingress rules batch update apps](AppFirewallIngressRuleBatchUpdateCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct BatchUpdateIngressRulesRequest {
@@ -488,7 +488,6 @@ impl client::RequestValue for BatchUpdateIngressRulesRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [firewall ingress rules batch update apps](AppFirewallIngressRuleBatchUpdateCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct BatchUpdateIngressRulesResponse {
@@ -578,6 +577,27 @@ pub struct CpuUtilization {
 impl client::Part for CpuUtilization {}
 
 
+/// Represents a whole or partial calendar date, such as a birthday. The time of day and time zone are either specified elsewhere or are insignificant. The date is relative to the Gregorian Calendar. This can represent one of the following: A full date, with non-zero year, month, and day values. A month and day, with a zero year (for example, an anniversary). A year on its own, with a zero month and a zero day. A year and month, with a zero day (for example, a credit card expiration date).Related types: google.type.TimeOfDay google.type.DateTime google.protobuf.Timestamp
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct Date {
+    /// Day of a month. Must be from 1 to 31 and valid for the year and month, or 0 to specify a year by itself or a year and month where the day isn't significant.
+    
+    pub day: Option<i32>,
+    /// Month of a year. Must be from 1 to 12, or 0 to specify a year without a month and day.
+    
+    pub month: Option<i32>,
+    /// Year of the date. Must be from 1 to 9999, or 0 to specify a date without a year.
+    
+    pub year: Option<i32>,
+}
+
+impl client::Part for Date {}
+
+
 /// Request message for Instances.DebugInstance.
 /// 
 /// # Activities
@@ -586,7 +606,6 @@ impl client::Part for CpuUtilization {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [services versions instances debug apps](AppServiceVersionInstanceDebugCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct DebugInstanceRequest {
@@ -662,7 +681,6 @@ impl client::Part for DiskUtilization {}
 /// * [domain mappings create apps](AppDomainMappingCreateCall) (request)
 /// * [domain mappings get apps](AppDomainMappingGetCall) (response)
 /// * [domain mappings patch apps](AppDomainMappingPatchCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct DomainMapping {
@@ -695,7 +713,6 @@ impl client::ResponseResult for DomainMapping {}
 /// 
 /// * [authorized certificates delete apps](AppAuthorizedCertificateDeleteCall) (response)
 /// * [firewall ingress rules delete apps](AppFirewallIngressRuleDeleteCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Empty { _never_set: Option<bool> }
@@ -823,7 +840,6 @@ impl client::Part for FileInfo {}
 /// * [firewall ingress rules create apps](AppFirewallIngressRuleCreateCall) (request|response)
 /// * [firewall ingress rules get apps](AppFirewallIngressRuleGetCall) (response)
 /// * [firewall ingress rules patch apps](AppFirewallIngressRulePatchCall) (request|response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct FirewallRule {
@@ -844,6 +860,26 @@ pub struct FirewallRule {
 
 impl client::RequestValue for FirewallRule {}
 impl client::ResponseResult for FirewallRule {}
+
+
+/// Runtime settings for the App Engine flexible environment.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct FlexibleRuntimeSettings {
+    /// The operating system of the application runtime.
+    #[serde(rename="operatingSystem")]
+    
+    pub operating_system: Option<String>,
+    /// The runtime version of an App Engine flexible application.
+    #[serde(rename="runtimeVersion")]
+    
+    pub runtime_version: Option<String>,
+}
+
+impl client::Part for FlexibleRuntimeSettings {}
 
 
 /// Health checking configuration for VM instances. Unhealthy instances are killed and replaced with new instances. Only applicable for instances in App Engine flexible environment.
@@ -904,7 +940,7 @@ pub struct IdentityAwareProxy {
     #[serde(rename="oauth2ClientSecret")]
     
     pub oauth2_client_secret: Option<String>,
-    /// Hex-encoded SHA-256 hash of the client secret.@OutputOnly
+    /// Output only. Hex-encoded SHA-256 hash of the client secret.@OutputOnly
     #[serde(rename="oauth2ClientSecretSha256")]
     
     pub oauth2_client_secret_sha256: Option<String>,
@@ -921,7 +957,6 @@ impl client::Part for IdentityAwareProxy {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [services versions instances get apps](AppServiceVersionInstanceGetCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Instance {
@@ -1019,7 +1054,6 @@ impl client::Part for Library {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [authorized certificates list apps](AppAuthorizedCertificateListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ListAuthorizedCertificatesResponse {
@@ -1043,7 +1077,7 @@ impl client::ResponseResult for ListAuthorizedCertificatesResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [authorized domains list apps](AppAuthorizedDomainListCall) (response)
-/// 
+/// * [locations applications authorized domains list projects](ProjectLocationApplicationAuthorizedDomainListCall) (response)
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ListAuthorizedDomainsResponse {
@@ -1067,7 +1101,6 @@ impl client::ResponseResult for ListAuthorizedDomainsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [domain mappings list apps](AppDomainMappingListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ListDomainMappingsResponse {
@@ -1092,7 +1125,6 @@ impl client::ResponseResult for ListDomainMappingsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [firewall ingress rules list apps](AppFirewallIngressRuleListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ListIngressRulesResponse {
@@ -1117,7 +1149,6 @@ impl client::ResponseResult for ListIngressRulesResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [services versions instances list apps](AppServiceVersionInstanceListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ListInstancesResponse {
@@ -1141,7 +1172,6 @@ impl client::ResponseResult for ListInstancesResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations list apps](AppLocationListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ListLocationsResponse {
@@ -1165,7 +1195,6 @@ impl client::ResponseResult for ListLocationsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [operations list apps](AppOperationListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ListOperationsResponse {
@@ -1181,6 +1210,29 @@ pub struct ListOperationsResponse {
 impl client::ResponseResult for ListOperationsResponse {}
 
 
+/// Response message for Applications.ListRuntimes.
+/// 
+/// # Activities
+/// 
+/// This type is used in activities, which are methods you may call on this type or where this type is involved in. 
+/// The list links the activity name, along with information about where it is used (one of *request* and *response*).
+/// 
+/// * [list runtimes apps](AppListRuntimeCall) (response)
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct ListRuntimesResponse {
+    /// Continuation token for fetching the next page of results.
+    #[serde(rename="nextPageToken")]
+    
+    pub next_page_token: Option<String>,
+    /// The runtimes available to the requested application.
+    
+    pub runtimes: Option<Vec<Runtime>>,
+}
+
+impl client::ResponseResult for ListRuntimesResponse {}
+
+
 /// Response message for Services.ListServices.
 /// 
 /// # Activities
@@ -1189,7 +1241,6 @@ impl client::ResponseResult for ListOperationsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [services list apps](AppServiceListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ListServicesResponse {
@@ -1213,7 +1264,6 @@ impl client::ResponseResult for ListServicesResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [services versions list apps](AppServiceVersionListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ListVersionsResponse {
@@ -1269,7 +1319,7 @@ pub struct LivenessCheck {
 impl client::Part for LivenessCheck {}
 
 
-/// A resource that represents Google Cloud Platform location.
+/// A resource that represents a Google Cloud location.
 /// 
 /// # Activities
 /// 
@@ -1277,7 +1327,6 @@ impl client::Part for LivenessCheck {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations get apps](AppLocationGetCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Location {
@@ -1437,7 +1486,6 @@ impl client::Part for NetworkUtilization {}
 /// * [create apps](AppCreateCall) (response)
 /// * [patch apps](AppPatchCall) (response)
 /// * [repair apps](AppRepairCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Operation {
@@ -1453,7 +1501,7 @@ pub struct Operation {
     /// The server-assigned name, which is only unique within the same service that originally returns it. If you use the default HTTP mapping, the name should be a resource name ending with operations/{unique_id}.
     
     pub name: Option<String>,
-    /// The normal response of the operation in case of success. If the original method returns no data on success, such as Delete, the response is google.protobuf.Empty. If the original method is standard Get/Create/Update, the response should be the resource. For other methods, the response should have the type XxxResponse, where Xxx is the original method name. For example, if the original method name is TakeSnapshot(), the inferred response type is TakeSnapshotResponse.
+    /// The normal, successful response of the operation. If the original method returns no data on success, such as Delete, the response is google.protobuf.Empty. If the original method is standard Get/Create/Update, the response should be the resource. For other methods, the response should have the type XxxResponse, where Xxx is the original method name. For example, if the original method name is TakeSnapshot(), the inferred response type is TakeSnapshotResponse.
     
     pub response: Option<HashMap<String, json::Value>>,
 }
@@ -1501,7 +1549,7 @@ pub struct ReadinessCheck {
 impl client::Part for ReadinessCheck {}
 
 
-/// Request message for 'Applications.RepairApplication'.
+/// Request message for ‘Applications.RepairApplication’.
 /// 
 /// # Activities
 /// 
@@ -1509,7 +1557,6 @@ impl client::Part for ReadinessCheck {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [repair apps](AppRepairCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct RepairApplicationRequest { _never_set: Option<bool> }
@@ -1589,6 +1636,50 @@ pub struct Resources {
 impl client::Part for Resources {}
 
 
+/// Runtime versions for App Engine.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct Runtime {
+    /// Date when Runtime is decommissioned.
+    #[serde(rename="decommissionedDate")]
+    
+    pub decommissioned_date: Option<Date>,
+    /// Date when Runtime is deprecated.
+    #[serde(rename="deprecationDate")]
+    
+    pub deprecation_date: Option<Date>,
+    /// User-friendly display name, e.g. 'Node.js 12', etc.
+    #[serde(rename="displayName")]
+    
+    pub display_name: Option<String>,
+    /// Date when Runtime is end of support.
+    #[serde(rename="endOfSupportDate")]
+    
+    pub end_of_support_date: Option<Date>,
+    /// The environment of the runtime.
+    
+    pub environment: Option<String>,
+    /// The name of the runtime, e.g., 'go113', 'nodejs12', etc.
+    
+    pub name: Option<String>,
+    /// The stage of life this runtime is in, e.g., BETA, GA, etc.
+    
+    pub stage: Option<String>,
+    /// Supported operating systems for the runtime, e.g., 'ubuntu22', etc.
+    #[serde(rename="supportedOperatingSystems")]
+    
+    pub supported_operating_systems: Option<Vec<String>>,
+    /// Warning messages, e.g., a deprecation warning.
+    
+    pub warnings: Option<Vec<String>>,
+}
+
+impl client::Part for Runtime {}
+
+
 /// Executes a script to handle the request that matches the URL pattern.
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
@@ -1614,10 +1705,13 @@ impl client::Part for ScriptHandler {}
 /// 
 /// * [services get apps](AppServiceGetCall) (response)
 /// * [services patch apps](AppServicePatchCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Service {
+    /// Additional Google Generated Customer Metadata, this field won't be provided by default and can be requested by setting the IncludeExtraData field in GetServiceRequest
+    #[serde(rename="generatedCustomerMetadata")]
+    
+    pub generated_customer_metadata: Option<HashMap<String, json::Value>>,
     /// Relative name of the service within the application. Example: default.@OutputOnly
     
     pub id: Option<String>,
@@ -1844,7 +1938,6 @@ impl client::Part for UrlMap {}
 /// * [services versions create apps](AppServiceVersionCreateCall) (request)
 /// * [services versions get apps](AppServiceVersionGetCall) (response)
 /// * [services versions patch apps](AppServiceVersionPatchCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Version {
@@ -1911,10 +2004,18 @@ pub struct Version {
     #[serde(rename="errorHandlers")]
     
     pub error_handlers: Option<Vec<ErrorHandler>>,
+    /// Settings for App Engine flexible runtimes.
+    #[serde(rename="flexibleRuntimeSettings")]
+    
+    pub flexible_runtime_settings: Option<FlexibleRuntimeSettings>,
+    /// Additional Google Generated Customer Metadata, this field won't be provided by default and can be requested by setting the IncludeExtraData field in GetVersionRequest
+    #[serde(rename="generatedCustomerMetadata")]
+    
+    pub generated_customer_metadata: Option<HashMap<String, json::Value>>,
     /// An ordered list of URL-matching patterns that should be applied to incoming requests. The first matching URL handles the request and other request handlers are not attempted.Only returned in GET requests if view=FULL is set.
     
     pub handlers: Option<Vec<UrlMap>>,
-    /// Configures health checking for instances. Unhealthy instances are stopped and replaced with new instances. Only applicable in the App Engine flexible environment.Only returned in GET requests if view=FULL is set.
+    /// Configures health checking for instances. Unhealthy instances are stopped and replaced with new instances. Only applicable in the App Engine flexible environment.
     #[serde(rename="healthCheck")]
     
     pub health_check: Option<HealthCheck>,
@@ -1932,7 +2033,7 @@ pub struct Version {
     /// Configuration for third-party Python runtime libraries that are required by the application.Only returned in GET requests if view=FULL is set.
     
     pub libraries: Option<Vec<Library>>,
-    /// Configures liveness health checking for instances. Unhealthy instances are stopped and replaced with new instancesOnly returned in GET requests if view=FULL is set.
+    /// Configures liveness health checking for instances. Unhealthy instances are stopped and replaced with new instances
     #[serde(rename="livenessCheck")]
     
     pub liveness_check: Option<LivenessCheck>,
@@ -1950,7 +2051,7 @@ pub struct Version {
     #[serde(rename="nobuildFilesRegex")]
     
     pub nobuild_files_regex: Option<String>,
-    /// Configures readiness health checking for instances. Unhealthy instances are not put into the backend traffic rotation.Only returned in GET requests if view=FULL is set.
+    /// Configures readiness health checking for instances. Unhealthy instances are not put into the backend traffic rotation.
     #[serde(rename="readinessCheck")]
     
     pub readiness_check: Option<ReadinessCheck>,
@@ -2037,7 +2138,7 @@ pub struct VpcAccessConnector {
     #[serde(rename="egressSetting")]
     
     pub egress_setting: Option<String>,
-    /// Full Serverless VPC Access Connector name e.g. /projects/my-project/locations/us-central1/connectors/c1.
+    /// Full Serverless VPC Access Connector name e.g. projects/my-project/locations/us-central1/connectors/c1.
     
     pub name: Option<String>,
 }
@@ -2091,9 +2192,9 @@ impl client::Part for ZipInfo {}
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
-/// // like `authorized_certificates_create(...)`, `authorized_certificates_delete(...)`, `authorized_certificates_get(...)`, `authorized_certificates_list(...)`, `authorized_certificates_patch(...)`, `authorized_domains_list(...)`, `create(...)`, `domain_mappings_create(...)`, `domain_mappings_delete(...)`, `domain_mappings_get(...)`, `domain_mappings_list(...)`, `domain_mappings_patch(...)`, `firewall_ingress_rules_batch_update(...)`, `firewall_ingress_rules_create(...)`, `firewall_ingress_rules_delete(...)`, `firewall_ingress_rules_get(...)`, `firewall_ingress_rules_list(...)`, `firewall_ingress_rules_patch(...)`, `get(...)`, `locations_get(...)`, `locations_list(...)`, `operations_get(...)`, `operations_list(...)`, `patch(...)`, `repair(...)`, `services_delete(...)`, `services_get(...)`, `services_list(...)`, `services_patch(...)`, `services_versions_create(...)`, `services_versions_delete(...)`, `services_versions_get(...)`, `services_versions_instances_debug(...)`, `services_versions_instances_delete(...)`, `services_versions_instances_get(...)`, `services_versions_instances_list(...)`, `services_versions_list(...)` and `services_versions_patch(...)`
+/// // like `authorized_certificates_create(...)`, `authorized_certificates_delete(...)`, `authorized_certificates_get(...)`, `authorized_certificates_list(...)`, `authorized_certificates_patch(...)`, `authorized_domains_list(...)`, `create(...)`, `domain_mappings_create(...)`, `domain_mappings_delete(...)`, `domain_mappings_get(...)`, `domain_mappings_list(...)`, `domain_mappings_patch(...)`, `firewall_ingress_rules_batch_update(...)`, `firewall_ingress_rules_create(...)`, `firewall_ingress_rules_delete(...)`, `firewall_ingress_rules_get(...)`, `firewall_ingress_rules_list(...)`, `firewall_ingress_rules_patch(...)`, `get(...)`, `list_runtimes(...)`, `locations_get(...)`, `locations_list(...)`, `operations_get(...)`, `operations_list(...)`, `patch(...)`, `repair(...)`, `services_delete(...)`, `services_get(...)`, `services_list(...)`, `services_patch(...)`, `services_versions_create(...)`, `services_versions_delete(...)`, `services_versions_get(...)`, `services_versions_instances_debug(...)`, `services_versions_instances_delete(...)`, `services_versions_instances_get(...)`, `services_versions_instances_list(...)`, `services_versions_list(...)` and `services_versions_patch(...)`
 /// // to build up your call.
 /// let rb = hub.apps();
 /// # }
@@ -2504,7 +2605,7 @@ impl<'a, S> AppMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns UNIMPLEMENTED.NOTE: the name binding allows API services to override the binding to use different resource name schemes, such as users/*/operations. To override the binding, API services can add a binding such as "/v1/{name=users/*}/operations" to their service configuration. For backwards compatibility, the default name includes the operations collection id, however overriding users must ensure the name binding is the parent resource, without the operations collection id.
+    /// Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns UNIMPLEMENTED.
     /// 
     /// # Arguments
     ///
@@ -2834,6 +2935,25 @@ impl<'a, S> AppMethods<'a, S> {
         AppGetCall {
             hub: self.hub,
             _apps_id: apps_id.to_string(),
+            _include_extra_data: Default::default(),
+            _delegate: Default::default(),
+            _additional_params: Default::default(),
+            _scopes: Default::default(),
+        }
+    }
+    
+    /// Create a builder to help you perform the following task:
+    ///
+    /// Lists all the available runtimes for the application.
+    /// 
+    /// # Arguments
+    ///
+    /// * `appsId` - Part of `parent`. Required. Name of the parent Application resource. Example: apps/myapp.
+    pub fn list_runtimes(&self, apps_id: &str) -> AppListRuntimeCall<'a, S> {
+        AppListRuntimeCall {
+            hub: self.hub,
+            _apps_id: apps_id.to_string(),
+            _environment: Default::default(),
             _delegate: Default::default(),
             _additional_params: Default::default(),
             _scopes: Default::default(),
@@ -2903,9 +3023,9 @@ impl<'a, S> AppMethods<'a, S> {
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
-/// // like `locations_applications_get(...)`
+/// // like `locations_applications_authorized_domains_list(...)`
 /// // to build up your call.
 /// let rb = hub.projects();
 /// # }
@@ -2922,19 +3042,21 @@ impl<'a, S> ProjectMethods<'a, S> {
     
     /// Create a builder to help you perform the following task:
     ///
-    /// Gets information about an application.
+    /// Lists all domains the user is authorized to administer.
     /// 
     /// # Arguments
     ///
-    /// * `projectsId` - Part of `name`. Name of the Application resource to get. Example: apps/myapp.
-    /// * `locationsId` - Part of `name`. See documentation of `projectsId`.
-    /// * `applicationsId` - Part of `name`. See documentation of `projectsId`.
-    pub fn locations_applications_get(&self, projects_id: &str, locations_id: &str, applications_id: &str) -> ProjectLocationApplicationGetCall<'a, S> {
-        ProjectLocationApplicationGetCall {
+    /// * `projectsId` - Part of `parent`. Name of the parent Application resource. Example: apps/myapp.
+    /// * `locationsId` - Part of `parent`. See documentation of `projectsId`.
+    /// * `applicationsId` - Part of `parent`. See documentation of `projectsId`.
+    pub fn locations_applications_authorized_domains_list(&self, projects_id: &str, locations_id: &str, applications_id: &str) -> ProjectLocationApplicationAuthorizedDomainListCall<'a, S> {
+        ProjectLocationApplicationAuthorizedDomainListCall {
             hub: self.hub,
             _projects_id: projects_id.to_string(),
             _locations_id: locations_id.to_string(),
             _applications_id: applications_id.to_string(),
+            _page_token: Default::default(),
+            _page_size: Default::default(),
             _delegate: Default::default(),
             _additional_params: Default::default(),
             _scopes: Default::default(),
@@ -2973,7 +3095,7 @@ impl<'a, S> ProjectMethods<'a, S> {
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -3170,7 +3292,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppAuthorizedCertificateCreateCall<'a, S> {
@@ -3263,7 +3386,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -3443,7 +3566,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppAuthorizedCertificateDeleteCall<'a, S> {
@@ -3536,7 +3660,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -3728,7 +3852,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppAuthorizedCertificateGetCall<'a, S> {
@@ -3821,7 +3946,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -4025,7 +4150,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppAuthorizedCertificateListCall<'a, S> {
@@ -4119,7 +4245,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -4340,7 +4466,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppAuthorizedCertificatePatchCall<'a, S> {
@@ -4433,7 +4560,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -4625,7 +4752,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppAuthorizedDomainListCall<'a, S> {
@@ -4719,7 +4847,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -4928,7 +5056,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppDomainMappingCreateCall<'a, S> {
@@ -5021,7 +5150,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -5201,7 +5330,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppDomainMappingDeleteCall<'a, S> {
@@ -5294,7 +5424,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -5474,7 +5604,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppDomainMappingGetCall<'a, S> {
@@ -5567,7 +5698,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -5759,7 +5890,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppDomainMappingListCall<'a, S> {
@@ -5853,7 +5985,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -6074,7 +6206,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppDomainMappingPatchCall<'a, S> {
@@ -6168,7 +6301,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -6365,7 +6498,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppFirewallIngressRuleBatchUpdateCall<'a, S> {
@@ -6459,7 +6593,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -6656,7 +6790,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppFirewallIngressRuleCreateCall<'a, S> {
@@ -6749,7 +6884,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -6929,7 +7064,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppFirewallIngressRuleDeleteCall<'a, S> {
@@ -7022,7 +7158,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -7202,7 +7338,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppFirewallIngressRuleGetCall<'a, S> {
@@ -7295,7 +7432,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -7499,7 +7636,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppFirewallIngressRuleListCall<'a, S> {
@@ -7593,7 +7731,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -7814,7 +7952,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppFirewallIngressRulePatchCall<'a, S> {
@@ -7907,7 +8046,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -8087,7 +8226,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppLocationGetCall<'a, S> {
@@ -8180,7 +8320,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -8384,7 +8524,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppLocationListCall<'a, S> {
@@ -8477,7 +8618,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -8657,7 +8798,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppOperationGetCall<'a, S> {
@@ -8728,7 +8870,7 @@ where
 }
 
 
-/// Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns UNIMPLEMENTED.NOTE: the name binding allows API services to override the binding to use different resource name schemes, such as users/*/operations. To override the binding, API services can add a binding such as "/v1/{name=users/*}/operations" to their service configuration. For backwards compatibility, the default name includes the operations collection id, however overriding users must ensure the name binding is the parent resource, without the operations collection id.
+/// Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns UNIMPLEMENTED.
 ///
 /// A builder for the *operations.list* method supported by a *app* resource.
 /// It is not used directly, but through a [`AppMethods`] instance.
@@ -8750,7 +8892,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -8954,7 +9096,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppOperationListCall<'a, S> {
@@ -9048,7 +9191,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -9281,7 +9424,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppServiceVersionInstanceDebugCall<'a, S> {
@@ -9374,7 +9518,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -9578,7 +9722,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppServiceVersionInstanceDeleteCall<'a, S> {
@@ -9671,7 +9816,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -9875,7 +10020,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppServiceVersionInstanceGetCall<'a, S> {
@@ -9968,7 +10114,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -10184,7 +10330,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppServiceVersionInstanceListCall<'a, S> {
@@ -10278,7 +10425,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -10487,7 +10634,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppServiceVersionCreateCall<'a, S> {
@@ -10580,7 +10728,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -10772,7 +10920,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppServiceVersionDeleteCall<'a, S> {
@@ -10865,7 +11014,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -11069,7 +11218,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppServiceVersionGetCall<'a, S> {
@@ -11162,7 +11312,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -11378,7 +11528,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppServiceVersionListCall<'a, S> {
@@ -11472,7 +11623,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -11705,7 +11856,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppServiceVersionPatchCall<'a, S> {
@@ -11798,7 +11950,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -11978,7 +12130,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppServiceDeleteCall<'a, S> {
@@ -12071,7 +12224,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -12251,7 +12404,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppServiceGetCall<'a, S> {
@@ -12344,7 +12498,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -12536,7 +12690,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppServiceListCall<'a, S> {
@@ -12630,7 +12785,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -12863,7 +13018,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppServicePatchCall<'a, S> {
@@ -12957,7 +13113,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -13135,7 +13291,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppCreateCall<'a, S> {
@@ -13228,11 +13385,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.apps().get("appsId")
+///              .include_extra_data("ipsum")
 ///              .doit().await;
 /// # }
 /// ```
@@ -13241,6 +13399,7 @@ pub struct AppGetCall<'a, S>
 
     hub: &'a Appengine<S>,
     _apps_id: String,
+    _include_extra_data: Option<String>,
     _delegate: Option<&'a mut dyn client::Delegate>,
     _additional_params: HashMap<String, String>,
     _scopes: BTreeSet<String>
@@ -13269,15 +13428,18 @@ where
         dlg.begin(client::MethodInfo { id: "appengine.apps.get",
                                http_method: hyper::Method::GET });
 
-        for &field in ["alt", "appsId"].iter() {
+        for &field in ["alt", "appsId", "includeExtraData"].iter() {
             if self._additional_params.contains_key(field) {
                 dlg.finished(false);
                 return Err(client::Error::FieldClash(field));
             }
         }
 
-        let mut params = Params::with_capacity(3 + self._additional_params.len());
+        let mut params = Params::with_capacity(4 + self._additional_params.len());
         params.push("appsId", self._apps_id);
+        if let Some(value) = self._include_extra_data.as_ref() {
+            params.push("includeExtraData", value);
+        }
 
         params.extend(self._additional_params.iter());
 
@@ -13392,11 +13554,19 @@ where
         self._apps_id = new_value.to_string();
         self
     }
+    /// Options to include extra data
+    ///
+    /// Sets the *include extra data* query property to the given value.
+    pub fn include_extra_data(mut self, new_value: &str) -> AppGetCall<'a, S> {
+        self._include_extra_data = Some(new_value.to_string());
+        self
+    }
     /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppGetCall<'a, S> {
@@ -13467,6 +13637,280 @@ where
 }
 
 
+/// Lists all the available runtimes for the application.
+///
+/// A builder for the *listRuntimes* method supported by a *app* resource.
+/// It is not used directly, but through a [`AppMethods`] instance.
+///
+/// # Example
+///
+/// Instantiate a resource method builder
+///
+/// ```test_harness,no_run
+/// # extern crate hyper;
+/// # extern crate hyper_rustls;
+/// # extern crate google_appengine1 as appengine1;
+/// # async fn dox() {
+/// # use std::default::Default;
+/// # use appengine1::{Appengine, oauth2, hyper, hyper_rustls, chrono, FieldMask};
+/// 
+/// # let secret: oauth2::ApplicationSecret = Default::default();
+/// # let auth = oauth2::InstalledFlowAuthenticator::builder(
+/// #         secret,
+/// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+/// #     ).build().await.unwrap();
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
+/// // You can configure optional parameters by calling the respective setters at will, and
+/// // execute the final call using `doit()`.
+/// // Values shown here are possibly random and not representative !
+/// let result = hub.apps().list_runtimes("appsId")
+///              .environment("sanctus")
+///              .doit().await;
+/// # }
+/// ```
+pub struct AppListRuntimeCall<'a, S>
+    where S: 'a {
+
+    hub: &'a Appengine<S>,
+    _apps_id: String,
+    _environment: Option<String>,
+    _delegate: Option<&'a mut dyn client::Delegate>,
+    _additional_params: HashMap<String, String>,
+    _scopes: BTreeSet<String>
+}
+
+impl<'a, S> client::CallBuilder for AppListRuntimeCall<'a, S> {}
+
+impl<'a, S> AppListRuntimeCall<'a, S>
+where
+    S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
+    S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    S::Future: Send + Unpin + 'static,
+    S::Error: Into<Box<dyn StdError + Send + Sync>>,
+{
+
+
+    /// Perform the operation you have build so far.
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, ListRuntimesResponse)> {
+        use std::io::{Read, Seek};
+        use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
+        use client::{ToParts, url::Params};
+        use std::borrow::Cow;
+
+        let mut dd = client::DefaultDelegate;
+        let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
+        dlg.begin(client::MethodInfo { id: "appengine.apps.listRuntimes",
+                               http_method: hyper::Method::GET });
+
+        for &field in ["alt", "appsId", "environment"].iter() {
+            if self._additional_params.contains_key(field) {
+                dlg.finished(false);
+                return Err(client::Error::FieldClash(field));
+            }
+        }
+
+        let mut params = Params::with_capacity(4 + self._additional_params.len());
+        params.push("appsId", self._apps_id);
+        if let Some(value) = self._environment.as_ref() {
+            params.push("environment", value);
+        }
+
+        params.extend(self._additional_params.iter());
+
+        params.push("alt", "json");
+        let mut url = self.hub._base_url.clone() + "v1/apps/{appsId}:listRuntimes";
+        if self._scopes.is_empty() {
+            self._scopes.insert(Scope::Admin.as_ref().to_string());
+        }
+
+        for &(find_this, param_name) in [("{appsId}", "appsId")].iter() {
+            url = params.uri_replacement(url, param_name, find_this, false);
+        }
+        {
+            let to_remove = ["appsId"];
+            params.remove_params(&to_remove);
+        }
+
+        let url = params.parse_with_url(&url);
+
+
+
+        loop {
+            let token = match self.hub.auth.get_token(&self._scopes.iter().map(String::as_str).collect::<Vec<_>>()[..]).await {
+                Ok(token) => token,
+                Err(e) => {
+                    match dlg.token(e) {
+                        Ok(token) => token,
+                        Err(e) => {
+                            dlg.finished(false);
+                            return Err(client::Error::MissingToken(e));
+                        }
+                    }
+                }
+            };
+            let mut req_result = {
+                let client = &self.hub.client;
+                dlg.pre_request();
+                let mut req_builder = hyper::Request::builder()
+                    .method(hyper::Method::GET)
+                    .uri(url.as_str())
+                    .header(USER_AGENT, self.hub._user_agent.clone());
+
+                if let Some(token) = token.as_ref() {
+                    req_builder = req_builder.header(AUTHORIZATION, format!("Bearer {}", token));
+                }
+
+
+                        let request = req_builder
+                        .body(hyper::body::Body::empty());
+
+                client.request(request.unwrap()).await
+
+            };
+
+            match req_result {
+                Err(err) => {
+                    if let client::Retry::After(d) = dlg.http_error(&err) {
+                        sleep(d).await;
+                        continue;
+                    }
+                    dlg.finished(false);
+                    return Err(client::Error::HttpError(err))
+                }
+                Ok(mut res) => {
+                    if !res.status().is_success() {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+                        let (parts, _) = res.into_parts();
+                        let body = hyper::Body::from(res_body_string.clone());
+                        let restored_response = hyper::Response::from_parts(parts, body);
+
+                        let server_response = json::from_str::<serde_json::Value>(&res_body_string).ok();
+
+                        if let client::Retry::After(d) = dlg.http_failure(&restored_response, server_response.clone()) {
+                            sleep(d).await;
+                            continue;
+                        }
+
+                        dlg.finished(false);
+
+                        return match server_response {
+                            Some(error_value) => Err(client::Error::BadRequest(error_value)),
+                            None => Err(client::Error::Failure(restored_response)),
+                        }
+                    }
+                    let result_value = {
+                        let res_body_string = client::get_body_as_string(res.body_mut()).await;
+
+                        match json::from_str(&res_body_string) {
+                            Ok(decoded) => (res, decoded),
+                            Err(err) => {
+                                dlg.response_json_decode_error(&res_body_string, &err);
+                                return Err(client::Error::JsonDecodeError(res_body_string, err));
+                            }
+                        }
+                    };
+
+                    dlg.finished(true);
+                    return Ok(result_value)
+                }
+            }
+        }
+    }
+
+
+    /// Part of `parent`. Required. Name of the parent Application resource. Example: apps/myapp.
+    ///
+    /// Sets the *apps id* path property to the given value.
+    ///
+    /// Even though the property as already been set when instantiating this call,
+    /// we provide this method for API completeness.
+    pub fn apps_id(mut self, new_value: &str) -> AppListRuntimeCall<'a, S> {
+        self._apps_id = new_value.to_string();
+        self
+    }
+    /// Optional. The environment of the Application.
+    ///
+    /// Sets the *environment* query property to the given value.
+    pub fn environment(mut self, new_value: &str) -> AppListRuntimeCall<'a, S> {
+        self._environment = Some(new_value.to_string());
+        self
+    }
+    /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
+    /// while executing the actual API request.
+    /// 
+    /// ````text
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
+    ///
+    /// Sets the *delegate* property to the given value.
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppListRuntimeCall<'a, S> {
+        self._delegate = Some(new_value);
+        self
+    }
+
+    /// Set any additional parameter of the query string used in the request.
+    /// It should be used to set parameters which are not yet available through their own
+    /// setters.
+    ///
+    /// Please note that this method must not be used to set any of the known parameters
+    /// which have their own setter method. If done anyway, the request will fail.
+    ///
+    /// # Additional Parameters
+    ///
+    /// * *$.xgafv* (query-string) - V1 error format.
+    /// * *access_token* (query-string) - OAuth access token.
+    /// * *alt* (query-string) - Data format for response.
+    /// * *callback* (query-string) - JSONP
+    /// * *fields* (query-string) - Selector specifying which fields to include in a partial response.
+    /// * *key* (query-string) - API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+    /// * *oauth_token* (query-string) - OAuth 2.0 token for the current user.
+    /// * *prettyPrint* (query-boolean) - Returns response with indentations and line breaks.
+    /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+    /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
+    /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
+    pub fn param<T>(mut self, name: T, value: T) -> AppListRuntimeCall<'a, S>
+                                                        where T: AsRef<str> {
+        self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
+        self
+    }
+
+    /// Identifies the authorization scope for the method you are building.
+    ///
+    /// Use this method to actively specify which scope should be used, instead of the default [`Scope`] variant
+    /// [`Scope::Admin`].
+    ///
+    /// The `scope` will be added to a set of scopes. This is important as one can maintain access
+    /// tokens for more than one scope.
+    ///
+    /// Usually there is more than one suitable scope to authorize an operation, some of which may
+    /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
+    /// sufficient, a read-write scope will do as well.
+    pub fn add_scope<St>(mut self, scope: St) -> AppListRuntimeCall<'a, S>
+                                                        where St: AsRef<str> {
+        self._scopes.insert(String::from(scope.as_ref()));
+        self
+    }
+    /// Identifies the authorization scope(s) for the method you are building.
+    ///
+    /// See [`Self::add_scope()`] for details.
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> AppListRuntimeCall<'a, S>
+                                                        where I: IntoIterator<Item = St>,
+                                                         St: AsRef<str> {
+        self._scopes
+            .extend(scopes.into_iter().map(|s| String::from(s.as_ref())));
+        self
+    }
+
+    /// Removes all scopes, and no default scope will be used either.
+    /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
+    /// for details).
+    pub fn clear_scopes(mut self) -> AppListRuntimeCall<'a, S> {
+        self._scopes.clear();
+        self
+    }
+}
+
+
 /// Updates the specified Application resource. You can update the following fields: auth_domain - Google authentication domain for controlling user access to the application. default_cookie_expiration - Cookie expiration policy for the application. iap - Identity-Aware Proxy properties for the application.
 ///
 /// A builder for the *patch* method supported by a *app* resource.
@@ -13490,7 +13934,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -13699,7 +14143,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppPatchCall<'a, S> {
@@ -13793,7 +14238,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -13990,7 +14435,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> AppRepairCall<'a, S> {
@@ -14061,9 +14507,9 @@ where
 }
 
 
-/// Gets information about an application.
+/// Lists all domains the user is authorized to administer.
 ///
-/// A builder for the *locations.applications.get* method supported by a *project* resource.
+/// A builder for the *locations.applications.authorizedDomains.list* method supported by a *project* resource.
 /// It is not used directly, but through a [`ProjectMethods`] instance.
 ///
 /// # Example
@@ -14083,29 +14529,33 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Appengine::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
-/// let result = hub.projects().locations_applications_get("projectsId", "locationsId", "applicationsId")
+/// let result = hub.projects().locations_applications_authorized_domains_list("projectsId", "locationsId", "applicationsId")
+///              .page_token("dolores")
+///              .page_size(-68)
 ///              .doit().await;
 /// # }
 /// ```
-pub struct ProjectLocationApplicationGetCall<'a, S>
+pub struct ProjectLocationApplicationAuthorizedDomainListCall<'a, S>
     where S: 'a {
 
     hub: &'a Appengine<S>,
     _projects_id: String,
     _locations_id: String,
     _applications_id: String,
+    _page_token: Option<String>,
+    _page_size: Option<i32>,
     _delegate: Option<&'a mut dyn client::Delegate>,
     _additional_params: HashMap<String, String>,
     _scopes: BTreeSet<String>
 }
 
-impl<'a, S> client::CallBuilder for ProjectLocationApplicationGetCall<'a, S> {}
+impl<'a, S> client::CallBuilder for ProjectLocationApplicationAuthorizedDomainListCall<'a, S> {}
 
-impl<'a, S> ProjectLocationApplicationGetCall<'a, S>
+impl<'a, S> ProjectLocationApplicationAuthorizedDomainListCall<'a, S>
 where
     S: tower_service::Service<http::Uri> + Clone + Send + Sync + 'static,
     S::Response: hyper::client::connect::Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
@@ -14115,7 +14565,7 @@ where
 
 
     /// Perform the operation you have build so far.
-    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, Application)> {
+    pub async fn doit(mut self) -> client::Result<(hyper::Response<hyper::body::Body>, ListAuthorizedDomainsResponse)> {
         use std::io::{Read, Seek};
         use hyper::header::{CONTENT_TYPE, CONTENT_LENGTH, AUTHORIZATION, USER_AGENT, LOCATION};
         use client::{ToParts, url::Params};
@@ -14123,25 +14573,31 @@ where
 
         let mut dd = client::DefaultDelegate;
         let mut dlg: &mut dyn client::Delegate = self._delegate.unwrap_or(&mut dd);
-        dlg.begin(client::MethodInfo { id: "appengine.projects.locations.applications.get",
+        dlg.begin(client::MethodInfo { id: "appengine.projects.locations.applications.authorizedDomains.list",
                                http_method: hyper::Method::GET });
 
-        for &field in ["alt", "projectsId", "locationsId", "applicationsId"].iter() {
+        for &field in ["alt", "projectsId", "locationsId", "applicationsId", "pageToken", "pageSize"].iter() {
             if self._additional_params.contains_key(field) {
                 dlg.finished(false);
                 return Err(client::Error::FieldClash(field));
             }
         }
 
-        let mut params = Params::with_capacity(5 + self._additional_params.len());
+        let mut params = Params::with_capacity(7 + self._additional_params.len());
         params.push("projectsId", self._projects_id);
         params.push("locationsId", self._locations_id);
         params.push("applicationsId", self._applications_id);
+        if let Some(value) = self._page_token.as_ref() {
+            params.push("pageToken", value);
+        }
+        if let Some(value) = self._page_size.as_ref() {
+            params.push("pageSize", value.to_string());
+        }
 
         params.extend(self._additional_params.iter());
 
         params.push("alt", "json");
-        let mut url = self.hub._base_url.clone() + "v1/projects/{projectsId}/locations/{locationsId}/applications/{applicationsId}";
+        let mut url = self.hub._base_url.clone() + "v1/projects/{projectsId}/locations/{locationsId}/applications/{applicationsId}/authorizedDomains";
         if self._scopes.is_empty() {
             self._scopes.insert(Scope::Admin.as_ref().to_string());
         }
@@ -14241,44 +14697,59 @@ where
     }
 
 
-    /// Part of `name`. Name of the Application resource to get. Example: apps/myapp.
+    /// Part of `parent`. Name of the parent Application resource. Example: apps/myapp.
     ///
     /// Sets the *projects id* path property to the given value.
     ///
     /// Even though the property as already been set when instantiating this call,
     /// we provide this method for API completeness.
-    pub fn projects_id(mut self, new_value: &str) -> ProjectLocationApplicationGetCall<'a, S> {
+    pub fn projects_id(mut self, new_value: &str) -> ProjectLocationApplicationAuthorizedDomainListCall<'a, S> {
         self._projects_id = new_value.to_string();
         self
     }
-    /// Part of `name`. See documentation of `projectsId`.
+    /// Part of `parent`. See documentation of `projectsId`.
     ///
     /// Sets the *locations id* path property to the given value.
     ///
     /// Even though the property as already been set when instantiating this call,
     /// we provide this method for API completeness.
-    pub fn locations_id(mut self, new_value: &str) -> ProjectLocationApplicationGetCall<'a, S> {
+    pub fn locations_id(mut self, new_value: &str) -> ProjectLocationApplicationAuthorizedDomainListCall<'a, S> {
         self._locations_id = new_value.to_string();
         self
     }
-    /// Part of `name`. See documentation of `projectsId`.
+    /// Part of `parent`. See documentation of `projectsId`.
     ///
     /// Sets the *applications id* path property to the given value.
     ///
     /// Even though the property as already been set when instantiating this call,
     /// we provide this method for API completeness.
-    pub fn applications_id(mut self, new_value: &str) -> ProjectLocationApplicationGetCall<'a, S> {
+    pub fn applications_id(mut self, new_value: &str) -> ProjectLocationApplicationAuthorizedDomainListCall<'a, S> {
         self._applications_id = new_value.to_string();
+        self
+    }
+    /// Continuation token for fetching the next page of results.
+    ///
+    /// Sets the *page token* query property to the given value.
+    pub fn page_token(mut self, new_value: &str) -> ProjectLocationApplicationAuthorizedDomainListCall<'a, S> {
+        self._page_token = Some(new_value.to_string());
+        self
+    }
+    /// Maximum results to return per page.
+    ///
+    /// Sets the *page size* query property to the given value.
+    pub fn page_size(mut self, new_value: i32) -> ProjectLocationApplicationAuthorizedDomainListCall<'a, S> {
+        self._page_size = Some(new_value);
         self
     }
     /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
-    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationApplicationGetCall<'a, S> {
+    pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationApplicationAuthorizedDomainListCall<'a, S> {
         self._delegate = Some(new_value);
         self
     }
@@ -14303,7 +14774,7 @@ where
     /// * *quotaUser* (query-string) - Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
     /// * *uploadType* (query-string) - Legacy upload protocol for media (e.g. "media", "multipart").
     /// * *upload_protocol* (query-string) - Upload protocol for media (e.g. "raw", "multipart").
-    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationApplicationGetCall<'a, S>
+    pub fn param<T>(mut self, name: T, value: T) -> ProjectLocationApplicationAuthorizedDomainListCall<'a, S>
                                                         where T: AsRef<str> {
         self._additional_params.insert(name.as_ref().to_string(), value.as_ref().to_string());
         self
@@ -14320,7 +14791,7 @@ where
     /// Usually there is more than one suitable scope to authorize an operation, some of which may
     /// encompass more rights than others. For example, for listing resources, a *read-only* scope will be
     /// sufficient, a read-write scope will do as well.
-    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationApplicationGetCall<'a, S>
+    pub fn add_scope<St>(mut self, scope: St) -> ProjectLocationApplicationAuthorizedDomainListCall<'a, S>
                                                         where St: AsRef<str> {
         self._scopes.insert(String::from(scope.as_ref()));
         self
@@ -14328,7 +14799,7 @@ where
     /// Identifies the authorization scope(s) for the method you are building.
     ///
     /// See [`Self::add_scope()`] for details.
-    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationApplicationGetCall<'a, S>
+    pub fn add_scopes<I, St>(mut self, scopes: I) -> ProjectLocationApplicationAuthorizedDomainListCall<'a, S>
                                                         where I: IntoIterator<Item = St>,
                                                          St: AsRef<str> {
         self._scopes
@@ -14339,7 +14810,7 @@ where
     /// Removes all scopes, and no default scope will be used either.
     /// In this case, you have to specify your API-key using the `key` parameter (see [`Self::param()`]
     /// for details).
-    pub fn clear_scopes(mut self) -> ProjectLocationApplicationGetCall<'a, S> {
+    pub fn clear_scopes(mut self) -> ProjectLocationApplicationAuthorizedDomainListCall<'a, S> {
         self._scopes.clear();
         self
     }

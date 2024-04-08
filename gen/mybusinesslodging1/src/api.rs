@@ -55,7 +55,7 @@ use crate::{client, client::GetToken, client::serde_with};
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = MyBusinessLodging::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = MyBusinessLodging::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -104,7 +104,7 @@ impl<'a, S> MyBusinessLodging<S> {
         MyBusinessLodging {
             client,
             auth: Box::new(auth),
-            _user_agent: "google-api-rust-client/5.0.2".to_string(),
+            _user_agent: "google-api-rust-client/5.0.4".to_string(),
             _base_url: "https://mybusinesslodging.googleapis.com/".to_string(),
             _root_url: "https://mybusinesslodging.googleapis.com/".to_string(),
         }
@@ -115,7 +115,7 @@ impl<'a, S> MyBusinessLodging<S> {
     }
 
     /// Set the user-agent header field to use in all requests to the server.
-    /// It defaults to `google-api-rust-client/5.0.2`.
+    /// It defaults to `google-api-rust-client/5.0.4`.
     ///
     /// Returns the previously set user-agent.
     pub fn user_agent(&mut self, agent_name: String) -> String {
@@ -409,7 +409,7 @@ pub struct Connectivity {
 impl client::Part for Connectivity {}
 
 
-/// An eco certificate awarded to the hotel.
+/// An eco certificate awarded to the hotel. Deprecated: this message is no longer populated. All certification data is now provided by BeCause.
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
 /// 
@@ -479,7 +479,7 @@ pub struct EnergyEfficiency {
     #[serde(rename="energySavingThermostatsException")]
     
     pub energy_saving_thermostats_exception: Option<String>,
-    /// Output only. Green building design. True if BREEAM-* or LEED-* certified.
+    /// Output only. Green building design. True if the property has been awarded a relevant certification.
     #[serde(rename="greenBuildingDesign")]
     
     pub green_building_design: Option<bool>,
@@ -716,7 +716,6 @@ impl client::Part for FoodAndDrink {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [lodging get google updated locations](LocationLodgingGetGoogleUpdatedCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GetGoogleUpdatedLodgingResponse {
@@ -1568,7 +1567,6 @@ impl client::Part for LivingAreaSleeping {}
 /// 
 /// * [get lodging locations](LocationGetLodgingCall) (response)
 /// * [update lodging locations](LocationUpdateLodgingCall) (request|response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Lodging {
@@ -2361,7 +2359,7 @@ pub struct Sustainability {
     #[serde(rename="energyEfficiency")]
     
     pub energy_efficiency: Option<EnergyEfficiency>,
-    /// Sustainability certifications the hotel has been awarded.
+    /// Sustainability certifications the hotel has been awarded. Deprecated: this field is no longer populated. All certification data is now provided by BeCause.
     #[serde(rename="sustainabilityCertifications")]
     
     pub sustainability_certifications: Option<SustainabilityCertifications>,
@@ -2382,7 +2380,7 @@ pub struct Sustainability {
 impl client::Part for Sustainability {}
 
 
-/// Sustainability certifications the hotel has been awarded.
+/// Sustainability certifications the hotel has been awarded. Deprecated: this message is no longer populated. All certification data is now provided by BeCause.
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
 /// 
@@ -2401,11 +2399,11 @@ pub struct SustainabilityCertifications {
     #[serde(rename="ecoCertifications")]
     
     pub eco_certifications: Option<Vec<EcoCertification>>,
-    /// LEED certification. Deprecated: this field is no longer populated. LEED certification status is now provided directly by USGBC.
+    /// LEED certification.
     #[serde(rename="leedCertification")]
     
     pub leed_certification: Option<String>,
-    /// LEED certification exception. Deprecated: this field is no longer populated. LEED certification status is now provided directly by USGBC.
+    /// LEED certification exception.
     #[serde(rename="leedCertificationException")]
     
     pub leed_certification_exception: Option<String>,
@@ -2978,7 +2976,7 @@ impl client::Part for Wellness {}
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = MyBusinessLodging::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = MyBusinessLodging::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
 /// // like `get_lodging(...)`, `lodging_get_google_updated(...)` and `update_lodging(...)`
 /// // to build up your call.
@@ -3001,7 +2999,7 @@ impl<'a, S> LocationMethods<'a, S> {
     /// 
     /// # Arguments
     ///
-    /// * `name` - Required. Google identifier for this location in the form: `accounts/{account_id}/locations/{location_id}/lodging`
+    /// * `name` - Required. Google identifier for this location in the form: `locations/{location_id}/lodging`
     pub fn lodging_get_google_updated(&self, name: &str) -> LocationLodgingGetGoogleUpdatedCall<'a, S> {
         LocationLodgingGetGoogleUpdatedCall {
             hub: self.hub,
@@ -3079,7 +3077,7 @@ impl<'a, S> LocationMethods<'a, S> {
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = MyBusinessLodging::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = MyBusinessLodging::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -3227,7 +3225,7 @@ where
     }
 
 
-    /// Required. Google identifier for this location in the form: `accounts/{account_id}/locations/{location_id}/lodging`
+    /// Required. Google identifier for this location in the form: `locations/{location_id}/lodging`
     ///
     /// Sets the *name* path property to the given value.
     ///
@@ -3248,7 +3246,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> LocationLodgingGetGoogleUpdatedCall<'a, S> {
@@ -3307,7 +3306,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = MyBusinessLodging::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = MyBusinessLodging::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -3476,7 +3475,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> LocationGetLodgingCall<'a, S> {
@@ -3536,7 +3536,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = MyBusinessLodging::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = MyBusinessLodging::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -3734,7 +3734,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> LocationUpdateLodgingCall<'a, S> {

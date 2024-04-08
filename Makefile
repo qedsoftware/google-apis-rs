@@ -1,9 +1,8 @@
 .PHONY: help deps regen-apis license test-gen test clean
 .SUFFIXES:
 
-VIRTUALENV_VERSION = 16.0.0
 VENV_BIN = .virtualenv.marker
-VENV_VERSION = 20.2.2
+VENV_VERSION = 20.24.3
 
 VENV_DIR := .pyenv-$(shell uname)
 PYTHON_BIN := $(VENV_DIR)/bin/python
@@ -65,11 +64,12 @@ $(PREPROC): $(PREPROC_DIR)/src/main.rs
 	cd "$(PREPROC_DIR)" && cargo build --release 
 
 $(VENV_BIN):
+	python3 -m pip install --user virtualenv==$(VENV_VERSION)
 	touch $@
 
 $(PYTHON_BIN): $(VENV_BIN) requirements.txt
 	python3 -m venv $(VENV_DIR)
-	$(VENV_DIR)/bin/pip install -r requirements.txt
+	$@ -m pip install -r requirements.txt
 
 $(MAKO_RENDER): $(PYTHON_BIN) $(wildcard $(GEN_LIB_SRC)/*)
 

@@ -23,7 +23,7 @@ use crate::{client, client::GetToken, client::serde_with};
 /// Identifies the an OAuth2 authorization scope.
 /// A scope is needed when requesting an
 /// [authorization token](https://developers.google.com/youtube/v3/guides/authentication).
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Ord, PartialOrd, Hash, Debug, Clone, Copy)]
 pub enum Scope {
     /// See, edit, configure, and delete your Google Cloud data and see the email address for your Google Account.
     CloudPlatform,
@@ -77,7 +77,7 @@ impl Default for Scope {
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = Transcoder::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = Transcoder::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -125,7 +125,7 @@ impl<'a, S> Transcoder<S> {
         Transcoder {
             client,
             auth: Box::new(auth),
-            _user_agent: "google-api-rust-client/5.0.2".to_string(),
+            _user_agent: "google-api-rust-client/5.0.4".to_string(),
             _base_url: "https://transcoder.googleapis.com/".to_string(),
             _root_url: "https://transcoder.googleapis.com/".to_string(),
         }
@@ -136,7 +136,7 @@ impl<'a, S> Transcoder<S> {
     }
 
     /// Set the user-agent header field to use in all requests to the server.
-    /// It defaults to `google-api-rust-client/5.0.2`.
+    /// It defaults to `google-api-rust-client/5.0.4`.
     ///
     /// Returns the previously set user-agent.
     pub fn user_agent(&mut self, agent_name: String) -> String {
@@ -181,6 +181,17 @@ pub struct AdBreak {
 impl client::Part for AdBreak {}
 
 
+/// Configuration for AES-128 encryption.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct Aes128Encryption { _never_set: Option<bool> }
+
+impl client::Part for Aes128Encryption {}
+
+
 /// Animation types.
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
@@ -205,7 +216,7 @@ pub struct Animation {
 impl client::Part for Animation {}
 
 
-/// End previous overlay animation from the video. Without AnimationEnd, the overlay object will keep the state of previous animation until the end of the video.
+/// End previous overlay animation from the video. Without `AnimationEnd`, the overlay object will keep the state of previous animation until the end of the video.
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
 /// 
@@ -294,14 +305,14 @@ pub struct Audio {
 impl client::Part for Audio {}
 
 
-/// The mapping for the `Job.edit_list` atoms with audio `EditAtom.inputs`.
+/// The mapping for the JobConfig.edit_list atoms with audio EditAtom.inputs.
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
 /// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct AudioMapping {
-    /// Required. The `EditAtom.key` that references the atom with audio inputs in the `Job.edit_list`.
+    /// Required. The EditAtom.key that references the atom with audio inputs in the JobConfig.edit_list.
     #[serde(rename="atomKey")]
     
     pub atom_key: Option<String>,
@@ -313,7 +324,7 @@ pub struct AudioMapping {
     #[serde(rename="inputChannel")]
     
     pub input_channel: Option<i32>,
-    /// Required. The `Input.key` that identifies the input file.
+    /// Required. The Input.key that identifies the input file.
     #[serde(rename="inputKey")]
     
     pub input_key: Option<String>,
@@ -352,7 +363,15 @@ pub struct AudioStream {
     /// The codec for this audio stream. The default is `aac`. Supported audio codecs: - `aac` - `aac-he` - `aac-he-v2` - `mp3` - `ac3` - `eac3`
     
     pub codec: Option<String>,
-    /// The mapping for the `Job.edit_list` atoms with audio `EditAtom.inputs`.
+    /// The name for this particular audio stream that will be added to the HLS/DASH manifest. Not supported in MP4 files.
+    #[serde(rename="displayName")]
+    
+    pub display_name: Option<String>,
+    /// The BCP-47 language code, such as `en-US` or `sr-Latn`. For more information, see https://www.unicode.org/reports/tr35/#Unicode_locale_identifier. Not supported in MP4 files.
+    #[serde(rename="languageCode")]
+    
+    pub language_code: Option<String>,
+    /// The mapping for the JobConfig.edit_list atoms with audio EditAtom.inputs.
     
     pub mapping: Option<Vec<AudioMapping>>,
     /// The audio sample rate in Hertz. The default is 48000 Hertz.
@@ -384,6 +403,17 @@ pub struct BwdifConfig {
 }
 
 impl client::Part for BwdifConfig {}
+
+
+/// Clearkey configuration.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct Clearkey { _never_set: Option<bool> }
+
+impl client::Part for Clearkey {}
 
 
 /// Color preprocessing configuration. **Note:** This configuration is not supported.
@@ -433,6 +463,22 @@ pub struct Crop {
 }
 
 impl client::Part for Crop {}
+
+
+/// `DASH` manifest configuration.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct DashConfig {
+    /// The segment reference scheme for a `DASH` manifest. The default is `SEGMENT_LIST`.
+    #[serde(rename="segmentReferenceScheme")]
+    
+    pub segment_reference_scheme: Option<String>,
+}
+
+impl client::Part for DashConfig {}
 
 
 /// Deblock preprocessing configuration. **Note:** This configuration is not supported.
@@ -489,6 +535,30 @@ pub struct Denoise {
 impl client::Part for Denoise {}
 
 
+/// Defines configuration for DRM systems in use.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct DrmSystems {
+    /// Clearkey configuration.
+    
+    pub clearkey: Option<Clearkey>,
+    /// Fairplay configuration.
+    
+    pub fairplay: Option<Fairplay>,
+    /// Playready configuration.
+    
+    pub playready: Option<Playready>,
+    /// Widevine configuration.
+    
+    pub widevine: Option<Widevine>,
+}
+
+impl client::Part for DrmSystems {}
+
+
 /// Edit atom.
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
@@ -501,7 +571,7 @@ pub struct EditAtom {
     
     #[serde_as(as = "Option<::client::serde::duration::Wrapper>")]
     pub end_time_offset: Option<client::chrono::Duration>,
-    /// List of `Input.key`s identifying files that should be used in this atom. The listed `inputs` must have the same timeline.
+    /// List of Input.key values identifying files that should be used in this atom. The listed `inputs` must have the same timeline.
     
     pub inputs: Option<Vec<String>>,
     /// A unique key for this atom. Must be specified when using advanced mapping.
@@ -553,12 +623,72 @@ impl client::Part for ElementaryStream {}
 /// 
 /// * [locations job templates delete projects](ProjectLocationJobTemplateDeleteCall) (response)
 /// * [locations jobs delete projects](ProjectLocationJobDeleteCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Empty { _never_set: Option<bool> }
 
 impl client::ResponseResult for Empty {}
+
+
+/// Encryption settings.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct Encryption {
+    /// Configuration for AES-128 encryption.
+    
+    pub aes128: Option<Aes128Encryption>,
+    /// Required. DRM system(s) to use; at least one must be specified. If a DRM system is omitted, it is considered disabled.
+    #[serde(rename="drmSystems")]
+    
+    pub drm_systems: Option<DrmSystems>,
+    /// Required. Identifier for this set of encryption options.
+    
+    pub id: Option<String>,
+    /// Configuration for MPEG Common Encryption (MPEG-CENC).
+    #[serde(rename="mpegCenc")]
+    
+    pub mpeg_cenc: Option<MpegCommonEncryption>,
+    /// Configuration for SAMPLE-AES encryption.
+    #[serde(rename="sampleAes")]
+    
+    pub sample_aes: Option<SampleAesEncryption>,
+    /// Keys are stored in Google Secret Manager.
+    #[serde(rename="secretManagerKeySource")]
+    
+    pub secret_manager_key_source: Option<SecretManagerSource>,
+}
+
+impl client::Part for Encryption {}
+
+
+/// Fairplay configuration.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct Fairplay { _never_set: Option<bool> }
+
+impl client::Part for Fairplay {}
+
+
+/// `fmp4` container configuration.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct Fmp4Config {
+    /// Optional. Specify the codec tag string that will be used in the media bitstream. When not specified, the codec appropriate value is used. Supported H265 codec tags: - `hvc1` (default) - `hev1`
+    #[serde(rename="codecTag")]
+    
+    pub codec_tag: Option<String>,
+}
+
+impl client::Part for Fmp4Config {}
 
 
 /// H264 codec settings.
@@ -576,7 +706,7 @@ pub struct H264CodecSettings {
     #[serde(rename="aqStrength")]
     
     pub aq_strength: Option<f64>,
-    /// The number of consecutive B-frames. Must be greater than or equal to zero. Must be less than `VideoStream.gop_frame_count` if set. The default is 0.
+    /// The number of consecutive B-frames. Must be greater than or equal to zero. Must be less than H264CodecSettings.gop_frame_count if set. The default is 0.
     #[serde(rename="bFrameCount")]
     
     pub b_frame_count: Option<i32>,
@@ -592,7 +722,7 @@ pub struct H264CodecSettings {
     #[serde(rename="crfLevel")]
     
     pub crf_level: Option<i32>,
-    /// Use two-pass encoding strategy to achieve better video quality. `VideoStream.rate_control_mode` must be `vbr`. The default is `false`.
+    /// Use two-pass encoding strategy to achieve better video quality. H264CodecSettings.rate_control_mode must be `vbr`. The default is `false`.
     #[serde(rename="enableTwoPass")]
     
     pub enable_two_pass: Option<bool>,
@@ -600,10 +730,14 @@ pub struct H264CodecSettings {
     #[serde(rename="entropyCoder")]
     
     pub entropy_coder: Option<String>,
-    /// Required. The target video frame rate in frames per second (FPS). Must be less than or equal to 120. Will default to the input frame rate if larger than the input frame rate. The API will generate an output FPS that is divisible by the input FPS, and smaller or equal to the target FPS. See [Calculating frame rate](https://cloud.google.com/transcoder/docs/concepts/frame-rate) for more information.
+    /// Required. The target video frame rate in frames per second (FPS). Must be less than or equal to 120.
     #[serde(rename="frameRate")]
     
     pub frame_rate: Option<f64>,
+    /// Optional. Frame rate conversion strategy for desired frame rate. The default is `DOWNSAMPLE`.
+    #[serde(rename="frameRateConversionStrategy")]
+    
+    pub frame_rate_conversion_strategy: Option<String>,
     /// Select the GOP size based on the specified duration. The default is `3s`. Note that `gopDuration` must be less than or equal to [`segmentDuration`](#SegmentSettings), and [`segmentDuration`](#SegmentSettings) must be divisible by `gopDuration`.
     #[serde(rename="gopDuration")]
     
@@ -617,6 +751,9 @@ pub struct H264CodecSettings {
     #[serde(rename="heightPixels")]
     
     pub height_pixels: Option<i32>,
+    /// Optional. HLG color format setting for H264.
+    
+    pub hlg: Option<H264ColorFormatHLG>,
     /// Pixel format to use. The default is `yuv420p`. Supported pixel formats: - `yuv420p` pixel format - `yuv422p` pixel format - `yuv444p` pixel format - `yuv420p10` 10-bit HDR pixel format - `yuv422p10` 10-bit HDR pixel format - `yuv444p10` 10-bit HDR pixel format - `yuv420p12` 12-bit HDR pixel format - `yuv422p12` 12-bit HDR pixel format - `yuv444p12` 12-bit HDR pixel format
     #[serde(rename="pixelFormat")]
     
@@ -627,18 +764,21 @@ pub struct H264CodecSettings {
     /// Enforces the specified codec profile. The following profiles are supported: * `baseline` * `main` * `high` (default) The available options are [FFmpeg-compatible](https://trac.ffmpeg.org/wiki/Encode/H.264#Tune). Note that certain values for this field may cause the transcoder to override other fields you set in the `H264CodecSettings` message.
     
     pub profile: Option<String>,
-    /// Specify the `rate_control_mode`. The default is `vbr`. Supported rate control modes: - `vbr` - variable bitrate - `crf` - constant rate factor
+    /// Specify the mode. The default is `vbr`. Supported rate control modes: - `vbr` - variable bitrate - `crf` - constant rate factor
     #[serde(rename="rateControlMode")]
     
     pub rate_control_mode: Option<String>,
+    /// Optional. SDR color format setting for H264.
+    
+    pub sdr: Option<H264ColorFormatSDR>,
     /// Enforces the specified codec tune. The available options are [FFmpeg-compatible](https://trac.ffmpeg.org/wiki/Encode/H.264#Tune). Note that certain values for this field may cause the transcoder to override other fields you set in the `H264CodecSettings` message.
     
     pub tune: Option<String>,
-    /// Initial fullness of the Video Buffering Verifier (VBV) buffer in bits. Must be greater than zero. The default is equal to 90% of `VideoStream.vbv_size_bits`.
+    /// Initial fullness of the Video Buffering Verifier (VBV) buffer in bits. Must be greater than zero. The default is equal to 90% of H264CodecSettings.vbv_size_bits.
     #[serde(rename="vbvFullnessBits")]
     
     pub vbv_fullness_bits: Option<i32>,
-    /// Size of the Video Buffering Verifier (VBV) buffer in bits. Must be greater than zero. The default is equal to `VideoStream.bitrate_bps`.
+    /// Size of the Video Buffering Verifier (VBV) buffer in bits. Must be greater than zero. The default is equal to H264CodecSettings.bitrate_bps.
     #[serde(rename="vbvSizeBits")]
     
     pub vbv_size_bits: Option<i32>,
@@ -649,6 +789,28 @@ pub struct H264CodecSettings {
 }
 
 impl client::Part for H264CodecSettings {}
+
+
+/// Convert the input video to a Hybrid Log Gamma (HLG) video.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct H264ColorFormatHLG { _never_set: Option<bool> }
+
+impl client::Part for H264ColorFormatHLG {}
+
+
+/// Convert the input video to a Standard Dynamic Range (SDR) video.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct H264ColorFormatSDR { _never_set: Option<bool> }
+
+impl client::Part for H264ColorFormatSDR {}
 
 
 /// H265 codec settings.
@@ -666,7 +828,7 @@ pub struct H265CodecSettings {
     #[serde(rename="aqStrength")]
     
     pub aq_strength: Option<f64>,
-    /// The number of consecutive B-frames. Must be greater than or equal to zero. Must be less than `VideoStream.gop_frame_count` if set. The default is 0.
+    /// The number of consecutive B-frames. Must be greater than or equal to zero. Must be less than H265CodecSettings.gop_frame_count if set. The default is 0.
     #[serde(rename="bFrameCount")]
     
     pub b_frame_count: Option<i32>,
@@ -682,14 +844,18 @@ pub struct H265CodecSettings {
     #[serde(rename="crfLevel")]
     
     pub crf_level: Option<i32>,
-    /// Use two-pass encoding strategy to achieve better video quality. `VideoStream.rate_control_mode` must be `vbr`. The default is `false`.
+    /// Use two-pass encoding strategy to achieve better video quality. H265CodecSettings.rate_control_mode must be `vbr`. The default is `false`.
     #[serde(rename="enableTwoPass")]
     
     pub enable_two_pass: Option<bool>,
-    /// Required. The target video frame rate in frames per second (FPS). Must be less than or equal to 120. Will default to the input frame rate if larger than the input frame rate. The API will generate an output FPS that is divisible by the input FPS, and smaller or equal to the target FPS. See [Calculating frame rate](https://cloud.google.com/transcoder/docs/concepts/frame-rate) for more information.
+    /// Required. The target video frame rate in frames per second (FPS). Must be less than or equal to 120.
     #[serde(rename="frameRate")]
     
     pub frame_rate: Option<f64>,
+    /// Optional. Frame rate conversion strategy for desired frame rate. The default is `DOWNSAMPLE`.
+    #[serde(rename="frameRateConversionStrategy")]
+    
+    pub frame_rate_conversion_strategy: Option<String>,
     /// Select the GOP size based on the specified duration. The default is `3s`. Note that `gopDuration` must be less than or equal to [`segmentDuration`](#SegmentSettings), and [`segmentDuration`](#SegmentSettings) must be divisible by `gopDuration`.
     #[serde(rename="gopDuration")]
     
@@ -699,10 +865,16 @@ pub struct H265CodecSettings {
     #[serde(rename="gopFrameCount")]
     
     pub gop_frame_count: Option<i32>,
+    /// Optional. HDR10 color format setting for H265.
+    
+    pub hdr10: Option<H265ColorFormatHDR10>,
     /// The height of the video in pixels. Must be an even integer. When not specified, the height is adjusted to match the specified width and input aspect ratio. If both are omitted, the input height is used. For portrait videos that contain horizontal ASR and rotation metadata, provide the height, in pixels, per the horizontal ASR. The API calculates the width per the horizontal ASR. The API detects any rotation metadata and swaps the requested height and width for the output.
     #[serde(rename="heightPixels")]
     
     pub height_pixels: Option<i32>,
+    /// Optional. HLG color format setting for H265.
+    
+    pub hlg: Option<H265ColorFormatHLG>,
     /// Pixel format to use. The default is `yuv420p`. Supported pixel formats: - `yuv420p` pixel format - `yuv422p` pixel format - `yuv444p` pixel format - `yuv420p10` 10-bit HDR pixel format - `yuv422p10` 10-bit HDR pixel format - `yuv444p10` 10-bit HDR pixel format - `yuv420p12` 12-bit HDR pixel format - `yuv422p12` 12-bit HDR pixel format - `yuv444p12` 12-bit HDR pixel format
     #[serde(rename="pixelFormat")]
     
@@ -713,14 +885,17 @@ pub struct H265CodecSettings {
     /// Enforces the specified codec profile. The following profiles are supported: * 8-bit profiles * `main` (default) * `main-intra` * `mainstillpicture` * 10-bit profiles * `main10` (default) * `main10-intra` * `main422-10` * `main422-10-intra` * `main444-10` * `main444-10-intra` * 12-bit profiles * `main12` (default) * `main12-intra` * `main422-12` * `main422-12-intra` * `main444-12` * `main444-12-intra` The available options are [FFmpeg-compatible](https://x265.readthedocs.io/). Note that certain values for this field may cause the transcoder to override other fields you set in the `H265CodecSettings` message.
     
     pub profile: Option<String>,
-    /// Specify the `rate_control_mode`. The default is `vbr`. Supported rate control modes: - `vbr` - variable bitrate - `crf` - constant rate factor
+    /// Specify the mode. The default is `vbr`. Supported rate control modes: - `vbr` - variable bitrate - `crf` - constant rate factor
     #[serde(rename="rateControlMode")]
     
     pub rate_control_mode: Option<String>,
+    /// Optional. SDR color format setting for H265.
+    
+    pub sdr: Option<H265ColorFormatSDR>,
     /// Enforces the specified codec tune. The available options are [FFmpeg-compatible](https://trac.ffmpeg.org/wiki/Encode/H.265). Note that certain values for this field may cause the transcoder to override other fields you set in the `H265CodecSettings` message.
     
     pub tune: Option<String>,
-    /// Initial fullness of the Video Buffering Verifier (VBV) buffer in bits. Must be greater than zero. The default is equal to 90% of `VideoStream.vbv_size_bits`.
+    /// Initial fullness of the Video Buffering Verifier (VBV) buffer in bits. Must be greater than zero. The default is equal to 90% of H265CodecSettings.vbv_size_bits.
     #[serde(rename="vbvFullnessBits")]
     
     pub vbv_fullness_bits: Option<i32>,
@@ -737,7 +912,40 @@ pub struct H265CodecSettings {
 impl client::Part for H265CodecSettings {}
 
 
-/// Overlaid jpeg image.
+/// Convert the input video to a High Dynamic Range 10 (HDR10) video.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct H265ColorFormatHDR10 { _never_set: Option<bool> }
+
+impl client::Part for H265ColorFormatHDR10 {}
+
+
+/// Convert the input video to a Hybrid Log Gamma (HLG) video.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct H265ColorFormatHLG { _never_set: Option<bool> }
+
+impl client::Part for H265ColorFormatHLG {}
+
+
+/// Convert the input video to a Standard Dynamic Range (SDR) video.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct H265ColorFormatSDR { _never_set: Option<bool> }
+
+impl client::Part for H265ColorFormatSDR {}
+
+
+/// Overlaid image.
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
 /// 
@@ -750,7 +958,7 @@ pub struct Image {
     /// Normalized image resolution, based on output video resolution. Valid values: `0.0`–`1.0`. To respect the original image aspect ratio, set either `x` or `y` to `0.0`. To use the original image resolution, set both `x` and `y` to `0.0`.
     
     pub resolution: Option<NormalizedCoordinate>,
-    /// Required. URI of the JPEG image in Cloud Storage. For example, `gs://bucket/inputs/image.jpeg`. JPEG is the only supported image type.
+    /// Required. URI of the image in Cloud Storage. For example, `gs://bucket/inputs/image.png`. Only PNG and JPEG images are supported.
     
     pub uri: Option<String>,
 }
@@ -772,7 +980,7 @@ pub struct Input {
     #[serde(rename="preprocessingConfig")]
     
     pub preprocessing_config: Option<PreprocessingConfig>,
-    /// URI of the media. Input files must be at least 5 seconds in duration and stored in Cloud Storage (for example, `gs://bucket/inputs/file.mp4`). If empty, the value is populated from `Job.input_uri`. See [Supported input and output formats](https://cloud.google.com/transcoder/docs/concepts/supported-input-and-output-formats).
+    /// URI of the media. Input files must be at least 5 seconds in duration and stored in Cloud Storage (for example, `gs://bucket/inputs/file.mp4`). If empty, the value is populated from Job.input_uri. See [Supported input and output formats](https://cloud.google.com/transcoder/docs/concepts/supported-input-and-output-formats).
     
     pub uri: Option<String>,
 }
@@ -789,10 +997,13 @@ impl client::Part for Input {}
 /// 
 /// * [locations jobs create projects](ProjectLocationJobCreateCall) (request|response)
 /// * [locations jobs get projects](ProjectLocationJobGetCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Job {
+    /// The processing priority of a batch job. This field can only be set for batch mode jobs. The default value is 0. This value cannot be negative. Higher values correspond to higher priorities for the job.
+    #[serde(rename="batchModePriority")]
+    
+    pub batch_mode_priority: Option<i32>,
     /// The configuration for this job.
     
     pub config: Option<JobConfig>,
@@ -804,7 +1015,7 @@ pub struct Job {
     #[serde(rename="endTime")]
     
     pub end_time: Option<client::chrono::DateTime<client::chrono::offset::Utc>>,
-    /// Output only. An error object that describes the reason for the failure. This property is always present when `state` is `FAILED`.
+    /// Output only. An error object that describes the reason for the failure. This property is always present when ProcessingState is `FAILED`.
     
     pub error: Option<Status>,
     /// Input only. Specify the `input_uri` to populate empty `uri` fields in each element of `Job.config.inputs` or `JobTemplate.config.inputs` when using template. URI of the media. Input files must be at least 5 seconds in duration and stored in Cloud Storage (for example, `gs://bucket/inputs/file.mp4`). See [Supported input and output formats](https://cloud.google.com/transcoder/docs/concepts/supported-input-and-output-formats).
@@ -814,9 +1025,15 @@ pub struct Job {
     /// The labels associated with this job. You can use these to organize and group your jobs.
     
     pub labels: Option<HashMap<String, String>>,
+    /// The processing mode of the job. The default is `PROCESSING_MODE_INTERACTIVE`.
+    
+    pub mode: Option<String>,
     /// The resource name of the job. Format: `projects/{project_number}/locations/{location}/jobs/{job}`
     
     pub name: Option<String>,
+    /// Optional. The optimization strategy of the job. The default is `AUTODETECT`.
+    
+    pub optimization: Option<String>,
     /// Input only. Specify the `output_uri` to populate an empty `Job.config.output.uri` or `JobTemplate.config.output.uri` when using template. URI for the output file(s). For example, `gs://my-bucket/outputs/`. See [Supported input and output formats](https://cloud.google.com/transcoder/docs/concepts/supported-input-and-output-formats).
     #[serde(rename="outputUri")]
     
@@ -828,7 +1045,7 @@ pub struct Job {
     /// Output only. The current state of the job.
     
     pub state: Option<String>,
-    /// Input only. Specify the `template_id` to use for populating `Job.config`. The default is `preset/web-hd`. Preset Transcoder templates: - `preset/{preset_id}` - User defined JobTemplate: `{job_template_id}`
+    /// Input only. Specify the `template_id` to use for populating `Job.config`. The default is `preset/web-hd`, which is the only supported preset. User defined JobTemplate: `{job_template_id}`
     #[serde(rename="templateId")]
     
     pub template_id: Option<String>,
@@ -853,7 +1070,7 @@ pub struct JobConfig {
     #[serde(rename="adBreaks")]
     
     pub ad_breaks: Option<Vec<AdBreak>>,
-    /// List of `Edit atom`s. Defines the ultimate timeline of the resulting file or manifest.
+    /// List of edit atoms. Defines the ultimate timeline of the resulting file or manifest.
     #[serde(rename="editList")]
     
     pub edit_list: Option<Vec<EditAtom>>,
@@ -861,6 +1078,9 @@ pub struct JobConfig {
     #[serde(rename="elementaryStreams")]
     
     pub elementary_streams: Option<Vec<ElementaryStream>>,
+    /// List of encryption configurations for the content. Each configuration has an ID. Specify this ID in the MuxStream.encryption_id field to indicate the configuration to use for that `MuxStream` output.
+    
+    pub encryptions: Option<Vec<Encryption>>,
     /// List of input assets stored in Cloud Storage.
     
     pub inputs: Option<Vec<Input>>,
@@ -899,7 +1119,6 @@ impl client::Part for JobConfig {}
 /// 
 /// * [locations job templates create projects](ProjectLocationJobTemplateCreateCall) (request|response)
 /// * [locations job templates get projects](ProjectLocationJobTemplateGetCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct JobTemplate {
@@ -926,7 +1145,6 @@ impl client::ResponseResult for JobTemplate {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations job templates list projects](ProjectLocationJobTemplateListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ListJobTemplatesResponse {
@@ -954,7 +1172,6 @@ impl client::ResponseResult for ListJobTemplatesResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [locations jobs list projects](ProjectLocationJobListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ListJobsResponse {
@@ -980,21 +1197,39 @@ impl client::ResponseResult for ListJobsResponse {}
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Manifest {
-    /// The name of the generated file. The default is `manifest` with the extension suffix corresponding to the `Manifest.type`.
+    /// `DASH` manifest configuration.
+    
+    pub dash: Option<DashConfig>,
+    /// The name of the generated file. The default is `manifest` with the extension suffix corresponding to the Manifest.type.
     #[serde(rename="fileName")]
     
     pub file_name: Option<String>,
-    /// Required. List of user given `MuxStream.key`s that should appear in this manifest. When `Manifest.type` is `HLS`, a media manifest with name `MuxStream.key` and `.m3u8` extension is generated for each element of the `Manifest.mux_streams`.
+    /// Required. List of user supplied MuxStream.key values that should appear in this manifest. When Manifest.type is `HLS`, a media manifest with name MuxStream.key and `.m3u8` extension is generated for each element in this list.
     #[serde(rename="muxStreams")]
     
     pub mux_streams: Option<Vec<String>>,
-    /// Required. Type of the manifest, can be `HLS` or `DASH`.
+    /// Required. Type of the manifest.
     #[serde(rename="type")]
     
     pub type_: Option<String>,
 }
 
 impl client::Part for Manifest {}
+
+
+/// Configuration for MPEG Common Encryption (MPEG-CENC).
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct MpegCommonEncryption {
+    /// Required. Specify the encryption scheme. Supported encryption schemes: - `cenc` - `cbcs`
+    
+    pub scheme: Option<String>,
+}
+
+impl client::Part for MpegCommonEncryption {}
 
 
 /// Multiplexing settings for output stream.
@@ -1007,15 +1242,22 @@ pub struct MuxStream {
     /// The container format. The default is `mp4` Supported container formats: - `ts` - `fmp4`- the corresponding file extension is `.m4s` - `mp4` - `vtt` See also: [Supported input and output formats](https://cloud.google.com/transcoder/docs/concepts/supported-input-and-output-formats)
     
     pub container: Option<String>,
-    /// List of `ElementaryStream.key`s multiplexed in this stream.
+    /// List of ElementaryStream.key values multiplexed in this stream.
     #[serde(rename="elementaryStreams")]
     
     pub elementary_streams: Option<Vec<String>>,
-    /// The name of the generated file. The default is `MuxStream.key` with the extension suffix corresponding to the `MuxStream.container`. Individual segments also have an incremental 10-digit zero-padded suffix starting from 0 before the extension, such as `mux_stream0000000123.ts`.
+    /// Identifier of the encryption configuration to use. If omitted, output will be unencrypted.
+    #[serde(rename="encryptionId")]
+    
+    pub encryption_id: Option<String>,
+    /// The name of the generated file. The default is MuxStream.key with the extension suffix corresponding to the MuxStream.container. Individual segments also have an incremental 10-digit zero-padded suffix starting from 0 before the extension, such as `mux_stream0000000123.ts`.
     #[serde(rename="fileName")]
     
     pub file_name: Option<String>,
-    /// A unique key for this multiplexed stream. HLS media manifests will be named `MuxStream.key` with the `.m3u8` extension suffix.
+    /// Optional. `fmp4` container configuration.
+    
+    pub fmp4: Option<Fmp4Config>,
+    /// A unique key for this multiplexed stream.
     
     pub key: Option<String>,
     /// Segment settings for `ts`, `fmp4` and `vtt`.
@@ -1052,7 +1294,7 @@ impl client::Part for NormalizedCoordinate {}
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Output {
-    /// URI for the output file(s). For example, `gs://my-bucket/outputs/`. If empty, the value is populated from `Job.output_uri`. See [Supported input and output formats](https://cloud.google.com/transcoder/docs/concepts/supported-input-and-output-formats).
+    /// URI for the output file(s). For example, `gs://my-bucket/outputs/`. If empty, the value is populated from Job.output_uri. See [Supported input and output formats](https://cloud.google.com/transcoder/docs/concepts/supported-input-and-output-formats).
     
     pub uri: Option<String>,
 }
@@ -1067,7 +1309,7 @@ impl client::Part for Output {}
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Overlay {
-    /// List of Animations. The list should be chronological, without any time overlap.
+    /// List of animations. The list should be chronological, without any time overlap.
     
     pub animations: Option<Vec<Animation>>,
     /// Image overlay.
@@ -1104,6 +1346,17 @@ pub struct Pad {
 }
 
 impl client::Part for Pad {}
+
+
+/// Playready configuration.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct Playready { _never_set: Option<bool> }
+
+impl client::Part for Playready {}
 
 
 /// Preprocessing configurations.
@@ -1152,6 +1405,33 @@ pub struct PubsubDestination {
 }
 
 impl client::Part for PubsubDestination {}
+
+
+/// Configuration for SAMPLE-AES encryption.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct SampleAesEncryption { _never_set: Option<bool> }
+
+impl client::Part for SampleAesEncryption {}
+
+
+/// Configuration for secrets stored in Google Secret Manager.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct SecretManagerSource {
+    /// Required. The name of the Secret Version containing the encryption key in the following format: `projects/{project}/secrets/{secret_id}/versions/{version_number}` Note that only numbered versions are supported. Aliases like "latest" are not supported.
+    #[serde(rename="secretVersion")]
+    
+    pub secret_version: Option<String>,
+}
+
+impl client::Part for SecretManagerSource {}
 
 
 /// Segment settings for `ts`, `fmp4` and `vtt`.
@@ -1252,18 +1532,18 @@ pub struct Status {
 impl client::Part for Status {}
 
 
-/// The mapping for the `Job.edit_list` atoms with text `EditAtom.inputs`.
+/// The mapping for the JobConfig.edit_list atoms with text EditAtom.inputs.
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
 /// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct TextMapping {
-    /// Required. The `EditAtom.key` that references atom with text inputs in the `Job.edit_list`.
+    /// Required. The EditAtom.key that references atom with text inputs in the JobConfig.edit_list.
     #[serde(rename="atomKey")]
     
     pub atom_key: Option<String>,
-    /// Required. The `Input.key` that identifies the input file.
+    /// Required. The Input.key that identifies the input file.
     #[serde(rename="inputKey")]
     
     pub input_key: Option<String>,
@@ -1286,7 +1566,15 @@ pub struct TextStream {
     /// The codec for this text stream. The default is `webvtt`. Supported text codecs: - `srt` - `ttml` - `cea608` - `cea708` - `webvtt`
     
     pub codec: Option<String>,
-    /// The mapping for the `Job.edit_list` atoms with text `EditAtom.inputs`.
+    /// The name for this particular text stream that will be added to the HLS/DASH manifest. Not supported in MP4 files.
+    #[serde(rename="displayName")]
+    
+    pub display_name: Option<String>,
+    /// The BCP-47 language code, such as `en-US` or `sr-Latn`. For more information, see https://www.unicode.org/reports/tr35/#Unicode_locale_identifier. Not supported in MP4 files.
+    #[serde(rename="languageCode")]
+    
+    pub language_code: Option<String>,
+    /// The mapping for the JobConfig.edit_list atoms with text EditAtom.inputs.
     
     pub mapping: Option<Vec<TextMapping>>,
 }
@@ -1330,10 +1618,14 @@ pub struct Vp9CodecSettings {
     #[serde(rename="crfLevel")]
     
     pub crf_level: Option<i32>,
-    /// Required. The target video frame rate in frames per second (FPS). Must be less than or equal to 120. Will default to the input frame rate if larger than the input frame rate. The API will generate an output FPS that is divisible by the input FPS, and smaller or equal to the target FPS. See [Calculating frame rate](https://cloud.google.com/transcoder/docs/concepts/frame-rate) for more information.
+    /// Required. The target video frame rate in frames per second (FPS). Must be less than or equal to 120.
     #[serde(rename="frameRate")]
     
     pub frame_rate: Option<f64>,
+    /// Optional. Frame rate conversion strategy for desired frame rate. The default is `DOWNSAMPLE`.
+    #[serde(rename="frameRateConversionStrategy")]
+    
+    pub frame_rate_conversion_strategy: Option<String>,
     /// Select the GOP size based on the specified duration. The default is `3s`. Note that `gopDuration` must be less than or equal to [`segmentDuration`](#SegmentSettings), and [`segmentDuration`](#SegmentSettings) must be divisible by `gopDuration`.
     #[serde(rename="gopDuration")]
     
@@ -1347,6 +1639,9 @@ pub struct Vp9CodecSettings {
     #[serde(rename="heightPixels")]
     
     pub height_pixels: Option<i32>,
+    /// Optional. HLG color format setting for VP9.
+    
+    pub hlg: Option<Vp9ColorFormatHLG>,
     /// Pixel format to use. The default is `yuv420p`. Supported pixel formats: - `yuv420p` pixel format - `yuv422p` pixel format - `yuv444p` pixel format - `yuv420p10` 10-bit HDR pixel format - `yuv422p10` 10-bit HDR pixel format - `yuv444p10` 10-bit HDR pixel format - `yuv420p12` 12-bit HDR pixel format - `yuv422p12` 12-bit HDR pixel format - `yuv444p12` 12-bit HDR pixel format
     #[serde(rename="pixelFormat")]
     
@@ -1354,10 +1649,13 @@ pub struct Vp9CodecSettings {
     /// Enforces the specified codec profile. The following profiles are supported: * `profile0` (default) * `profile1` * `profile2` * `profile3` The available options are [WebM-compatible](https://www.webmproject.org/vp9/profiles/). Note that certain values for this field may cause the transcoder to override other fields you set in the `Vp9CodecSettings` message.
     
     pub profile: Option<String>,
-    /// Specify the `rate_control_mode`. The default is `vbr`. Supported rate control modes: - `vbr` - variable bitrate
+    /// Specify the mode. The default is `vbr`. Supported rate control modes: - `vbr` - variable bitrate
     #[serde(rename="rateControlMode")]
     
     pub rate_control_mode: Option<String>,
+    /// Optional. SDR color format setting for VP9.
+    
+    pub sdr: Option<Vp9ColorFormatSDR>,
     /// The width of the video in pixels. Must be an even integer. When not specified, the width is adjusted to match the specified height and input aspect ratio. If both are omitted, the input width is used. For portrait videos that contain horizontal ASR and rotation metadata, provide the width, in pixels, per the horizontal ASR. The API calculates the height per the horizontal ASR. The API detects any rotation metadata and swaps the requested height and width for the output.
     #[serde(rename="widthPixels")]
     
@@ -1365,6 +1663,39 @@ pub struct Vp9CodecSettings {
 }
 
 impl client::Part for Vp9CodecSettings {}
+
+
+/// Convert the input video to a Hybrid Log Gamma (HLG) video.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct Vp9ColorFormatHLG { _never_set: Option<bool> }
+
+impl client::Part for Vp9ColorFormatHLG {}
+
+
+/// Convert the input video to a Standard Dynamic Range (SDR) video.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct Vp9ColorFormatSDR { _never_set: Option<bool> }
+
+impl client::Part for Vp9ColorFormatSDR {}
+
+
+/// Widevine configuration.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct Widevine { _never_set: Option<bool> }
+
+impl client::Part for Widevine {}
 
 
 /// Yet Another Deinterlacing Filter Configuration.
@@ -1419,7 +1750,7 @@ impl client::Part for YadifConfig {}
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = Transcoder::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = Transcoder::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
 /// // like `locations_job_templates_create(...)`, `locations_job_templates_delete(...)`, `locations_job_templates_get(...)`, `locations_job_templates_list(...)`, `locations_jobs_create(...)`, `locations_jobs_delete(...)`, `locations_jobs_get(...)` and `locations_jobs_list(...)`
 /// // to build up your call.
@@ -1619,7 +1950,7 @@ impl<'a, S> ProjectMethods<'a, S> {
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Transcoder::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Transcoder::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -1828,7 +2159,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationJobTemplateCreateCall<'a, S> {
@@ -1921,7 +2253,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Transcoder::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Transcoder::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -2101,7 +2433,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationJobTemplateDeleteCall<'a, S> {
@@ -2194,7 +2527,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Transcoder::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Transcoder::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -2362,7 +2695,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationJobTemplateGetCall<'a, S> {
@@ -2455,7 +2789,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Transcoder::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Transcoder::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -2671,7 +3005,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationJobTemplateListCall<'a, S> {
@@ -2765,7 +3100,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Transcoder::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Transcoder::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -2962,7 +3297,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationJobCreateCall<'a, S> {
@@ -3055,7 +3391,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Transcoder::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Transcoder::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -3235,7 +3571,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationJobDeleteCall<'a, S> {
@@ -3328,7 +3665,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Transcoder::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Transcoder::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -3496,7 +3833,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationJobGetCall<'a, S> {
@@ -3589,7 +3927,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Transcoder::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Transcoder::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -3805,7 +4143,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ProjectLocationJobListCall<'a, S> {

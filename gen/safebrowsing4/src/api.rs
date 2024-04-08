@@ -54,7 +54,7 @@ use crate::{client, client::GetToken, client::serde_with};
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -99,7 +99,7 @@ impl<'a, S> Safebrowsing<S> {
         Safebrowsing {
             client,
             auth: Box::new(auth),
-            _user_agent: "google-api-rust-client/5.0.2".to_string(),
+            _user_agent: "google-api-rust-client/5.0.4".to_string(),
             _base_url: "https://safebrowsing.googleapis.com/".to_string(),
             _root_url: "https://safebrowsing.googleapis.com/".to_string(),
         }
@@ -128,7 +128,7 @@ impl<'a, S> Safebrowsing<S> {
     }
 
     /// Set the user-agent header field to use in all requests to the server.
-    /// It defaults to `google-api-rust-client/5.0.2`.
+    /// It defaults to `google-api-rust-client/5.0.4`.
     ///
     /// Returns the previously set user-agent.
     pub fn user_agent(&mut self, agent_name: String) -> String {
@@ -164,7 +164,6 @@ impl<'a, S> Safebrowsing<S> {
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [create threat hits](ThreatHitCreateCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleProtobufEmpty { _never_set: Option<bool> }
@@ -181,7 +180,7 @@ impl client::ResponseResult for GoogleProtobufEmpty {}
 pub struct GoogleSecuritySafebrowsingV4Checksum {
     /// The SHA256 hash of the client state; that is, of the sorted list of all hashes present in the database.
     
-    #[serde_as(as = "Option<::client::serde::urlsafe_base64::Wrapper>")]
+    #[serde_as(as = "Option<::client::serde::standard_base64::Wrapper>")]
     pub sha256: Option<Vec<u8>>,
 }
 
@@ -216,7 +215,6 @@ impl client::Part for GoogleSecuritySafebrowsingV4ClientInfo {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [fetch threat list updates](ThreatListUpdateFetchCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleSecuritySafebrowsingV4FetchThreatListUpdatesRequest {
@@ -248,7 +246,7 @@ pub struct GoogleSecuritySafebrowsingV4FetchThreatListUpdatesRequestListUpdateRe
     pub platform_type: Option<String>,
     /// The current state of the client for the requested list (the encrypted client state that was received from the last successful list update).
     
-    #[serde_as(as = "Option<::client::serde::urlsafe_base64::Wrapper>")]
+    #[serde_as(as = "Option<::client::serde::standard_base64::Wrapper>")]
     pub state: Option<Vec<u8>>,
     /// The types of entries present in the list.
     #[serde(rename="threatEntryType")]
@@ -306,7 +304,6 @@ impl client::Part for GoogleSecuritySafebrowsingV4FetchThreatListUpdatesRequestL
 /// 
 /// * [get encoded updates](EncodedUpdateGetCall) (response)
 /// * [fetch threat list updates](ThreatListUpdateFetchCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleSecuritySafebrowsingV4FetchThreatListUpdatesResponse {
@@ -340,7 +337,7 @@ pub struct GoogleSecuritySafebrowsingV4FetchThreatListUpdatesResponseListUpdateR
     /// The new client state, in encrypted format. Opaque to clients.
     #[serde(rename="newClientState")]
     
-    #[serde_as(as = "Option<::client::serde::urlsafe_base64::Wrapper>")]
+    #[serde_as(as = "Option<::client::serde::standard_base64::Wrapper>")]
     pub new_client_state: Option<Vec<u8>>,
     /// The platform type for which data is returned.
     #[serde(rename="platformType")]
@@ -374,7 +371,6 @@ impl client::Part for GoogleSecuritySafebrowsingV4FetchThreatListUpdatesResponse
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [find full hashes](FullHashFindCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleSecuritySafebrowsingV4FindFullHashesRequest {
@@ -388,7 +384,7 @@ pub struct GoogleSecuritySafebrowsingV4FindFullHashesRequest {
     /// The current client states for each of the client's local threat lists.
     #[serde(rename="clientStates")]
     
-    #[serde_as(as = "Option<Vec<::client::serde::urlsafe_base64::Wrapper>>")]
+    #[serde_as(as = "Option<Vec<::client::serde::standard_base64::Wrapper>>")]
     pub client_states: Option<Vec<Vec<u8>>>,
     /// The lists and hashes to be checked.
     #[serde(rename="threatInfo")]
@@ -408,7 +404,6 @@ impl client::RequestValue for GoogleSecuritySafebrowsingV4FindFullHashesRequest 
 /// 
 /// * [get encoded full hashes](EncodedFullHashGetCall) (response)
 /// * [find full hashes](FullHashFindCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleSecuritySafebrowsingV4FindFullHashesResponse {
@@ -438,7 +433,6 @@ impl client::ResponseResult for GoogleSecuritySafebrowsingV4FindFullHashesRespon
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [find threat matches](ThreatMatchFindCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleSecuritySafebrowsingV4FindThreatMatchesRequest {
@@ -462,7 +456,6 @@ impl client::RequestValue for GoogleSecuritySafebrowsingV4FindThreatMatchesReque
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [find threat matches](ThreatMatchFindCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleSecuritySafebrowsingV4FindThreatMatchesResponse {
@@ -482,7 +475,6 @@ impl client::ResponseResult for GoogleSecuritySafebrowsingV4FindThreatMatchesRes
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [list threat lists](ThreatListListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleSecuritySafebrowsingV4ListThreatListsResponse {
@@ -509,7 +501,7 @@ pub struct GoogleSecuritySafebrowsingV4RawHashes {
     /// The hashes, in binary format, concatenated into one long string. Hashes are sorted in lexicographic order. For JSON API users, hashes are base64-encoded.
     #[serde(rename="rawHashes")]
     
-    #[serde_as(as = "Option<::client::serde::urlsafe_base64::Wrapper>")]
+    #[serde_as(as = "Option<::client::serde::standard_base64::Wrapper>")]
     pub raw_hashes: Option<Vec<u8>>,
 }
 
@@ -541,7 +533,7 @@ pub struct GoogleSecuritySafebrowsingV4RiceDeltaEncoding {
     /// The encoded deltas that are encoded using the Golomb-Rice coder.
     #[serde(rename="encodedData")]
     
-    #[serde_as(as = "Option<::client::serde::urlsafe_base64::Wrapper>")]
+    #[serde_as(as = "Option<::client::serde::standard_base64::Wrapper>")]
     pub encoded_data: Option<Vec<u8>>,
     /// The offset of the first entry in the encoded data, or, if only a single integer was encoded, that single integer's value. If the field is empty or missing, assume zero.
     #[serde(rename="firstValue")]
@@ -570,11 +562,11 @@ impl client::Part for GoogleSecuritySafebrowsingV4RiceDeltaEncoding {}
 pub struct GoogleSecuritySafebrowsingV4ThreatEntry {
     /// The digest of an executable in SHA256 format. The API supports both binary and hex digests. For JSON requests, digests are base64-encoded.
     
-    #[serde_as(as = "Option<::client::serde::urlsafe_base64::Wrapper>")]
+    #[serde_as(as = "Option<::client::serde::standard_base64::Wrapper>")]
     pub digest: Option<Vec<u8>>,
     /// A hash prefix, consisting of the most significant 4-32 bytes of a SHA256 hash. This field is in binary format. For JSON requests, hashes are base64-encoded.
     
-    #[serde_as(as = "Option<::client::serde::urlsafe_base64::Wrapper>")]
+    #[serde_as(as = "Option<::client::serde::standard_base64::Wrapper>")]
     pub hash: Option<Vec<u8>>,
     /// A URL.
     
@@ -608,11 +600,11 @@ impl client::Part for GoogleSecuritySafebrowsingV4ThreatEntryMetadata {}
 pub struct GoogleSecuritySafebrowsingV4ThreatEntryMetadataMetadataEntry {
     /// The metadata entry key. For JSON requests, the key is base64-encoded.
     
-    #[serde_as(as = "Option<::client::serde::urlsafe_base64::Wrapper>")]
+    #[serde_as(as = "Option<::client::serde::standard_base64::Wrapper>")]
     pub key: Option<Vec<u8>>,
     /// The metadata entry value. For JSON requests, the value is base64-encoded.
     
-    #[serde_as(as = "Option<::client::serde::urlsafe_base64::Wrapper>")]
+    #[serde_as(as = "Option<::client::serde::standard_base64::Wrapper>")]
     pub value: Option<Vec<u8>>,
 }
 
@@ -659,7 +651,6 @@ impl client::Part for GoogleSecuritySafebrowsingV4ThreatEntrySet {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [create threat hits](ThreatHitCreateCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleSecuritySafebrowsingV4ThreatHit {
@@ -730,7 +721,7 @@ pub struct GoogleSecuritySafebrowsingV4ThreatHitUserInfo {
     /// Unique user identifier defined by the client.
     #[serde(rename="userId")]
     
-    #[serde_as(as = "Option<::client::serde::urlsafe_base64::Wrapper>")]
+    #[serde_as(as = "Option<::client::serde::standard_base64::Wrapper>")]
     pub user_id: Option<Vec<u8>>,
 }
 
@@ -851,7 +842,7 @@ impl client::Part for GoogleSecuritySafebrowsingV4ThreatMatch {}
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
 /// // like `get(...)`
 /// // to build up your call.
@@ -910,7 +901,7 @@ impl<'a, S> EncodedFullHashMethods<'a, S> {
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
 /// // like `get(...)`
 /// // to build up your call.
@@ -969,7 +960,7 @@ impl<'a, S> EncodedUpdateMethods<'a, S> {
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
 /// // like `find(...)`
 /// // to build up your call.
@@ -1026,7 +1017,7 @@ impl<'a, S> FullHashMethods<'a, S> {
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
 /// // like `create(...)`
 /// // to build up your call.
@@ -1083,7 +1074,7 @@ impl<'a, S> ThreatHitMethods<'a, S> {
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
 /// // like `fetch(...)`
 /// // to build up your call.
@@ -1140,7 +1131,7 @@ impl<'a, S> ThreatListUpdateMethods<'a, S> {
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
 /// // like `list(...)`
 /// // to build up your call.
@@ -1192,7 +1183,7 @@ impl<'a, S> ThreatListMethods<'a, S> {
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
 /// // like `find(...)`
 /// // to build up your call.
@@ -1256,7 +1247,7 @@ impl<'a, S> ThreatMatchMethods<'a, S> {
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -1308,7 +1299,7 @@ where
         }
 
         let mut params = Params::with_capacity(5 + self._additional_params.len());
-        params.push("encodedRequest", ::client::serde::urlsafe_base64::to_string(&self._encoded_request));
+        params.push("encodedRequest", ::client::serde::standard_base64::to_string(&self._encoded_request));
         if let Some(value) = self._client_version.as_ref() {
             params.push("clientVersion", value);
         }
@@ -1437,7 +1428,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> EncodedFullHashGetCall<'a, S> {
@@ -1496,7 +1488,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -1548,7 +1540,7 @@ where
         }
 
         let mut params = Params::with_capacity(5 + self._additional_params.len());
-        params.push("encodedRequest", ::client::serde::urlsafe_base64::to_string(&self._encoded_request));
+        params.push("encodedRequest", ::client::serde::standard_base64::to_string(&self._encoded_request));
         if let Some(value) = self._client_version.as_ref() {
             params.push("clientVersion", value);
         }
@@ -1677,7 +1669,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> EncodedUpdateGetCall<'a, S> {
@@ -1737,7 +1730,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -1904,7 +1897,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> FullHashFindCall<'a, S> {
@@ -1964,7 +1958,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -2131,7 +2125,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ThreatHitCreateCall<'a, S> {
@@ -2191,7 +2186,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -2358,7 +2353,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ThreatListUpdateFetchCall<'a, S> {
@@ -2417,7 +2413,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -2555,7 +2551,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ThreatListListCall<'a, S> {
@@ -2615,7 +2612,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Safebrowsing::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -2782,7 +2779,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ThreatMatchFindCall<'a, S> {

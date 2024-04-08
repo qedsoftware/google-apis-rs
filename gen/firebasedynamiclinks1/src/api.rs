@@ -23,7 +23,7 @@ use crate::{client, client::GetToken, client::serde_with};
 /// Identifies the an OAuth2 authorization scope.
 /// A scope is needed when requesting an
 /// [authorization token](https://developers.google.com/youtube/v3/guides/authentication).
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Ord, PartialOrd, Hash, Debug, Clone, Copy)]
 pub enum Scope {
     /// View and administer all your Firebase data and settings
     Firebase,
@@ -77,7 +77,7 @@ impl Default for Scope {
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = FirebaseDynamicLinks::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = FirebaseDynamicLinks::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -125,7 +125,7 @@ impl<'a, S> FirebaseDynamicLinks<S> {
         FirebaseDynamicLinks {
             client,
             auth: Box::new(auth),
-            _user_agent: "google-api-rust-client/5.0.2".to_string(),
+            _user_agent: "google-api-rust-client/5.0.4".to_string(),
             _base_url: "https://firebasedynamiclinks.googleapis.com/".to_string(),
             _root_url: "https://firebasedynamiclinks.googleapis.com/".to_string(),
         }
@@ -142,7 +142,7 @@ impl<'a, S> FirebaseDynamicLinks<S> {
     }
 
     /// Set the user-agent header field to use in all requests to the server.
-    /// It defaults to `google-api-rust-client/5.0.2`.
+    /// It defaults to `google-api-rust-client/5.0.4`.
     ///
     /// Returns the previously set user-agent.
     pub fn user_agent(&mut self, agent_name: String) -> String {
@@ -226,7 +226,6 @@ impl client::Part for AndroidInfo {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [create managed short links](ManagedShortLinkCreateCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct CreateManagedShortLinkRequest {
@@ -261,7 +260,6 @@ impl client::RequestValue for CreateManagedShortLinkRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [create managed short links](ManagedShortLinkCreateCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct CreateManagedShortLinkResponse {
@@ -289,7 +287,6 @@ impl client::ResponseResult for CreateManagedShortLinkResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [create short links](ShortLinkCreateCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct CreateShortDynamicLinkRequest {
@@ -321,7 +318,6 @@ impl client::RequestValue for CreateShortDynamicLinkRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [create short links](ShortLinkCreateCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct CreateShortDynamicLinkResponse {
@@ -475,7 +471,6 @@ impl client::Part for DynamicLinkInfo {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [get link stats](MethodGetLinkStatCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct DynamicLinkStats {
@@ -520,7 +515,6 @@ impl client::Part for DynamicLinkWarning {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [install attribution](MethodInstallAttributionCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GetIosPostInstallAttributionRequest {
@@ -548,7 +542,7 @@ pub struct GetIosPostInstallAttributionRequest {
     #[serde(rename="sdkVersion")]
     
     pub sdk_version: Option<String>,
-    /// Possible unique matched link that server need to check before performing fingerprint match. If passed link is short server need to expand the link. If link is long server need to vslidate the link.
+    /// Possible unique matched link that server need to check before performing device heuristics match. If passed link is short server need to expand the link. If link is long server need to vslidate the link.
     #[serde(rename="uniqueMatchLinkToCheck")]
     
     pub unique_match_link_to_check: Option<String>,
@@ -561,7 +555,7 @@ pub struct GetIosPostInstallAttributionRequest {
 impl client::RequestValue for GetIosPostInstallAttributionRequest {}
 
 
-/// Response for iSDK to execute strong match flow for post-install attribution.
+/// Response for iSDK to execute strong match flow for post-install attribution. Information of the resolved FDL link.
 /// 
 /// # Activities
 /// 
@@ -569,7 +563,6 @@ impl client::RequestValue for GetIosPostInstallAttributionRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [install attribution](MethodInstallAttributionCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GetIosPostInstallAttributionResponse {
@@ -581,7 +574,7 @@ pub struct GetIosPostInstallAttributionResponse {
     #[serde(rename="attributionConfidence")]
     
     pub attribution_confidence: Option<String>,
-    /// The deep-link attributed post-install via one of several techniques (fingerprint, copy unique).
+    /// The deep-link attributed post-install via one of several techniques (device heuristics, copy unique).
     #[serde(rename="deepLink")]
     
     pub deep_link: Option<String>,
@@ -593,7 +586,7 @@ pub struct GetIosPostInstallAttributionResponse {
     #[serde(rename="fallbackLink")]
     
     pub fallback_link: Option<String>,
-    /// Invitation ID attributed post-install via one of several techniques (fingerprint, copy unique).
+    /// Invitation ID attributed post-install via one of several techniques (device heuristics, copy unique).
     #[serde(rename="invitationId")]
     
     pub invitation_id: Option<String>,
@@ -609,7 +602,7 @@ pub struct GetIosPostInstallAttributionResponse {
     #[serde(rename="requestIpVersion")]
     
     pub request_ip_version: Option<String>,
-    /// Entire FDL (short or long) attributed post-install via one of several techniques (fingerprint, copy unique).
+    /// Entire FDL (short or long) attributed post-install via one of several techniques (device heuristics, copy unique).
     #[serde(rename="requestedLink")]
     
     pub requested_link: Option<String>,
@@ -650,7 +643,6 @@ impl client::ResponseResult for GetIosPostInstallAttributionResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [reopen attribution](MethodReopenAttributionCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GetIosReopenAttributionRequest {
@@ -679,7 +671,6 @@ impl client::RequestValue for GetIosReopenAttributionRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [reopen attribution](MethodReopenAttributionCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GetIosReopenAttributionResponse {
@@ -831,7 +822,6 @@ impl client::Part for IosInfo {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [create managed short links](ManagedShortLinkCreateCall) (none)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct ManagedShortLink {
@@ -946,7 +936,7 @@ impl client::Part for Suffix {}
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = FirebaseDynamicLinks::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = FirebaseDynamicLinks::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
 /// // like `create(...)`
 /// // to build up your call.
@@ -1004,7 +994,7 @@ impl<'a, S> ManagedShortLinkMethods<'a, S> {
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = FirebaseDynamicLinks::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = FirebaseDynamicLinks::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
 /// // like `create(...)`
 /// // to build up your call.
@@ -1062,7 +1052,7 @@ impl<'a, S> ShortLinkMethods<'a, S> {
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = FirebaseDynamicLinks::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = FirebaseDynamicLinks::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
 /// // like `get_link_stats(...)`, `install_attribution(...)` and `reopen_attribution(...)`
 /// // to build up your call.
@@ -1164,7 +1154,7 @@ impl<'a, S> MethodMethods<'a, S> {
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = FirebaseDynamicLinks::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = FirebaseDynamicLinks::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -1342,7 +1332,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ManagedShortLinkCreateCall<'a, S> {
@@ -1436,7 +1427,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = FirebaseDynamicLinks::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = FirebaseDynamicLinks::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -1614,7 +1605,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ShortLinkCreateCall<'a, S> {
@@ -1707,7 +1699,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = FirebaseDynamicLinks::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = FirebaseDynamicLinks::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -1899,7 +1891,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> MethodGetLinkStatCall<'a, S> {
@@ -1993,7 +1986,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = FirebaseDynamicLinks::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = FirebaseDynamicLinks::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -2171,7 +2164,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> MethodInstallAttributionCall<'a, S> {
@@ -2265,7 +2259,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = FirebaseDynamicLinks::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = FirebaseDynamicLinks::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -2443,7 +2437,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> MethodReopenAttributionCall<'a, S> {

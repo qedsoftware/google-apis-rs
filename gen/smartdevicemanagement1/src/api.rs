@@ -23,7 +23,7 @@ use crate::{client, client::GetToken, client::serde_with};
 /// Identifies the an OAuth2 authorization scope.
 /// A scope is needed when requesting an
 /// [authorization token](https://developers.google.com/youtube/v3/guides/authentication).
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Ord, PartialOrd, Hash, Debug, Clone, Copy)]
 pub enum Scope {
     /// See and/or control the devices that you selected
     SdmService,
@@ -76,7 +76,7 @@ impl Default for Scope {
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = SmartDeviceManagement::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = SmartDeviceManagement::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -119,7 +119,7 @@ impl<'a, S> SmartDeviceManagement<S> {
         SmartDeviceManagement {
             client,
             auth: Box::new(auth),
-            _user_agent: "google-api-rust-client/5.0.2".to_string(),
+            _user_agent: "google-api-rust-client/5.0.4".to_string(),
             _base_url: "https://smartdevicemanagement.googleapis.com/".to_string(),
             _root_url: "https://smartdevicemanagement.googleapis.com/".to_string(),
         }
@@ -130,7 +130,7 @@ impl<'a, S> SmartDeviceManagement<S> {
     }
 
     /// Set the user-agent header field to use in all requests to the server.
-    /// It defaults to `google-api-rust-client/5.0.2`.
+    /// It defaults to `google-api-rust-client/5.0.4`.
     ///
     /// Returns the previously set user-agent.
     pub fn user_agent(&mut self, agent_name: String) -> String {
@@ -166,7 +166,6 @@ impl<'a, S> SmartDeviceManagement<S> {
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [devices get enterprises](EnterpriseDeviceGetCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleHomeEnterpriseSdmV1Device {
@@ -197,7 +196,6 @@ impl client::ResponseResult for GoogleHomeEnterpriseSdmV1Device {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [devices execute command enterprises](EnterpriseDeviceExecuteCommandCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleHomeEnterpriseSdmV1ExecuteDeviceCommandRequest {
@@ -220,7 +218,6 @@ impl client::RequestValue for GoogleHomeEnterpriseSdmV1ExecuteDeviceCommandReque
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [devices execute command enterprises](EnterpriseDeviceExecuteCommandCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleHomeEnterpriseSdmV1ExecuteDeviceCommandResponse {
@@ -240,17 +237,12 @@ impl client::ResponseResult for GoogleHomeEnterpriseSdmV1ExecuteDeviceCommandRes
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [devices list enterprises](EnterpriseDeviceListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleHomeEnterpriseSdmV1ListDevicesResponse {
     /// The list of devices.
     
     pub devices: Option<Vec<GoogleHomeEnterpriseSdmV1Device>>,
-    /// The pagination token to retrieve the next page of results.
-    #[serde(rename="nextPageToken")]
-    
-    pub next_page_token: Option<String>,
 }
 
 impl client::ResponseResult for GoogleHomeEnterpriseSdmV1ListDevicesResponse {}
@@ -264,14 +256,9 @@ impl client::ResponseResult for GoogleHomeEnterpriseSdmV1ListDevicesResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [structures rooms list enterprises](EnterpriseStructureRoomListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleHomeEnterpriseSdmV1ListRoomsResponse {
-    /// The pagination token to retrieve the next page of results. If this field is omitted, there are no subsequent pages.
-    #[serde(rename="nextPageToken")]
-    
-    pub next_page_token: Option<String>,
     /// The list of rooms.
     
     pub rooms: Option<Vec<GoogleHomeEnterpriseSdmV1Room>>,
@@ -288,14 +275,9 @@ impl client::ResponseResult for GoogleHomeEnterpriseSdmV1ListRoomsResponse {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [structures list enterprises](EnterpriseStructureListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleHomeEnterpriseSdmV1ListStructuresResponse {
-    /// The pagination token to retrieve the next page of results. If this field is omitted, there are no subsequent pages.
-    #[serde(rename="nextPageToken")]
-    
-    pub next_page_token: Option<String>,
     /// The list of structures.
     
     pub structures: Option<Vec<GoogleHomeEnterpriseSdmV1Structure>>,
@@ -331,7 +313,6 @@ impl client::Part for GoogleHomeEnterpriseSdmV1ParentRelation {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [structures rooms get enterprises](EnterpriseStructureRoomGetCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleHomeEnterpriseSdmV1Room {
@@ -354,7 +335,6 @@ impl client::ResponseResult for GoogleHomeEnterpriseSdmV1Room {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [structures get enterprises](EnterpriseStructureGetCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleHomeEnterpriseSdmV1Structure {
@@ -395,7 +375,7 @@ impl client::ResponseResult for GoogleHomeEnterpriseSdmV1Structure {}
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = SmartDeviceManagement::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = SmartDeviceManagement::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
 /// // like `devices_execute_command(...)`, `devices_get(...)`, `devices_list(...)`, `structures_get(...)`, `structures_list(...)`, `structures_rooms_get(...)` and `structures_rooms_list(...)`
 /// // to build up your call.
@@ -459,8 +439,6 @@ impl<'a, S> EnterpriseMethods<'a, S> {
         EnterpriseDeviceListCall {
             hub: self.hub,
             _parent: parent.to_string(),
-            _page_token: Default::default(),
-            _page_size: Default::default(),
             _filter: Default::default(),
             _delegate: Default::default(),
             _additional_params: Default::default(),
@@ -496,8 +474,6 @@ impl<'a, S> EnterpriseMethods<'a, S> {
         EnterpriseStructureRoomListCall {
             hub: self.hub,
             _parent: parent.to_string(),
-            _page_token: Default::default(),
-            _page_size: Default::default(),
             _delegate: Default::default(),
             _additional_params: Default::default(),
             _scopes: Default::default(),
@@ -532,8 +508,6 @@ impl<'a, S> EnterpriseMethods<'a, S> {
         EnterpriseStructureListCall {
             hub: self.hub,
             _parent: parent.to_string(),
-            _page_token: Default::default(),
-            _page_size: Default::default(),
             _filter: Default::default(),
             _delegate: Default::default(),
             _additional_params: Default::default(),
@@ -573,7 +547,7 @@ impl<'a, S> EnterpriseMethods<'a, S> {
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = SmartDeviceManagement::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = SmartDeviceManagement::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -770,7 +744,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> EnterpriseDeviceExecuteCommandCall<'a, S> {
@@ -863,7 +838,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = SmartDeviceManagement::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = SmartDeviceManagement::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -1031,7 +1006,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> EnterpriseDeviceGetCall<'a, S> {
@@ -1124,14 +1100,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = SmartDeviceManagement::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = SmartDeviceManagement::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.enterprises().devices_list("parent")
-///              .page_token("sanctus")
-///              .page_size(-80)
-///              .filter("amet.")
+///              .filter("sanctus")
 ///              .doit().await;
 /// # }
 /// ```
@@ -1140,8 +1114,6 @@ pub struct EnterpriseDeviceListCall<'a, S>
 
     hub: &'a SmartDeviceManagement<S>,
     _parent: String,
-    _page_token: Option<String>,
-    _page_size: Option<i32>,
     _filter: Option<String>,
     _delegate: Option<&'a mut dyn client::Delegate>,
     _additional_params: HashMap<String, String>,
@@ -1171,21 +1143,15 @@ where
         dlg.begin(client::MethodInfo { id: "smartdevicemanagement.enterprises.devices.list",
                                http_method: hyper::Method::GET });
 
-        for &field in ["alt", "parent", "pageToken", "pageSize", "filter"].iter() {
+        for &field in ["alt", "parent", "filter"].iter() {
             if self._additional_params.contains_key(field) {
                 dlg.finished(false);
                 return Err(client::Error::FieldClash(field));
             }
         }
 
-        let mut params = Params::with_capacity(6 + self._additional_params.len());
+        let mut params = Params::with_capacity(4 + self._additional_params.len());
         params.push("parent", self._parent);
-        if let Some(value) = self._page_token.as_ref() {
-            params.push("pageToken", value);
-        }
-        if let Some(value) = self._page_size.as_ref() {
-            params.push("pageSize", value.to_string());
-        }
         if let Some(value) = self._filter.as_ref() {
             params.push("filter", value);
         }
@@ -1303,20 +1269,6 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// Optional token of the page to retrieve.
-    ///
-    /// Sets the *page token* query property to the given value.
-    pub fn page_token(mut self, new_value: &str) -> EnterpriseDeviceListCall<'a, S> {
-        self._page_token = Some(new_value.to_string());
-        self
-    }
-    /// Optional requested page size. Server may return fewer devices than requested. If unspecified, server will pick an appropriate default.
-    ///
-    /// Sets the *page size* query property to the given value.
-    pub fn page_size(mut self, new_value: i32) -> EnterpriseDeviceListCall<'a, S> {
-        self._page_size = Some(new_value);
-        self
-    }
     /// Optional filter to list devices. Filters can be done on: Device custom name (substring match): 'customName=wing'
     ///
     /// Sets the *filter* query property to the given value.
@@ -1328,7 +1280,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> EnterpriseDeviceListCall<'a, S> {
@@ -1421,7 +1374,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = SmartDeviceManagement::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = SmartDeviceManagement::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -1589,7 +1542,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> EnterpriseStructureRoomGetCall<'a, S> {
@@ -1682,13 +1636,11 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = SmartDeviceManagement::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = SmartDeviceManagement::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.enterprises().structures_rooms_list("parent")
-///              .page_token("duo")
-///              .page_size(-55)
 ///              .doit().await;
 /// # }
 /// ```
@@ -1697,8 +1649,6 @@ pub struct EnterpriseStructureRoomListCall<'a, S>
 
     hub: &'a SmartDeviceManagement<S>,
     _parent: String,
-    _page_token: Option<String>,
-    _page_size: Option<i32>,
     _delegate: Option<&'a mut dyn client::Delegate>,
     _additional_params: HashMap<String, String>,
     _scopes: BTreeSet<String>
@@ -1727,21 +1677,15 @@ where
         dlg.begin(client::MethodInfo { id: "smartdevicemanagement.enterprises.structures.rooms.list",
                                http_method: hyper::Method::GET });
 
-        for &field in ["alt", "parent", "pageToken", "pageSize"].iter() {
+        for &field in ["alt", "parent"].iter() {
             if self._additional_params.contains_key(field) {
                 dlg.finished(false);
                 return Err(client::Error::FieldClash(field));
             }
         }
 
-        let mut params = Params::with_capacity(5 + self._additional_params.len());
+        let mut params = Params::with_capacity(3 + self._additional_params.len());
         params.push("parent", self._parent);
-        if let Some(value) = self._page_token.as_ref() {
-            params.push("pageToken", value);
-        }
-        if let Some(value) = self._page_size.as_ref() {
-            params.push("pageSize", value.to_string());
-        }
 
         params.extend(self._additional_params.iter());
 
@@ -1856,25 +1800,12 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The token of the page to retrieve.
-    ///
-    /// Sets the *page token* query property to the given value.
-    pub fn page_token(mut self, new_value: &str) -> EnterpriseStructureRoomListCall<'a, S> {
-        self._page_token = Some(new_value.to_string());
-        self
-    }
-    /// Requested page size. Server may return fewer rooms than requested. If unspecified, server will pick an appropriate default.
-    ///
-    /// Sets the *page size* query property to the given value.
-    pub fn page_size(mut self, new_value: i32) -> EnterpriseStructureRoomListCall<'a, S> {
-        self._page_size = Some(new_value);
-        self
-    }
     /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> EnterpriseStructureRoomListCall<'a, S> {
@@ -1967,7 +1898,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = SmartDeviceManagement::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = SmartDeviceManagement::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -2135,7 +2066,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> EnterpriseStructureGetCall<'a, S> {
@@ -2228,14 +2160,12 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = SmartDeviceManagement::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = SmartDeviceManagement::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.enterprises().structures_list("parent")
-///              .page_token("gubergren")
-///              .page_size(-75)
-///              .filter("dolor")
+///              .filter("duo")
 ///              .doit().await;
 /// # }
 /// ```
@@ -2244,8 +2174,6 @@ pub struct EnterpriseStructureListCall<'a, S>
 
     hub: &'a SmartDeviceManagement<S>,
     _parent: String,
-    _page_token: Option<String>,
-    _page_size: Option<i32>,
     _filter: Option<String>,
     _delegate: Option<&'a mut dyn client::Delegate>,
     _additional_params: HashMap<String, String>,
@@ -2275,21 +2203,15 @@ where
         dlg.begin(client::MethodInfo { id: "smartdevicemanagement.enterprises.structures.list",
                                http_method: hyper::Method::GET });
 
-        for &field in ["alt", "parent", "pageToken", "pageSize", "filter"].iter() {
+        for &field in ["alt", "parent", "filter"].iter() {
             if self._additional_params.contains_key(field) {
                 dlg.finished(false);
                 return Err(client::Error::FieldClash(field));
             }
         }
 
-        let mut params = Params::with_capacity(6 + self._additional_params.len());
+        let mut params = Params::with_capacity(4 + self._additional_params.len());
         params.push("parent", self._parent);
-        if let Some(value) = self._page_token.as_ref() {
-            params.push("pageToken", value);
-        }
-        if let Some(value) = self._page_size.as_ref() {
-            params.push("pageSize", value.to_string());
-        }
         if let Some(value) = self._filter.as_ref() {
             params.push("filter", value);
         }
@@ -2407,20 +2329,6 @@ where
         self._parent = new_value.to_string();
         self
     }
-    /// The token of the page to retrieve.
-    ///
-    /// Sets the *page token* query property to the given value.
-    pub fn page_token(mut self, new_value: &str) -> EnterpriseStructureListCall<'a, S> {
-        self._page_token = Some(new_value.to_string());
-        self
-    }
-    /// Requested page size. Server may return fewer structures than requested. If unspecified, server will pick an appropriate default.
-    ///
-    /// Sets the *page size* query property to the given value.
-    pub fn page_size(mut self, new_value: i32) -> EnterpriseStructureListCall<'a, S> {
-        self._page_size = Some(new_value);
-        self
-    }
     /// Optional filter to list structures.
     ///
     /// Sets the *filter* query property to the given value.
@@ -2432,7 +2340,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> EnterpriseStructureListCall<'a, S> {

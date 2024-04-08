@@ -78,8 +78,9 @@ where
                     "lifecycle-state" => Some(("lifecycleState", JsonTypeInfo { jtype: JsonType::String, ctype: ComplexType::Pod })),
                     "name" => Some(("name", JsonTypeInfo { jtype: JsonType::String, ctype: ComplexType::Pod })),
                     "parent" => Some(("parent", JsonTypeInfo { jtype: JsonType::String, ctype: ComplexType::Pod })),
+                    "tags" => Some(("tags", JsonTypeInfo { jtype: JsonType::String, ctype: ComplexType::Map })),
                     _ => {
-                        let suggestion = FieldCursor::did_you_mean(key, &vec!["create-time", "display-name", "lifecycle-state", "name", "parent"]);
+                        let suggestion = FieldCursor::did_you_mean(key, &vec!["create-time", "display-name", "lifecycle-state", "name", "parent", "tags"]);
                         err.issues.push(CLIError::Field(FieldError::Unknown(temp_cursor.to_string(), suggestion, value.map(|v| v.to_string()))));
                         None
                     }
@@ -510,8 +511,9 @@ where
                     "lifecycle-state" => Some(("lifecycleState", JsonTypeInfo { jtype: JsonType::String, ctype: ComplexType::Pod })),
                     "name" => Some(("name", JsonTypeInfo { jtype: JsonType::String, ctype: ComplexType::Pod })),
                     "parent" => Some(("parent", JsonTypeInfo { jtype: JsonType::String, ctype: ComplexType::Pod })),
+                    "tags" => Some(("tags", JsonTypeInfo { jtype: JsonType::String, ctype: ComplexType::Map })),
                     _ => {
-                        let suggestion = FieldCursor::did_you_mean(key, &vec!["create-time", "display-name", "lifecycle-state", "name", "parent"]);
+                        let suggestion = FieldCursor::did_you_mean(key, &vec!["create-time", "display-name", "lifecycle-state", "name", "parent", "tags"]);
                         err.issues.push(CLIError::Field(FieldError::Unknown(temp_cursor.to_string(), suggestion, value.map(|v| v.to_string()))));
                         None
                     }
@@ -1404,7 +1406,7 @@ async fn main() {
     
     let mut app = App::new("cloudresourcemanager2")
            .author("Sebastian Thiel <byronimo@gmail.com>")
-           .version("5.0.2+20230115")
+           .version("5.0.4+20240303")
            .about("Creates, reads, and updates metadata for Google Cloud Platform resource containers.")
            .after_help("All documentation details can be found at http://byron.github.io/google-apis-rs/google_cloudresourcemanager2_cli")
            .arg(Arg::with_name("url")
@@ -1470,7 +1472,6 @@ async fn main() {
     let connector = hyper_rustls::HttpsConnectorBuilder::new().with_native_roots()
         .https_or_http()
         .enable_http1()
-        .enable_http2()
         .build();
 
     match Engine::new(matches, connector).await {

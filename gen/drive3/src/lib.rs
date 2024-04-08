@@ -2,7 +2,7 @@
 // This file was generated automatically from 'src/generator/templates/api/lib.rs.mako'
 // DO NOT EDIT !
 
-//! This documentation was generated from *drive* crate version *5.0.2+20230115*, where *20230115* is the exact revision of the *drive:v3* schema built by the [mako](http://www.makotemplates.org/) code generator *v5.0.2*.
+//! This documentation was generated from *drive* crate version *5.0.4+20240227*, where *20240227* is the exact revision of the *drive:v3* schema built by the [mako](http://www.makotemplates.org/) code generator *v5.0.4*.
 //! 
 //! Everything else about the *drive* *v3* API can be found at the
 //! [official documentation site](https://developers.google.com/drive/).
@@ -13,6 +13,8 @@
 //! 
 //! * [about](api::About)
 //!  * [*get*](api::AboutGetCall)
+//! * [apps](api::App)
+//!  * [*get*](api::AppGetCall) and [*list*](api::AppListCall)
 //! * [changes](api::Change)
 //!  * [*get start page token*](api::ChangeGetStartPageTokenCall), [*list*](api::ChangeListCall) and [*watch*](api::ChangeWatchCall)
 //! * [channels](api::Channel)
@@ -42,14 +44,12 @@
 //! 
 //! * [*export files*](api::FileExportCall)
 //! * [*get files*](api::FileGetCall)
-//! * [*watch files*](api::FileWatchCall)
 //! * [*get revisions*](api::RevisionGetCall)
 //! 
 //! Subscription supported by ...
 //! 
 //! * [*list changes*](api::ChangeListCall)
 //! * [*watch changes*](api::ChangeWatchCall)
-//! * [*create files*](api::FileCreateCall)
 //! * [*get files*](api::FileGetCall)
 //! * [*watch files*](api::FileWatchCall)
 //! 
@@ -140,7 +140,7 @@
 //!         secret,
 //!         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 //!     ).build().await.unwrap();
-//! let mut hub = DriveHub::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+//! let mut hub = DriveHub::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 //! // You can configure optional parameters by calling the respective setters at will, and
 //! // execute the final call using `doit()`.
 //! // Values shown here are possibly random and not representative !

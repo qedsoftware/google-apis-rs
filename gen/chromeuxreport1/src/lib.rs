@@ -2,7 +2,7 @@
 // This file was generated automatically from 'src/generator/templates/api/lib.rs.mako'
 // DO NOT EDIT !
 
-//! This documentation was generated from *Chrome UX Report* crate version *5.0.2+20230117*, where *20230117* is the exact revision of the *chromeuxreport:v1* schema built by the [mako](http://www.makotemplates.org/) code generator *v5.0.2*.
+//! This documentation was generated from *Chrome UX Report* crate version *5.0.4+20240228*, where *20240228* is the exact revision of the *chromeuxreport:v1* schema built by the [mako](http://www.makotemplates.org/) code generator *v5.0.4*.
 //! 
 //! Everything else about the *Chrome UX Report* *v1* API can be found at the
 //! [official documentation site](https://developers.google.com/web/tools/chrome-user-experience-report/api/reference).
@@ -12,7 +12,7 @@
 //! Handle the following *Resources* with ease from the central [hub](ChromeUXReport) ... 
 //! 
 //! * [records](api::Record)
-//!  * [*query record*](api::RecordQueryRecordCall)
+//!  * [*query history record*](api::RecordQueryHistoryRecordCall) and [*query record*](api::RecordQueryRecordCall)
 //! 
 //! 
 //! 
@@ -47,6 +47,7 @@
 //! Or specifically ...
 //! 
 //! ```ignore
+//! let r = hub.records().query_history_record(...).doit().await
 //! let r = hub.records().query_record(...).doit().await
 //! ```
 //! 
@@ -74,7 +75,7 @@
 //! extern crate hyper;
 //! extern crate hyper_rustls;
 //! extern crate google_chromeuxreport1 as chromeuxreport1;
-//! use chromeuxreport1::api::QueryRequest;
+//! use chromeuxreport1::api::QueryHistoryRequest;
 //! use chromeuxreport1::{Result, Error};
 //! # async fn dox() {
 //! use std::default::Default;
@@ -92,16 +93,16 @@
 //!         secret,
 //!         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 //!     ).build().await.unwrap();
-//! let mut hub = ChromeUXReport::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+//! let mut hub = ChromeUXReport::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 //! // As the method needs a request, you would usually fill it with the desired information
 //! // into the respective structure. Some of the parts shown here might not be applicable !
 //! // Values shown here are possibly random and not representative !
-//! let mut req = QueryRequest::default();
+//! let mut req = QueryHistoryRequest::default();
 //! 
 //! // You can configure optional parameters by calling the respective setters at will, and
 //! // execute the final call using `doit()`.
 //! // Values shown here are possibly random and not representative !
-//! let result = hub.records().query_record(req)
+//! let result = hub.records().query_history_record(req)
 //!              .doit().await;
 //! 
 //! match result {

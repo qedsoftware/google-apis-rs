@@ -2,7 +2,7 @@
 // This file was generated automatically from 'src/generator/templates/api/lib.rs.mako'
 // DO NOT EDIT !
 
-//! This documentation was generated from *Binary Authorization* crate version *5.0.2+20230113*, where *20230113* is the exact revision of the *binaryauthorization:v1* schema built by the [mako](http://www.makotemplates.org/) code generator *v5.0.2*.
+//! This documentation was generated from *Binary Authorization* crate version *5.0.3+20240223*, where *20240223* is the exact revision of the *binaryauthorization:v1* schema built by the [mako](http://www.makotemplates.org/) code generator *v5.0.3*.
 //! 
 //! Everything else about the *Binary Authorization* *v1* API can be found at the
 //! [official documentation site](https://cloud.google.com/binary-authorization/).
@@ -12,7 +12,7 @@
 //! Handle the following *Resources* with ease from the central [hub](BinaryAuthorization) ... 
 //! 
 //! * projects
-//!  * [*attestors create*](api::ProjectAttestorCreateCall), [*attestors delete*](api::ProjectAttestorDeleteCall), [*attestors get*](api::ProjectAttestorGetCall), [*attestors get iam policy*](api::ProjectAttestorGetIamPolicyCall), [*attestors list*](api::ProjectAttestorListCall), [*attestors set iam policy*](api::ProjectAttestorSetIamPolicyCall), [*attestors test iam permissions*](api::ProjectAttestorTestIamPermissionCall), [*attestors update*](api::ProjectAttestorUpdateCall), [*attestors validate attestation occurrence*](api::ProjectAttestorValidateAttestationOccurrenceCall), [*get policy*](api::ProjectGetPolicyCall), [*policy get iam policy*](api::ProjectPolicyGetIamPolicyCall), [*policy set iam policy*](api::ProjectPolicySetIamPolicyCall), [*policy test iam permissions*](api::ProjectPolicyTestIamPermissionCall) and [*update policy*](api::ProjectUpdatePolicyCall)
+//!  * [*attestors create*](api::ProjectAttestorCreateCall), [*attestors delete*](api::ProjectAttestorDeleteCall), [*attestors get*](api::ProjectAttestorGetCall), [*attestors get iam policy*](api::ProjectAttestorGetIamPolicyCall), [*attestors list*](api::ProjectAttestorListCall), [*attestors set iam policy*](api::ProjectAttestorSetIamPolicyCall), [*attestors test iam permissions*](api::ProjectAttestorTestIamPermissionCall), [*attestors update*](api::ProjectAttestorUpdateCall), [*attestors validate attestation occurrence*](api::ProjectAttestorValidateAttestationOccurrenceCall), [*get policy*](api::ProjectGetPolicyCall), [*platforms gke policies evaluate*](api::ProjectPlatformGkePolicyEvaluateCall), [*platforms policies create*](api::ProjectPlatformPolicyCreateCall), [*platforms policies delete*](api::ProjectPlatformPolicyDeleteCall), [*platforms policies get*](api::ProjectPlatformPolicyGetCall), [*platforms policies list*](api::ProjectPlatformPolicyListCall), [*platforms policies replace platform policy*](api::ProjectPlatformPolicyReplacePlatformPolicyCall), [*policy get iam policy*](api::ProjectPolicyGetIamPolicyCall), [*policy set iam policy*](api::ProjectPolicySetIamPolicyCall), [*policy test iam permissions*](api::ProjectPolicyTestIamPermissionCall) and [*update policy*](api::ProjectUpdatePolicyCall)
 //! * systempolicy
 //!  * [*get policy*](api::SystempolicyGetPolicyCall)
 //! 
@@ -96,7 +96,7 @@
 //!         secret,
 //!         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 //!     ).build().await.unwrap();
-//! let mut hub = BinaryAuthorization::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+//! let mut hub = BinaryAuthorization::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 //! // You can configure optional parameters by calling the respective setters at will, and
 //! // execute the final call using `doit()`.
 //! // Values shown here are possibly random and not representative !
