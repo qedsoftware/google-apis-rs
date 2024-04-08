@@ -23,7 +23,7 @@ use crate::{client, client::GetToken, client::serde_with};
 /// Identifies the an OAuth2 authorization scope.
 /// A scope is needed when requesting an
 /// [authorization token](https://developers.google.com/youtube/v3/guides/authentication).
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Ord, PartialOrd, Hash, Debug, Clone, Copy)]
 pub enum Scope {
     /// See, edit, create or delete policies applied to Chrome OS and Chrome Browsers managed within your organization
     ChromeManagementPolicy,
@@ -81,7 +81,7 @@ impl Default for Scope {
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -129,7 +129,7 @@ impl<'a, S> ChromePolicy<S> {
         ChromePolicy {
             client,
             auth: Box::new(auth),
-            _user_agent: "google-api-rust-client/5.0.2".to_string(),
+            _user_agent: "google-api-rust-client/5.0.4".to_string(),
             _base_url: "https://chromepolicy.googleapis.com/".to_string(),
             _root_url: "https://chromepolicy.googleapis.com/".to_string(),
         }
@@ -143,7 +143,7 @@ impl<'a, S> ChromePolicy<S> {
     }
 
     /// Set the user-agent header field to use in all requests to the server.
-    /// It defaults to `google-api-rust-client/5.0.2`.
+    /// It defaults to `google-api-rust-client/5.0.4`.
     ///
     /// Returns the previously set user-agent.
     pub fn user_agent(&mut self, agent_name: String) -> String {
@@ -171,29 +171,6 @@ impl<'a, S> ChromePolicy<S> {
 // ############
 // SCHEMAS ###
 // ##########
-/// There is no detailed description.
-/// 
-/// This type is not used in any activity, and only used as *part* of another schema.
-/// 
-#[serde_with::serde_as(crate = "::client::serde_with")]
-#[derive(Default, Clone, Debug, Serialize, Deserialize)]
-pub struct ChromeCrosDpanelAutosettingsProtoPolicyApiLifecycle {
-    /// Description about current life cycle.
-    
-    pub description: Option<String>,
-    /// End supporting date for current policy.
-    #[serde(rename="endSupport")]
-    
-    pub end_support: Option<GoogleTypeDate>,
-    /// Indicate current life cycle stage of the policy API.
-    #[serde(rename="policyApiLifecycleStage")]
-    
-    pub policy_api_lifecycle_stage: Option<String>,
-}
-
-impl client::Part for ChromeCrosDpanelAutosettingsProtoPolicyApiLifecycle {}
-
-
 /// Additional key names that will be used to identify the target of the policy value.
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
@@ -221,7 +198,6 @@ impl client::Part for GoogleChromePolicyVersionsV1AdditionalTargetKeyName {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [policies groups batch delete customers](CustomerPolicyGroupBatchDeleteCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleChromePolicyVersionsV1BatchDeleteGroupPoliciesRequest {
@@ -241,7 +217,6 @@ impl client::RequestValue for GoogleChromePolicyVersionsV1BatchDeleteGroupPolici
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [policies orgunits batch inherit customers](CustomerPolicyOrgunitBatchInheritCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleChromePolicyVersionsV1BatchInheritOrgUnitPoliciesRequest {
@@ -261,7 +236,6 @@ impl client::RequestValue for GoogleChromePolicyVersionsV1BatchInheritOrgUnitPol
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [policies groups batch modify customers](CustomerPolicyGroupBatchModifyCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleChromePolicyVersionsV1BatchModifyGroupPoliciesRequest {
@@ -281,7 +255,6 @@ impl client::RequestValue for GoogleChromePolicyVersionsV1BatchModifyGroupPolici
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [policies orgunits batch modify customers](CustomerPolicyOrgunitBatchModifyCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleChromePolicyVersionsV1BatchModifyOrgUnitPoliciesRequest {
@@ -301,7 +274,6 @@ impl client::RequestValue for GoogleChromePolicyVersionsV1BatchModifyOrgUnitPoli
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [policies networks define certificate customers](CustomerPolicyNetworkDefineCertificateCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleChromePolicyVersionsV1DefineCertificateRequest {
@@ -332,7 +304,6 @@ impl client::RequestValue for GoogleChromePolicyVersionsV1DefineCertificateReque
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [policies networks define certificate customers](CustomerPolicyNetworkDefineCertificateCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleChromePolicyVersionsV1DefineCertificateResponse {
@@ -360,7 +331,6 @@ impl client::ResponseResult for GoogleChromePolicyVersionsV1DefineCertificateRes
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [policies networks define network customers](CustomerPolicyNetworkDefineNetworkCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleChromePolicyVersionsV1DefineNetworkRequest {
@@ -387,7 +357,6 @@ impl client::RequestValue for GoogleChromePolicyVersionsV1DefineNetworkRequest {
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [policies networks define network customers](CustomerPolicyNetworkDefineNetworkCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleChromePolicyVersionsV1DefineNetworkResponse {
@@ -438,6 +407,10 @@ pub struct GoogleChromePolicyVersionsV1FieldConstraints {
     #[serde(rename="numericRangeConstraint")]
     
     pub numeric_range_constraint: Option<GoogleChromePolicyVersionsV1NumericRangeConstraint>,
+    /// Constraints on the uploaded file of a file policy. If present, this policy requires a URL that can be fetched by uploading a file with the constraints specified in this proto.
+    #[serde(rename="uploadedFileConstraints")]
+    
+    pub uploaded_file_constraints: Option<GoogleChromePolicyVersionsV1UploadedFileConstraints>,
 }
 
 impl client::Part for GoogleChromePolicyVersionsV1FieldConstraints {}
@@ -471,14 +444,17 @@ impl client::Part for GoogleChromePolicyVersionsV1InheritOrgUnitPolicyRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [policies groups list group priority ordering customers](CustomerPolicyGroupListGroupPriorityOrderingCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleChromePolicyVersionsV1ListGroupPriorityOrderingRequest {
-    /// Required. The namespace of the policy type for the request.
+    /// The namespace of the policy type for the request.
     #[serde(rename="policyNamespace")]
     
     pub policy_namespace: Option<String>,
+    /// The schema name of the policy for the request.
+    #[serde(rename="policySchema")]
+    
+    pub policy_schema: Option<String>,
     /// Required. The key of the target for which we want to retrieve the group priority ordering. The target resource must point to an app.
     #[serde(rename="policyTargetKey")]
     
@@ -496,7 +472,6 @@ impl client::RequestValue for GoogleChromePolicyVersionsV1ListGroupPriorityOrder
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [policies groups list group priority ordering customers](CustomerPolicyGroupListGroupPriorityOrderingCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleChromePolicyVersionsV1ListGroupPriorityOrderingResponse {
@@ -508,6 +483,10 @@ pub struct GoogleChromePolicyVersionsV1ListGroupPriorityOrderingResponse {
     #[serde(rename="policyNamespace")]
     
     pub policy_namespace: Option<String>,
+    /// Output only. The schema name of the policy for the group IDs.
+    #[serde(rename="policySchema")]
+    
+    pub policy_schema: Option<String>,
     /// Output only. The target resource for which the group priority ordering has been retrieved.
     #[serde(rename="policyTargetKey")]
     
@@ -525,7 +504,6 @@ impl client::ResponseResult for GoogleChromePolicyVersionsV1ListGroupPriorityOrd
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [policy schemas list customers](CustomerPolicySchemaListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleChromePolicyVersionsV1ListPolicySchemasResponse {
@@ -629,6 +607,37 @@ pub struct GoogleChromePolicyVersionsV1NumericRangeConstraint {
 impl client::Part for GoogleChromePolicyVersionsV1NumericRangeConstraint {}
 
 
+/// Lifecycle information.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleChromePolicyVersionsV1PolicyApiLifecycle {
+    /// In the event that this policy was deprecated in favor of another policy, the fully qualified namespace(s) of the new policies as they will show in PolicyAPI. Could only be set if policy_api_lifecycle_stage is API_DEPRECATED.
+    #[serde(rename="deprecatedInFavorOf")]
+    
+    pub deprecated_in_favor_of: Option<Vec<String>>,
+    /// Description about current life cycle.
+    
+    pub description: Option<String>,
+    /// End supporting date for current policy. Attempting to modify a policy after its end support date will result in a Bad Request (400 error). Could only be set if policy_api_lifecycle_stage is API_DEPRECATED.
+    #[serde(rename="endSupport")]
+    
+    pub end_support: Option<GoogleTypeDate>,
+    /// Indicates current life cycle stage of the policy API.
+    #[serde(rename="policyApiLifecycleStage")]
+    
+    pub policy_api_lifecycle_stage: Option<String>,
+    /// Corresponding to deprecated_in_favor_of, the fully qualified namespace(s) of the old policies that will be deprecated because of introduction of this policy. This field should not be manually set but will be set and exposed through PolicyAPI automatically.
+    #[serde(rename="scheduledToDeprecatePolicies")]
+    
+    pub scheduled_to_deprecate_policies: Option<Vec<String>>,
+}
+
+impl client::Part for GoogleChromePolicyVersionsV1PolicyApiLifecycle {}
+
+
 /// Resource representing a policy schema.
 /// 
 /// # Activities
@@ -637,7 +646,6 @@ impl client::Part for GoogleChromePolicyVersionsV1NumericRangeConstraint {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [policy schemas get customers](CustomerPolicySchemaGetCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleChromePolicyVersionsV1PolicySchema {
@@ -656,7 +664,7 @@ pub struct GoogleChromePolicyVersionsV1PolicySchema {
     /// Schema definition using proto descriptor.
     
     pub definition: Option<Proto2FileDescriptorProto>,
-    /// Output only. Detailed description of each field that is part of the schema.
+    /// Output only. Detailed description of each field that is part of the schema. Fields are suggested to be displayed by the ordering in this list, not by field number.
     #[serde(rename="fieldDescriptions")]
     
     pub field_descriptions: Option<Vec<GoogleChromePolicyVersionsV1PolicySchemaFieldDescription>>,
@@ -669,11 +677,7 @@ pub struct GoogleChromePolicyVersionsV1PolicySchema {
     /// Output only. Current lifecycle information.
     #[serde(rename="policyApiLifecycle")]
     
-    pub policy_api_lifecycle: Option<ChromeCrosDpanelAutosettingsProtoPolicyApiLifecycle>,
-    /// Deprecated field because of typo.
-    #[serde(rename="policyApiLifeycle")]
-    
-    pub policy_api_lifeycle: Option<ChromeCrosDpanelAutosettingsProtoPolicyApiLifecycle>,
+    pub policy_api_lifecycle: Option<GoogleChromePolicyVersionsV1PolicyApiLifecycle>,
     /// Output only. Description about the policy schema for user consumption.
     #[serde(rename="policyDescription")]
     
@@ -686,6 +690,10 @@ pub struct GoogleChromePolicyVersionsV1PolicySchema {
     #[serde(rename="supportUri")]
     
     pub support_uri: Option<String>,
+    /// Output only. List indicates that the policy will only apply to devices/users on these platforms.
+    #[serde(rename="supportedPlatforms")]
+    
+    pub supported_platforms: Option<Vec<String>>,
     /// Output only. Information about applicable target resources for the policy.
     #[serde(rename="validTargetResources")]
     
@@ -755,7 +763,7 @@ pub struct GoogleChromePolicyVersionsV1PolicySchemaFieldDescription {
     /// Output only. The name of the field.
     
     pub name: Option<String>,
-    /// Output only. Provides the description of the fields nested in this field, if the field is a message type that defines multiple fields.
+    /// Output only. Provides the description of the fields nested in this field, if the field is a message type that defines multiple fields. Fields are suggested to be displayed by the ordering in this list, not by field number.
     #[serde(rename="nestedFieldDescriptions")]
     
     pub nested_field_descriptions: Option<Vec<GoogleChromePolicyVersionsV1PolicySchemaFieldDescription>>,
@@ -778,6 +786,10 @@ pub struct GoogleChromePolicyVersionsV1PolicySchemaFieldKnownValueDescription {
     /// Output only. Additional description for this value.
     
     pub description: Option<String>,
+    /// Output only. Field conditions required for this value to be valid.
+    #[serde(rename="fieldDependencies")]
+    
+    pub field_dependencies: Option<Vec<GoogleChromePolicyVersionsV1PolicySchemaFieldDependencies>>,
     /// Output only. The string represenstation of the value that can be set for the field.
     
     pub value: Option<String>,
@@ -880,7 +892,6 @@ impl client::Part for GoogleChromePolicyVersionsV1PolicyValue {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [policies networks remove certificate customers](CustomerPolicyNetworkRemoveCertificateCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleChromePolicyVersionsV1RemoveCertificateRequest {
@@ -905,7 +916,6 @@ impl client::RequestValue for GoogleChromePolicyVersionsV1RemoveCertificateReque
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [policies networks remove certificate customers](CustomerPolicyNetworkRemoveCertificateCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleChromePolicyVersionsV1RemoveCertificateResponse { _never_set: Option<bool> }
@@ -921,7 +931,6 @@ impl client::ResponseResult for GoogleChromePolicyVersionsV1RemoveCertificateRes
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [policies networks remove network customers](CustomerPolicyNetworkRemoveNetworkCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleChromePolicyVersionsV1RemoveNetworkRequest {
@@ -946,7 +955,6 @@ impl client::RequestValue for GoogleChromePolicyVersionsV1RemoveNetworkRequest {
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [policies networks remove network customers](CustomerPolicyNetworkRemoveNetworkCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleChromePolicyVersionsV1RemoveNetworkResponse { _never_set: Option<bool> }
@@ -962,7 +970,6 @@ impl client::ResponseResult for GoogleChromePolicyVersionsV1RemoveNetworkRespons
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [policies resolve customers](CustomerPolicyResolveCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleChromePolicyVersionsV1ResolveRequest {
@@ -974,7 +981,7 @@ pub struct GoogleChromePolicyVersionsV1ResolveRequest {
     #[serde(rename="pageToken")]
     
     pub page_token: Option<String>,
-    /// The schema filter to apply to the resolve request. Specify a schema name to view a particular schema, for example: chrome.users.ShowLogoutButton Wildcards are supported, but only in the leaf portion of the schema name. Wildcards cannot be used in namespace directly. Please read https://developers.google.com/chrome/policy/guides/policy-schemas for details on schema namespaces. For example: Valid: "chrome.users.*", "chrome.users.apps.*", "chrome.printers.*" Invalid: "*", "*.users", "chrome.*", "chrome.*.apps.*"
+    /// Required. The schema filter to apply to the resolve request. Specify a schema name to view a particular schema, for example: chrome.users.ShowLogoutButton Wildcards are supported, but only in the leaf portion of the schema name. Wildcards cannot be used in namespace directly. Please read https://developers.google.com/chrome/policy/guides/policy-schemas for details on schema namespaces. For example: Valid: "chrome.users.*", "chrome.users.apps.*", "chrome.printers.*" Invalid: "*", "*.users", "chrome.*", "chrome.*.apps.*"
     #[serde(rename="policySchemaFilter")]
     
     pub policy_schema_filter: Option<String>,
@@ -995,7 +1002,6 @@ impl client::RequestValue for GoogleChromePolicyVersionsV1ResolveRequest {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [policies resolve customers](CustomerPolicyResolveCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleChromePolicyVersionsV1ResolveResponse {
@@ -1047,7 +1053,6 @@ impl client::Part for GoogleChromePolicyVersionsV1ResolvedPolicy {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [policies groups update group priority ordering customers](CustomerPolicyGroupUpdateGroupPriorityOrderingCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleChromePolicyVersionsV1UpdateGroupPriorityOrderingRequest {
@@ -1055,10 +1060,14 @@ pub struct GoogleChromePolicyVersionsV1UpdateGroupPriorityOrderingRequest {
     #[serde(rename="groupIds")]
     
     pub group_ids: Option<Vec<String>>,
-    /// Required. The namespace of the policy type for the request.
+    /// The namespace of the policy type for the request.
     #[serde(rename="policyNamespace")]
     
     pub policy_namespace: Option<String>,
+    /// The schema name of the policy for the request.
+    #[serde(rename="policySchema")]
+    
+    pub policy_schema: Option<String>,
     /// Required. The key of the target for which we want to update the group priority ordering. The target resource must point to an app.
     #[serde(rename="policyTargetKey")]
     
@@ -1076,7 +1085,6 @@ impl client::RequestValue for GoogleChromePolicyVersionsV1UpdateGroupPriorityOrd
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [upload media](MediaUploadCall) (request)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleChromePolicyVersionsV1UploadPolicyFileRequest {
@@ -1097,7 +1105,6 @@ impl client::RequestValue for GoogleChromePolicyVersionsV1UploadPolicyFileReques
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [upload media](MediaUploadCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleChromePolicyVersionsV1UploadPolicyFileResponse {
@@ -1108,6 +1115,27 @@ pub struct GoogleChromePolicyVersionsV1UploadPolicyFileResponse {
 }
 
 impl client::ResponseResult for GoogleChromePolicyVersionsV1UploadPolicyFileResponse {}
+
+
+/// Constraints on the uploaded file of a file policy.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleChromePolicyVersionsV1UploadedFileConstraints {
+    /// The size limit of uploaded files for a setting, in bytes.
+    #[serde(rename="sizeLimitBytes")]
+    
+    #[serde_as(as = "Option<::client::serde_with::DisplayFromStr>")]
+    pub size_limit_bytes: Option<i64>,
+    /// File types that can be uploaded for a setting.
+    #[serde(rename="supportedContentTypes")]
+    
+    pub supported_content_types: Option<Vec<String>>,
+}
+
+impl client::Part for GoogleChromePolicyVersionsV1UploadedFileConstraints {}
 
 
 /// A generic empty message that you can re-use to avoid defining duplicated empty messages in your APIs. A typical example is to use it as the request or the response type of an API method. For instance: service Foo { rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty); }
@@ -1122,7 +1150,6 @@ impl client::ResponseResult for GoogleChromePolicyVersionsV1UploadPolicyFileResp
 /// * [policies groups update group priority ordering customers](CustomerPolicyGroupUpdateGroupPriorityOrderingCall) (response)
 /// * [policies orgunits batch inherit customers](CustomerPolicyOrgunitBatchInheritCall) (response)
 /// * [policies orgunits batch modify customers](CustomerPolicyOrgunitBatchModifyCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct GoogleProtobufEmpty { _never_set: Option<bool> }
@@ -1245,7 +1272,7 @@ pub struct Proto2FieldDescriptorProto {
     #[serde(rename="oneofIndex")]
     
     pub oneof_index: Option<i32>,
-    /// If true, this is a proto3 "optional". When a proto3 field is optional, it tracks presence regardless of field type. When proto3_optional is true, this field must be belong to a oneof to signal to old proto3 clients that presence is tracked for this field. This oneof is known as a "synthetic" oneof, and this field must be its sole member (each proto3 optional field gets its own synthetic oneof). Synthetic oneofs exist in the descriptor only, and do not generate any API. Synthetic oneofs must be ordered after all "real" oneofs. For message fields, proto3_optional doesn't create any semantic change, since non-repeated message fields always track presence. However it still indicates the semantic detail of whether the user wrote "optional" or not. This can be useful for round-tripping the .proto file. For consistency we give message fields a synthetic oneof also, even though it is not required to track presence. This is especially important because the parser can't tell if a field is a message or an enum, so it must always create a synthetic oneof. Proto2 optional fields do not set this flag, because they already indicate optional with `LABEL_OPTIONAL`.
+    /// If true, this is a proto3 "optional". When a proto3 field is optional, it tracks presence regardless of field type. When proto3_optional is true, this field must belong to a oneof to signal to old proto3 clients that presence is tracked for this field. This oneof is known as a "synthetic" oneof, and this field must be its sole member (each proto3 optional field gets its own synthetic oneof). Synthetic oneofs exist in the descriptor only, and do not generate any API. Synthetic oneofs must be ordered after all "real" oneofs. For message fields, proto3_optional doesn't create any semantic change, since non-repeated message fields always track presence. However it still indicates the semantic detail of whether the user wrote "optional" or not. This can be useful for round-tripping the .proto file. For consistency we give message fields a synthetic oneof also, even though it is not required to track presence. This is especially important because the parser can't tell if a field is a message or an enum, so it must always create a synthetic oneof. Proto2 optional fields do not set this flag, because they already indicate optional with `LABEL_OPTIONAL`.
     #[serde(rename="proto3Optional")]
     
     pub proto3_optional: Option<bool>,
@@ -1269,6 +1296,10 @@ impl client::Part for Proto2FieldDescriptorProto {}
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Proto2FileDescriptorProto {
+    /// BEGIN GOOGLE-INTERNAL TODO(b/297898292) Deprecate and remove this field in favor of enums. END GOOGLE-INTERNAL
+    #[serde(rename="editionDeprecated")]
+    
+    pub edition_deprecated: Option<String>,
     /// no description provided
     #[serde(rename="enumType")]
     
@@ -1332,7 +1363,7 @@ impl client::Part for Proto2OneofDescriptorProto {}
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
 /// // like `policies_groups_batch_delete(...)`, `policies_groups_batch_modify(...)`, `policies_groups_list_group_priority_ordering(...)`, `policies_groups_update_group_priority_ordering(...)`, `policies_networks_define_certificate(...)`, `policies_networks_define_network(...)`, `policies_networks_remove_certificate(...)`, `policies_networks_remove_network(...)`, `policies_orgunits_batch_inherit(...)`, `policies_orgunits_batch_modify(...)`, `policies_resolve(...)`, `policy_schemas_get(...)` and `policy_schemas_list(...)`
 /// // to build up your call.
@@ -1619,7 +1650,7 @@ impl<'a, S> CustomerMethods<'a, S> {
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
 /// // like `upload(...)`
 /// // to build up your call.
@@ -1687,7 +1718,7 @@ impl<'a, S> MediaMethods<'a, S> {
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -1884,7 +1915,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> CustomerPolicyGroupBatchDeleteCall<'a, S> {
@@ -1978,7 +2010,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -2175,7 +2207,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> CustomerPolicyGroupBatchModifyCall<'a, S> {
@@ -2269,7 +2302,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -2466,7 +2499,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> CustomerPolicyGroupListGroupPriorityOrderingCall<'a, S> {
@@ -2560,7 +2594,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -2757,7 +2791,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> CustomerPolicyGroupUpdateGroupPriorityOrderingCall<'a, S> {
@@ -2851,7 +2886,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -3048,7 +3083,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> CustomerPolicyNetworkDefineCertificateCall<'a, S> {
@@ -3142,7 +3178,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -3339,7 +3375,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> CustomerPolicyNetworkDefineNetworkCall<'a, S> {
@@ -3433,7 +3470,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -3630,7 +3667,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> CustomerPolicyNetworkRemoveCertificateCall<'a, S> {
@@ -3724,7 +3762,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -3921,7 +3959,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> CustomerPolicyNetworkRemoveNetworkCall<'a, S> {
@@ -4015,7 +4054,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -4212,7 +4251,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> CustomerPolicyOrgunitBatchInheritCall<'a, S> {
@@ -4306,7 +4346,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -4503,7 +4543,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> CustomerPolicyOrgunitBatchModifyCall<'a, S> {
@@ -4597,7 +4638,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -4794,7 +4835,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> CustomerPolicyResolveCall<'a, S> {
@@ -4887,7 +4929,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -5055,7 +5097,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> CustomerPolicySchemaGetCall<'a, S> {
@@ -5148,7 +5191,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -5352,7 +5395,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> CustomerPolicySchemaListCall<'a, S> {
@@ -5447,7 +5491,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = ChromePolicy::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // As the method needs a request, you would usually fill it with the desired information
 /// // into the respective structure. Some of the parts shown here might not be applicable !
 /// // Values shown here are possibly random and not representative !
@@ -5675,7 +5719,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> MediaUploadCall<'a, S> {

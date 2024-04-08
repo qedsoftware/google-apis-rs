@@ -54,12 +54,15 @@ use crate::{client, client::GetToken, client::serde_with};
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = Webfonts::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = Webfonts::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.webfonts().list()
-///              .sort("no")
+///              .subset("amet.")
+///              .sort("takimata")
+///              .add_family("amet.")
+///              .add_capability("duo")
 ///              .doit().await;
 /// 
 /// match result {
@@ -98,7 +101,7 @@ impl<'a, S> Webfonts<S> {
         Webfonts {
             client,
             auth: Box::new(auth),
-            _user_agent: "google-api-rust-client/5.0.2".to_string(),
+            _user_agent: "google-api-rust-client/5.0.4".to_string(),
             _base_url: "https://webfonts.googleapis.com/".to_string(),
             _root_url: "https://webfonts.googleapis.com/".to_string(),
         }
@@ -109,7 +112,7 @@ impl<'a, S> Webfonts<S> {
     }
 
     /// Set the user-agent header field to use in all requests to the server.
-    /// It defaults to `google-api-rust-client/5.0.2`.
+    /// It defaults to `google-api-rust-client/5.0.4`.
     ///
     /// Returns the previously set user-agent.
     pub fn user_agent(&mut self, agent_name: String) -> String {
@@ -137,6 +140,27 @@ impl<'a, S> Webfonts<S> {
 // ############
 // SCHEMAS ###
 // ##########
+/// Metadata for a variable font axis.
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct Axis {
+    /// maximum value
+    
+    pub end: Option<f32>,
+    /// minimum value
+    
+    pub start: Option<f32>,
+    /// tag name.
+    
+    pub tag: Option<String>,
+}
+
+impl client::Part for Axis {}
+
+
 /// Metadata describing a family of fonts.
 /// 
 /// # Activities
@@ -145,10 +169,12 @@ impl<'a, S> Webfonts<S> {
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [list webfonts](WebfontListCall) (none)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct Webfont {
+    /// Axis for variable fonts.
+    
+    pub axes: Option<Vec<Axis>>,
     /// The category of the font.
     
     pub category: Option<String>,
@@ -165,6 +191,9 @@ pub struct Webfont {
     #[serde(rename="lastModified")]
     
     pub last_modified: Option<String>,
+    /// Font URL for menu subset, a subset of the font that is enough to display the font name
+    
+    pub menu: Option<String>,
     /// The scripts supported by the font.
     
     pub subsets: Option<Vec<String>>,
@@ -187,7 +216,6 @@ impl client::Resource for Webfont {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [list webfonts](WebfontListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct WebfontList {
@@ -228,7 +256,7 @@ impl client::ResponseResult for WebfontList {}
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = Webfonts::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = Webfonts::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
 /// // like `list(...)`
 /// // to build up your call.
@@ -251,7 +279,10 @@ impl<'a, S> WebfontMethods<'a, S> {
     pub fn list(&self) -> WebfontListCall<'a, S> {
         WebfontListCall {
             hub: self.hub,
+            _subset: Default::default(),
             _sort: Default::default(),
+            _family: Default::default(),
+            _capability: Default::default(),
             _delegate: Default::default(),
             _additional_params: Default::default(),
         }
@@ -288,12 +319,15 @@ impl<'a, S> WebfontMethods<'a, S> {
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Webfonts::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Webfonts::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
 /// let result = hub.webfonts().list()
-///              .sort("ipsum")
+///              .subset("ipsum")
+///              .sort("gubergren")
+///              .add_family("Lorem")
+///              .add_capability("gubergren")
 ///              .doit().await;
 /// # }
 /// ```
@@ -301,7 +335,10 @@ pub struct WebfontListCall<'a, S>
     where S: 'a {
 
     hub: &'a Webfonts<S>,
+    _subset: Option<String>,
     _sort: Option<String>,
+    _family: Vec<String>,
+    _capability: Vec<String>,
     _delegate: Option<&'a mut dyn client::Delegate>,
     _additional_params: HashMap<String, String>,
 }
@@ -329,16 +366,29 @@ where
         dlg.begin(client::MethodInfo { id: "webfonts.webfonts.list",
                                http_method: hyper::Method::GET });
 
-        for &field in ["alt", "sort"].iter() {
+        for &field in ["alt", "subset", "sort", "family", "capability"].iter() {
             if self._additional_params.contains_key(field) {
                 dlg.finished(false);
                 return Err(client::Error::FieldClash(field));
             }
         }
 
-        let mut params = Params::with_capacity(3 + self._additional_params.len());
+        let mut params = Params::with_capacity(6 + self._additional_params.len());
+        if let Some(value) = self._subset.as_ref() {
+            params.push("subset", value);
+        }
         if let Some(value) = self._sort.as_ref() {
             params.push("sort", value);
+        }
+        if self._family.len() > 0 {
+            for f in self._family.iter() {
+                params.push("family", f);
+            }
+        }
+        if self._capability.len() > 0 {
+            for f in self._capability.iter() {
+                params.push("capability", f);
+            }
         }
 
         params.extend(self._additional_params.iter());
@@ -427,6 +477,13 @@ where
     }
 
 
+    /// Filters by Webfont.subset, if subset is found in Webfont.subsets. If not set, returns all families.
+    ///
+    /// Sets the *subset* query property to the given value.
+    pub fn subset(mut self, new_value: &str) -> WebfontListCall<'a, S> {
+        self._subset = Some(new_value.to_string());
+        self
+    }
     /// Enables sorting of the list.
     ///
     /// Sets the *sort* query property to the given value.
@@ -434,11 +491,28 @@ where
         self._sort = Some(new_value.to_string());
         self
     }
+    /// Filters by Webfont.family, using literal match. If not set, returns all families
+    ///
+    /// Append the given value to the *family* query property.
+    /// Each appended value will retain its original ordering and be '/'-separated in the URL's parameters.
+    pub fn add_family(mut self, new_value: &str) -> WebfontListCall<'a, S> {
+        self._family.push(new_value.to_string());
+        self
+    }
+    /// Controls the font urls in `Webfont.files`, by default, static ttf fonts are sent.
+    ///
+    /// Append the given value to the *capability* query property.
+    /// Each appended value will retain its original ordering and be '/'-separated in the URL's parameters.
+    pub fn add_capability(mut self, new_value: &str) -> WebfontListCall<'a, S> {
+        self._capability.push(new_value.to_string());
+        self
+    }
     /// The delegate implementation is consulted whenever there is an intermediate result, or if something goes wrong
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> WebfontListCall<'a, S> {

@@ -54,7 +54,7 @@ use crate::{client, client::GetToken, client::serde_with};
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = Discovery::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = Discovery::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -97,7 +97,7 @@ impl<'a, S> Discovery<S> {
         Discovery {
             client,
             auth: Box::new(auth),
-            _user_agent: "google-api-rust-client/5.0.2".to_string(),
+            _user_agent: "google-api-rust-client/5.0.4".to_string(),
             _base_url: "https://www.googleapis.com/discovery/v1/".to_string(),
             _root_url: "https://www.googleapis.com/".to_string(),
         }
@@ -108,7 +108,7 @@ impl<'a, S> Discovery<S> {
     }
 
     /// Set the user-agent header field to use in all requests to the server.
-    /// It defaults to `google-api-rust-client/5.0.2`.
+    /// It defaults to `google-api-rust-client/5.0.4`.
     ///
     /// Returns the previously set user-agent.
     pub fn user_agent(&mut self, agent_name: String) -> String {
@@ -144,7 +144,6 @@ impl<'a, S> Discovery<S> {
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [list apis](ApiListCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct DirectoryList {
@@ -184,6 +183,9 @@ pub struct JsonSchema {
     /// The default value of this property (if one exists).
     
     pub default: Option<String>,
+    /// Whether the parameter is deprecated.
+    
+    pub deprecated: Option<bool>,
     /// A description of this object.
     
     pub description: Option<String>,
@@ -191,6 +193,10 @@ pub struct JsonSchema {
     #[serde(rename="enum")]
     
     pub enum_: Option<Vec<String>>,
+    /// The deprecation status for the enums. Each position maps to the corresponding value in the "enum" array.
+    #[serde(rename="enumDeprecated")]
+    
+    pub enum_deprecated: Option<Vec<bool>>,
     /// The descriptions for the enums. Each position maps to the corresponding value in the "enum" array.
     #[serde(rename="enumDescriptions")]
     
@@ -249,7 +255,6 @@ impl client::Part for JsonSchema {}
 /// The list links the activity name, along with information about where it is used (one of *request* and *response*).
 /// 
 /// * [get rest apis](ApiGetRestCall) (response)
-/// 
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct RestDescription {
@@ -283,6 +288,9 @@ pub struct RestDescription {
     #[serde(rename="documentationLink")]
     
     pub documentation_link: Option<String>,
+    /// A list of location-based endpoint objects for this API. Each object contains the endpoint URL, location, description and deprecation status.
+    
+    pub endpoints: Option<Vec<RestDescriptionEndpoints>>,
     /// The ETag for this response.
     
     pub etag: Option<String>,
@@ -367,6 +375,9 @@ impl client::ResponseResult for RestDescription {}
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct RestMethod {
+    /// Whether this method is deprecated.
+    
+    pub deprecated: Option<bool>,
     /// Description of this method.
     
     pub description: Option<String>,
@@ -436,6 +447,9 @@ impl client::Part for RestMethod {}
 #[serde_with::serde_as(crate = "::client::serde_with")]
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct RestResource {
+    /// Whether this resource is deprecated.
+    
+    pub deprecated: Option<bool>,
     /// Methods on this resource.
     
     pub methods: Option<HashMap<String, RestMethod>>,
@@ -621,6 +635,32 @@ impl client::NestedType for RestDescriptionAuthOauth2Scopes {}
 impl client::Part for RestDescriptionAuthOauth2Scopes {}
 
 
+/// A single endpoint object
+/// 
+/// This type is not used in any activity, and only used as *part* of another schema.
+/// 
+#[serde_with::serde_as(crate = "::client::serde_with")]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct RestDescriptionEndpoints {
+    /// Whether this endpoint is deprecated
+    
+    pub deprecated: Option<bool>,
+    /// A string describing the host designated by the URL
+    
+    pub description: Option<String>,
+    /// The URL of the endpoint target host
+    #[serde(rename="endpointUrl")]
+    
+    pub endpoint_url: Option<String>,
+    /// The location of the endpoint
+    
+    pub location: Option<String>,
+}
+
+impl client::NestedType for RestDescriptionEndpoints {}
+impl client::Part for RestDescriptionEndpoints {}
+
+
 /// Links to 16x16 and 32x32 icons representing the API.
 /// 
 /// This type is not used in any activity, and only used as *part* of another schema.
@@ -784,7 +824,7 @@ impl client::Part for RestMethodResponse {}
 ///         secret,
 ///         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 ///     ).build().await.unwrap();
-/// let mut hub = Discovery::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// let mut hub = Discovery::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // Usually you wouldn't bind this to a variable, but keep calling *CallBuilders*
 /// // like `get_rest(...)` and `list(...)`
 /// // to build up your call.
@@ -863,7 +903,7 @@ impl<'a, S> ApiMethods<'a, S> {
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Discovery::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Discovery::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -1024,7 +1064,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ApiGetRestCall<'a, S> {
@@ -1079,7 +1120,7 @@ where
 /// #         secret,
 /// #         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 /// #     ).build().await.unwrap();
-/// # let mut hub = Discovery::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+/// # let mut hub = Discovery::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 /// // You can configure optional parameters by calling the respective setters at will, and
 /// // execute the final call using `doit()`.
 /// // Values shown here are possibly random and not representative !
@@ -1233,7 +1274,8 @@ where
     /// while executing the actual API request.
     /// 
     /// ````text
-    ///                   It should be used to handle progress information, and to implement a certain level of resilience.````
+    ///                   It should be used to handle progress information, and to implement a certain level of resilience.
+    /// ````
     ///
     /// Sets the *delegate* property to the given value.
     pub fn delegate(mut self, new_value: &'a mut dyn client::Delegate) -> ApiListCall<'a, S> {

@@ -2,7 +2,7 @@
 // This file was generated automatically from 'src/generator/templates/api/lib.rs.mako'
 // DO NOT EDIT !
 
-//! This documentation was generated from *Cloud Resource Manager* crate version *5.0.2+20230115*, where *20230115* is the exact revision of the *cloudresourcemanager:v3* schema built by the [mako](http://www.makotemplates.org/) code generator *v5.0.2*.
+//! This documentation was generated from *Cloud Resource Manager* crate version *5.0.4+20240303*, where *20240303* is the exact revision of the *cloudresourcemanager:v3* schema built by the [mako](http://www.makotemplates.org/) code generator *v5.0.4*.
 //! 
 //! Everything else about the *Cloud Resource Manager* *v3* API can be found at the
 //! [official documentation site](https://cloud.google.com/resource-manager).
@@ -26,9 +26,9 @@
 //! * [tag bindings](api::TagBinding)
 //!  * [*create*](api::TagBindingCreateCall), [*delete*](api::TagBindingDeleteCall) and [*list*](api::TagBindingListCall)
 //! * [tag keys](api::TagKey)
-//!  * [*create*](api::TagKeyCreateCall), [*delete*](api::TagKeyDeleteCall), [*get*](api::TagKeyGetCall), [*get iam policy*](api::TagKeyGetIamPolicyCall), [*list*](api::TagKeyListCall), [*patch*](api::TagKeyPatchCall), [*set iam policy*](api::TagKeySetIamPolicyCall) and [*test iam permissions*](api::TagKeyTestIamPermissionCall)
+//!  * [*create*](api::TagKeyCreateCall), [*delete*](api::TagKeyDeleteCall), [*get*](api::TagKeyGetCall), [*get iam policy*](api::TagKeyGetIamPolicyCall), [*get namespaced*](api::TagKeyGetNamespacedCall), [*list*](api::TagKeyListCall), [*patch*](api::TagKeyPatchCall), [*set iam policy*](api::TagKeySetIamPolicyCall) and [*test iam permissions*](api::TagKeyTestIamPermissionCall)
 //! * [tag values](api::TagValue)
-//!  * [*create*](api::TagValueCreateCall), [*delete*](api::TagValueDeleteCall), [*get*](api::TagValueGetCall), [*get iam policy*](api::TagValueGetIamPolicyCall), [*list*](api::TagValueListCall), [*patch*](api::TagValuePatchCall), [*set iam policy*](api::TagValueSetIamPolicyCall), [*tag holds create*](api::TagValueTagHoldCreateCall), [*tag holds delete*](api::TagValueTagHoldDeleteCall), [*tag holds list*](api::TagValueTagHoldListCall) and [*test iam permissions*](api::TagValueTestIamPermissionCall)
+//!  * [*create*](api::TagValueCreateCall), [*delete*](api::TagValueDeleteCall), [*get*](api::TagValueGetCall), [*get iam policy*](api::TagValueGetIamPolicyCall), [*get namespaced*](api::TagValueGetNamespacedCall), [*list*](api::TagValueListCall), [*patch*](api::TagValuePatchCall), [*set iam policy*](api::TagValueSetIamPolicyCall), [*tag holds create*](api::TagValueTagHoldCreateCall), [*tag holds delete*](api::TagValueTagHoldDeleteCall), [*tag holds list*](api::TagValueTagHoldListCall) and [*test iam permissions*](api::TagValueTestIamPermissionCall)
 //! 
 //! 
 //! 
@@ -128,7 +128,7 @@
 //!         secret,
 //!         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 //!     ).build().await.unwrap();
-//! let mut hub = CloudResourceManager::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+//! let mut hub = CloudResourceManager::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 //! // As the method needs a request, you would usually fill it with the desired information
 //! // into the respective structure. Some of the parts shown here might not be applicable !
 //! // Values shown here are possibly random and not representative !

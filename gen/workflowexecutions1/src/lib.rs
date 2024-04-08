@@ -2,7 +2,7 @@
 // This file was generated automatically from 'src/generator/templates/api/lib.rs.mako'
 // DO NOT EDIT !
 
-//! This documentation was generated from *Workflow Executions* crate version *5.0.2+20230110*, where *20230110* is the exact revision of the *workflowexecutions:v1* schema built by the [mako](http://www.makotemplates.org/) code generator *v5.0.2*.
+//! This documentation was generated from *Workflow Executions* crate version *5.0.4+20240220*, where *20240220* is the exact revision of the *workflowexecutions:v1* schema built by the [mako](http://www.makotemplates.org/) code generator *v5.0.4*.
 //! 
 //! Everything else about the *Workflow Executions* *v1* API can be found at the
 //! [official documentation site](https://cloud.google.com/workflows).
@@ -12,7 +12,7 @@
 //! Handle the following *Resources* with ease from the central [hub](WorkflowExecutions) ... 
 //! 
 //! * projects
-//!  * [*locations workflows executions cancel*](api::ProjectLocationWorkflowExecutionCancelCall), [*locations workflows executions create*](api::ProjectLocationWorkflowExecutionCreateCall), [*locations workflows executions get*](api::ProjectLocationWorkflowExecutionGetCall), [*locations workflows executions list*](api::ProjectLocationWorkflowExecutionListCall) and [*locations workflows trigger pubsub execution*](api::ProjectLocationWorkflowTriggerPubsubExecutionCall)
+//!  * [*locations workflows executions callbacks list*](api::ProjectLocationWorkflowExecutionCallbackListCall), [*locations workflows executions cancel*](api::ProjectLocationWorkflowExecutionCancelCall), [*locations workflows executions create*](api::ProjectLocationWorkflowExecutionCreateCall), [*locations workflows executions export data*](api::ProjectLocationWorkflowExecutionExportDataCall), [*locations workflows executions get*](api::ProjectLocationWorkflowExecutionGetCall), [*locations workflows executions list*](api::ProjectLocationWorkflowExecutionListCall), [*locations workflows executions step entries get*](api::ProjectLocationWorkflowExecutionStepEntryGetCall), [*locations workflows executions step entries list*](api::ProjectLocationWorkflowExecutionStepEntryListCall) and [*locations workflows trigger pubsub execution*](api::ProjectLocationWorkflowTriggerPubsubExecutionCall)
 //! 
 //! 
 //! 
@@ -95,7 +95,7 @@
 //!         secret,
 //!         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
 //!     ).build().await.unwrap();
-//! let mut hub = WorkflowExecutions::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().enable_http2().build()), auth);
+//! let mut hub = WorkflowExecutions::new(hyper::Client::builder().build(hyper_rustls::HttpsConnectorBuilder::new().with_native_roots().https_or_http().enable_http1().build()), auth);
 //! // As the method needs a request, you would usually fill it with the desired information
 //! // into the respective structure. Some of the parts shown here might not be applicable !
 //! // Values shown here are possibly random and not representative !
