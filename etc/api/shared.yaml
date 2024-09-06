@@ -5,6 +5,8 @@ api:
     - analyticsadmin
     # resursive type
     - bigquery
+    # resursive type
+    - bigtableadmin
     # redefinition of `Scope`
     - binaryauthorization
     # ampersand & in type name
@@ -27,7 +29,6 @@ api:
     # Has a struct field called 'async', which is now reserved
     - homegraph
     - gkehub
-    - spanner
     - firebaserules
     - servicemanagement
     # defines its own `Option` type
@@ -106,7 +107,7 @@ cargo:
 urls:
   authenticator_delegate: https://docs.rs/yup-oauth2/*/yup_oauth2/trait.AuthenticatorDelegate.html
 copyright:
-  license_abbrev: "MIT"
-  years: "2015-2020"
+  license_abbrev: MIT
+  years: 2015–2024
   authors:
-    - "Sebastian Thiel"
+    - Sebastian Thiel

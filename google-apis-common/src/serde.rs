@@ -144,6 +144,7 @@ pub mod duration {
 }
 
 pub mod standard_base64 {
+    use base64::Engine as _;
     use serde::{Deserialize, Deserializer, Serializer};
     use serde_with::{DeserializeAs, SerializeAs};
     use std::borrow::Cow;
@@ -151,7 +152,7 @@ pub mod standard_base64 {
     pub struct Wrapper;
 
     pub fn to_string(bytes: &Vec<u8>) -> String {
-        base64::encode_config(bytes, base64::STANDARD)
+        base64::prelude::BASE64_STANDARD.encode(bytes)
     }
 
     impl SerializeAs<Vec<u8>> for Wrapper {
@@ -169,12 +170,19 @@ pub mod standard_base64 {
             D: Deserializer<'de>,
         {
             let s: Cow<str> = Deserialize::deserialize(deserializer)?;
-            base64::decode_config(s.as_ref(), base64::STANDARD).map_err(serde::de::Error::custom)
+            match base64::prelude::BASE64_STANDARD.decode(s.as_ref()) {
+                Ok(decoded) => Ok(decoded),
+                Err(first_err) => match base64::prelude::BASE64_URL_SAFE.decode(s.as_ref()) {
+                    Ok(decoded) => Ok(decoded),
+                    Err(_) => Err(serde::de::Error::custom(first_err))
+                }
+            }
         }
     }
 }
 
 pub mod urlsafe_base64 {
+    use base64::Engine as _;
     use serde::{Deserialize, Deserializer, Serializer};
     use serde_with::{DeserializeAs, SerializeAs};
     use std::borrow::Cow;
@@ -182,7 +190,7 @@ pub mod urlsafe_base64 {
     pub struct Wrapper;
 
     pub fn to_string(bytes: &Vec<u8>) -> String {
-        base64::encode_config(bytes, base64::URL_SAFE)
+        base64::prelude::BASE64_URL_SAFE.encode(bytes)
     }
 
     impl SerializeAs<Vec<u8>> for Wrapper {
@@ -200,7 +208,13 @@ pub mod urlsafe_base64 {
             D: Deserializer<'de>,
         {
             let s: Cow<str> = Deserialize::deserialize(deserializer)?;
-            base64::decode_config(s.as_ref(), base64::URL_SAFE).map_err(serde::de::Error::custom)
+            match base64::prelude::BASE64_URL_SAFE.decode(s.as_ref()) {
+                Ok(decoded) => Ok(decoded),
+                Err(first_err) => match base64::prelude::BASE64_STANDARD.decode(s.as_ref()) {
+                    Ok(decoded) => Ok(decoded),
+                    Err(_) => Err(serde::de::Error::custom(first_err))
+                }
+            }
         }
     }
 }
@@ -212,6 +226,7 @@ pub fn datetime_to_string(datetime: &chrono::DateTime<chrono::offset::Utc>) -> S
 #[cfg(test)]
 mod test {
     use super::{duration, standard_base64, urlsafe_base64};
+    use base64::Engine as _;
     use serde::{Deserialize, Serialize};
     use serde_with::{serde_as, DisplayFromStr};
 
@@ -341,11 +356,25 @@ mod test {
     }
 
     #[test]
+    fn urlsafe_base64_de_standard_success_cases() {
+        let wrapper: Base64URLSafeWrapper =  // Expect URL-safe base64 accepts standard encoding
+            serde_json::from_reader(r#"{"bytes": "REE/P0V+Nz4oIWtH"}"#.as_bytes()).unwrap();
+        assert_eq!(Some(b"DA??E~7>(!kG".as_slice()), wrapper.bytes.as_deref());
+    }
+
+    #[test]
     fn urlsafe_base64_de_failure_cases() {
         assert!(
-            serde_json::from_str::<Base64URLSafeWrapper>(r#"{"bytes": "aGVsbG8gd29ybG+Q"}"#)
+            serde_json::from_str::<Base64URLSafeWrapper>(r#"{"bytes": "aGVsbG8gd29ybG&Q"}"#)
                 .is_err()
         );
+    }
+
+    #[test]
+    fn standard_base64_de_urlsafe_success_cases() {
+        let wrapper: Base64URLSafeWrapper =  // Expect standard base64 accepts url-safe encoding
+            serde_json::from_reader(r#"{"bytes": "REE_P0V-Nz4oIWtH"}"#.as_bytes()).unwrap();
+        assert_eq!(Some(b"DA??E~7>(!kG".as_slice()), wrapper.bytes.as_deref());
     }
 
     #[test]

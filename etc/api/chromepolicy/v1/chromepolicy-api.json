@@ -557,7 +557,7 @@
             }
         }
     },
-    "revision": "20240303",
+    "revision": "20240625",
     "rootUrl": "https://chromepolicy.googleapis.com/",
     "schemas": {
         "GoogleChromePolicyVersionsV1AdditionalTargetKeyName": {
