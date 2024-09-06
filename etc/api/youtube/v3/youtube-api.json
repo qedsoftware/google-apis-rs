@@ -1794,6 +1794,41 @@
                         "https://www.googleapis.com/auth/youtube.force-ssl",
                         "https://www.googleapis.com/auth/youtube.readonly"
                     ]
+                },
+                "transition": {
+                    "description": "Transition a durable chat event.",
+                    "flatPath": "youtube/v3/liveChat/messages/transition",
+                    "httpMethod": "POST",
+                    "id": "youtube.liveChatMessages.transition",
+                    "parameterOrder": [],
+                    "parameters": {
+                        "id": {
+                            "description": "The ID that uniquely identify the chat message event to transition.",
+                            "location": "query",
+                            "type": "string"
+                        },
+                        "status": {
+                            "description": "The status to which the chat event is going to transition.",
+                            "enum": [
+                                "statusUnspecified",
+                                "closed"
+                            ],
+                            "enumDescriptions": [
+                                "Default unknown enum value.",
+                                "The durable chat event is over."
+                            ],
+                            "location": "query",
+                            "type": "string"
+                        }
+                    },
+                    "path": "youtube/v3/liveChat/messages/transition",
+                    "response": {
+                        "$ref": "LiveChatMessage"
+                    },
+                    "scopes": [
+                        "https://www.googleapis.com/auth/youtube",
+                        "https://www.googleapis.com/auth/youtube.force-ssl"
+                    ]
                 }
             }
         },
@@ -4037,7 +4072,7 @@
             }
         }
     },
-    "revision": "20240303",
+    "revision": "20240626",
     "rootUrl": "https://youtube.googleapis.com/",
     "schemas": {
         "AbuseReport": {
@@ -5356,6 +5391,7 @@
                     "type": "string"
                 },
                 "moderateComments": {
+                    "deprecated": true,
                     "description": "Whether user-submitted comments left on the channel page need to be approved by the channel owner to be publicly visible.",
                     "type": "boolean"
                 },
@@ -7678,11 +7714,13 @@
                     "type": "string"
                 },
                 "repeatIntervalSecs": {
+                    "deprecated": true,
                     "description": "Interval frequency in seconds that api uses to insert cuepoints automatically.",
                     "format": "int32",
                     "type": "integer"
                 },
                 "scheduleStrategy": {
+                    "deprecated": true,
                     "description": "The strategy to use when scheduling cuepoints.",
                     "enum": [
                         "scheduleStrategyUnspecified",
@@ -8282,6 +8320,7 @@
                     "type": "boolean"
                 },
                 "startWithSlate": {
+                    "deprecated": true,
                     "description": "This setting indicates whether the broadcast should automatically begin with an in-stream slate when you update the broadcast's status to live. After updating the status, you then need to send a liveCuepoints.insert request that sets the cuepoint's eventState to end to remove the in-stream slate and make your broadcast stream visible to viewers.",
                     "type": "boolean"
                 },
@@ -8744,6 +8783,10 @@
         "LiveChatMessageListResponse": {
             "id": "LiveChatMessageListResponse",
             "properties": {
+                "activePollItem": {
+                    "$ref": "LiveChatMessage",
+                    "description": "Set when there is an active poll."
+                },
                 "etag": {
                     "description": "Etag of this resource.",
                     "type": "string"

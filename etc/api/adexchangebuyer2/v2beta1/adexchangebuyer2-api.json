@@ -3115,7 +3115,7 @@
             }
         }
     },
-    "revision": "20240305",
+    "revision": "20240625",
     "rootUrl": "https://adexchangebuyer.googleapis.com/",
     "schemas": {
         "AbsoluteDateRange": {
